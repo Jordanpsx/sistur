@@ -7,3 +7,9 @@ services:
     ports:
       - "${APP_PORT:-8083}:5000"
     restart: unless-stopped
+    networks:
+      - sistur-network
+
+networks:
+  sistur-network:
+    external: true
