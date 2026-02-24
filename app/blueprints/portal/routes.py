@@ -15,7 +15,7 @@ from __future__ import annotations
 
 import functools
 
-from flask import Blueprint, abort, flash, jsonify, redirect, render_template, request, session, url_for
+from flask import Blueprint, abort, flash, redirect, render_template, request, session, url_for
 
 from app.core.audit import AuditService
 from app.extensions import db
@@ -117,20 +117,7 @@ def dashboard():
     BancoDeHoras module is fully ported.
     """
     funcionario = _get_funcionario_sessao()
-
-    return jsonify(
-        {
-            "funcionario_id": funcionario.id,
-            "nome": funcionario.nome,
-            "cpf": funcionario.cpf_formatado(),
-            "cargo": funcionario.cargo,
-            "area": funcionario.area.name if funcionario.area else None,
-            "banco_de_horas": {
-                "saldo_minutos": funcionario.saldo_banco_horas(),
-                "saldo_formatado": funcionario.saldo_banco_horas_formatado(),
-            },
-        }
-    )
+    return render_template("portal/dashboard.html", funcionario=funcionario)
 
 
 # ---------------------------------------------------------------------------

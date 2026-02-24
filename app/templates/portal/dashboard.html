@@ -1,0 +1,250 @@
+<!DOCTYPE html>
+<!--
+  Copyright (c) 2026 Jordan Barbosa Machado — All Rights Reserved
+  Portal do Colaborador — Dashboard
+-->
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>{{ company_name }} | Minha Área</title>
+
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script>
+    tailwind.config = {
+      theme: {
+        extend: {
+          colors: {
+            primary: {
+              DEFAULT: '#0d9488',
+              light:   '#ccfbf1',
+              dark:    '#0f766e',
+            }
+          },
+          keyframes: {
+            fadeIn: {
+              '0%':   { opacity: '0', transform: 'translateY(12px)' },
+              '100%': { opacity: '1', transform: 'translateY(0)' },
+            },
+          },
+          animation: {
+            'fade-in': 'fadeIn 0.4s ease-out forwards',
+          },
+        },
+      },
+    }
+  </script>
+
+  <style>
+    @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap');
+    body { font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif; }
+
+    .card { opacity: 0; }
+    .card:nth-child(1) { animation: fadeIn 0.4s 0.05s ease-out forwards; }
+    .card:nth-child(2) { animation: fadeIn 0.4s 0.15s ease-out forwards; }
+    .card:nth-child(3) { animation: fadeIn 0.4s 0.25s ease-out forwards; }
+    .card:nth-child(4) { animation: fadeIn 0.4s 0.35s ease-out forwards; }
+  </style>
+</head>
+
+<body class="min-h-screen bg-gradient-to-br from-teal-50 via-sky-50 to-slate-100">
+
+  <!-- Top bar -->
+  <header class="bg-white/80 backdrop-blur border-b border-slate-100 sticky top-0 z-10">
+    <div class="max-w-5xl mx-auto px-4 sm:px-6 h-16 flex items-center justify-between gap-4">
+
+      <!-- Brand -->
+      <div class="flex items-center gap-3">
+        {% if company_logo %}
+          <img src="{{ company_logo | e }}" alt="{{ company_name | e }}"
+               class="h-8 w-auto object-contain" />
+        {% else %}
+          <div class="w-8 h-8 rounded-full bg-primary-light flex items-center justify-center text-primary">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none">
+              <circle cx="12" cy="12" r="10" stroke="currentColor" stroke-width="1.5"/>
+              <path d="M12 8V12L15 15" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/>
+            </svg>
+          </div>
+        {% endif %}
+        <span class="font-bold text-slate-700 text-sm hidden sm:block">
+          {{ company_name | e }}
+          <span class="text-slate-400 font-normal">| Portal do Colaborador</span>
+        </span>
+      </div>
+
+      <!-- Employee + logout -->
+      <div class="flex items-center gap-3">
+        <span class="text-sm text-slate-600 font-medium hidden sm:block">
+          {{ funcionario.nome.split()[0] | e }}
+        </span>
+        <form method="POST" action="{{ url_for('portal.logout') }}">
+          <button type="submit"
+                  class="flex items-center gap-2 px-3 py-1.5 rounded-lg
+                         text-sm font-medium text-slate-500
+                         hover:bg-red-50 hover:text-red-600
+                         transition-colors duration-150">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none">
+              <path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4
+                       M16 17l5-5-5-5M21 12H9"
+                    stroke="currentColor" stroke-width="2"
+                    stroke-linecap="round" stroke-linejoin="round"/>
+            </svg>
+            Sair
+          </button>
+        </form>
+      </div>
+    </div>
+  </header>
+
+  <!-- Page content -->
+  <main class="max-w-5xl mx-auto px-4 sm:px-6 py-8">
+
+    <!-- Welcome heading -->
+    <div class="mb-8">
+      <h1 class="text-2xl font-extrabold text-slate-800">
+        Olá, {{ funcionario.nome.split()[0] | e }}
+      </h1>
+      <p class="text-slate-500 text-sm mt-1">
+        Bem-vindo ao seu painel. Aqui você acompanha seus dados e registros.
+      </p>
+    </div>
+
+    <!-- Cards grid -->
+    <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-5">
+
+      <!-- Card: Dados Pessoais -->
+      <div class="card bg-white rounded-2xl shadow-sm border border-slate-100 p-6
+                  col-span-1 sm:col-span-2 lg:col-span-2">
+        <div class="flex items-center gap-3 mb-5">
+          <div class="w-10 h-10 rounded-xl bg-primary-light
+                      flex items-center justify-center text-primary flex-shrink-0">
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="none">
+              <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2
+                       M16 7a4 4 0 1 1-8 0 4 4 0 0 1 8 0z"
+                    stroke="currentColor" stroke-width="2"
+                    stroke-linecap="round" stroke-linejoin="round"/>
+            </svg>
+          </div>
+          <h2 class="font-bold text-slate-700">Dados do Colaborador</h2>
+        </div>
+
+        <dl class="grid grid-cols-1 sm:grid-cols-2 gap-x-6 gap-y-4 text-sm">
+          <div>
+            <dt class="text-xs font-semibold uppercase tracking-widest text-slate-400 mb-0.5">Nome</dt>
+            <dd class="text-slate-700 font-medium">{{ funcionario.nome | e }}</dd>
+          </div>
+          <div>
+            <dt class="text-xs font-semibold uppercase tracking-widest text-slate-400 mb-0.5">CPF</dt>
+            <dd class="text-slate-700 font-medium font-mono">{{ funcionario.cpf_formatado() }}</dd>
+          </div>
+          <div>
+            <dt class="text-xs font-semibold uppercase tracking-widest text-slate-400 mb-0.5">Cargo</dt>
+            <dd class="text-slate-700 font-medium">
+              {{ funcionario.cargo or '—' | e }}
+            </dd>
+          </div>
+          <div>
+            <dt class="text-xs font-semibold uppercase tracking-widest text-slate-400 mb-0.5">Área</dt>
+            <dd class="text-slate-700 font-medium">
+              {{ funcionario.area.name if funcionario.area else '—' }}
+            </dd>
+          </div>
+          {% if funcionario.matricula %}
+          <div>
+            <dt class="text-xs font-semibold uppercase tracking-widest text-slate-400 mb-0.5">Matrícula</dt>
+            <dd class="text-slate-700 font-medium font-mono">{{ funcionario.matricula | e }}</dd>
+          </div>
+          {% endif %}
+          {% if funcionario.data_admissao %}
+          <div>
+            <dt class="text-xs font-semibold uppercase tracking-widest text-slate-400 mb-0.5">Admissão</dt>
+            <dd class="text-slate-700 font-medium">
+              {{ funcionario.data_admissao.strftime('%d/%m/%Y') }}
+            </dd>
+          </div>
+          {% endif %}
+        </dl>
+      </div>
+
+      <!-- Card: Banco de Horas -->
+      <div class="card bg-white rounded-2xl shadow-sm border border-slate-100 p-6">
+        <div class="flex items-center gap-3 mb-5">
+          <div class="w-10 h-10 rounded-xl bg-primary-light
+                      flex items-center justify-center text-primary flex-shrink-0">
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="none">
+              <circle cx="12" cy="12" r="10" stroke="currentColor" stroke-width="2"/>
+              <path d="M12 8V12L15 15" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
+            </svg>
+          </div>
+          <h2 class="font-bold text-slate-700">Banco de Horas</h2>
+        </div>
+
+        {% set saldo = funcionario.saldo_banco_horas() %}
+        <div class="text-center py-2">
+          <p class="text-4xl font-extrabold tracking-tight
+                    {% if saldo < 0 %}text-red-500{% elif saldo > 0 %}text-primary{% else %}text-slate-400{% endif %}">
+            {{ funcionario.saldo_banco_horas_formatado() }}
+          </p>
+          <p class="text-xs text-slate-400 mt-2">saldo atual</p>
+        </div>
+
+        <p class="text-xs text-slate-400 text-center mt-4 border-t border-slate-50 pt-4">
+          Detalhamento em breve
+        </p>
+      </div>
+
+      <!-- Card: Ponto Eletrônico (em breve) -->
+      <div class="card bg-white rounded-2xl shadow-sm border border-slate-100 p-6
+                  opacity-60 cursor-not-allowed">
+        <div class="flex items-center gap-3 mb-4">
+          <div class="w-10 h-10 rounded-xl bg-slate-100
+                      flex items-center justify-center text-slate-400 flex-shrink-0">
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="none">
+              <rect x="5" y="2" width="14" height="20" rx="2"
+                    stroke="currentColor" stroke-width="2"/>
+              <path d="M12 11v5M12 7v.01"
+                    stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
+            </svg>
+          </div>
+          <div>
+            <h2 class="font-bold text-slate-500">Ponto Eletrônico</h2>
+            <span class="text-xs font-medium text-amber-500 bg-amber-50
+                         px-2 py-0.5 rounded-full">Em breve</span>
+          </div>
+        </div>
+        <p class="text-xs text-slate-400">
+          Visualize e confirme seus registros de entrada e saída.
+        </p>
+      </div>
+
+      <!-- Card: Holerite (em breve) -->
+      <div class="card bg-white rounded-2xl shadow-sm border border-slate-100 p-6
+                  opacity-60 cursor-not-allowed">
+        <div class="flex items-center gap-3 mb-4">
+          <div class="w-10 h-10 rounded-xl bg-slate-100
+                      flex items-center justify-center text-slate-400 flex-shrink-0">
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="none">
+              <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"
+                    stroke="currentColor" stroke-width="2"
+                    stroke-linecap="round" stroke-linejoin="round"/>
+              <path d="M14 2v6h6M16 13H8M16 17H8M10 9H8"
+                    stroke="currentColor" stroke-width="2"
+                    stroke-linecap="round" stroke-linejoin="round"/>
+            </svg>
+          </div>
+          <div>
+            <h2 class="font-bold text-slate-500">Holerite</h2>
+            <span class="text-xs font-medium text-amber-500 bg-amber-50
+                         px-2 py-0.5 rounded-full">Em breve</span>
+          </div>
+        </div>
+        <p class="text-xs text-slate-400">
+          Acesse seus contracheques e comprovantes de pagamento.
+        </p>
+      </div>
+
+    </div>
+  </main>
+
+</body>
+</html>
