@@ -48,4 +48,5 @@ debug.log
 # Environment files
 .env
 .env.local
-.env.*
+.env.*Dockerfile
+docker-compose.yml
