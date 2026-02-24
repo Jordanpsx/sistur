@@ -1,0 +1,18 @@
+version: '3.8'
+services:
+  sistur-flask:
+    build: .
+    container_name: sistur-flask-app
+    restart: always
+    environment:
+      - DB_HOST=sistur-db-test # Nome do serviço MariaDB que você já usa
+      - DB_USER=root
+      - DB_PASSWORD=root
+    ports:
+      - "5001:5000" # Porta externa 5001 para a VPS
+    networks:
+      - sistur-network
+
+networks:
+  sistur-network:
+    external: true # Conecta na rede Docker que você já possui
