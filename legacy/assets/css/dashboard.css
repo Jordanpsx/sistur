@@ -1,0 +1,517 @@
+/**
+ * Dashboard do Funcionário - Sistur
+ * 
+ * Estilização dedicada usando CSS Grid, Flexbox e Variáveis CSS.
+ * Design minimalista, profissional e responsivo.
+ * 
+ * @package SISTUR
+ * @since 2.0.0
+ */
+
+/* ========================================
+   CSS VARIABLES - Design Tokens
+======================================== */
+:root {
+    /* Cores Base */
+    --sistur-bg-page: #F4F6F8;
+    --sistur-bg-white: #FFFFFF;
+    --sistur-text-primary: #1A202C;
+    --sistur-text-secondary: #64748B;
+    --sistur-text-muted: #94A3B8;
+
+    /* Cores dos Módulos */
+    --sistur-color-rh: #3B82F6;
+    --sistur-color-rh-light: #DBEAFE;
+    --sistur-color-rh-hover: #2563EB;
+
+    --sistur-color-restaurante: #F97316;
+    --sistur-color-restaurante-light: #FFEDD5;
+    --sistur-color-restaurante-hover: #EA580C;
+
+    --sistur-color-financeiro: #22C55E;
+    --sistur-color-financeiro-light: #DCFCE7;
+    --sistur-color-financeiro-hover: #16A34A;
+
+    --sistur-color-placeholder: #94A3B8;
+    --sistur-color-placeholder-light: #F1F5F9;
+
+    /* Cores da Navbar */
+    --sistur-navbar-bg: #FFFFFF;
+    --sistur-navbar-shadow: 0 1px 3px rgba(0, 0, 0, 0.08);
+
+    /* Botão Primário */
+    --sistur-btn-primary-bg: #3B82F6;
+    --sistur-btn-primary-hover: #2563EB;
+    --sistur-btn-primary-text: #FFFFFF;
+
+    /* Sombras */
+    --sistur-shadow-sm: 0 1px 2px rgba(0, 0, 0, 0.05);
+    --sistur-shadow-md: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
+    --sistur-shadow-lg: 0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05);
+    --sistur-shadow-hover: 0 20px 25px -5px rgba(0, 0, 0, 0.1), 0 10px 10px -5px rgba(0, 0, 0, 0.04);
+
+    /* Bordas */
+    --sistur-radius-sm: 8px;
+    --sistur-radius-md: 12px;
+    --sistur-radius-lg: 16px;
+
+    /* Espaçamentos */
+    --sistur-space-xs: 0.25rem;
+    --sistur-space-sm: 0.5rem;
+    --sistur-space-md: 1rem;
+    --sistur-space-lg: 1.5rem;
+    --sistur-space-xl: 2rem;
+    --sistur-space-2xl: 3rem;
+
+    /* Tipografia */
+    --sistur-font-family: 'Inter', 'Segoe UI', -apple-system, BlinkMacSystemFont, 'Roboto', 'Oxygen', sans-serif;
+    --sistur-font-size-xs: 0.75rem;
+    --sistur-font-size-sm: 0.875rem;
+    --sistur-font-size-base: 1rem;
+    --sistur-font-size-lg: 1.125rem;
+    --sistur-font-size-xl: 1.25rem;
+    --sistur-font-size-2xl: 1.5rem;
+    --sistur-font-size-3xl: 2rem;
+
+    /* Transições */
+    --sistur-transition-fast: 150ms ease;
+    --sistur-transition-base: 200ms ease;
+    --sistur-transition-slow: 300ms ease;
+}
+
+/* ========================================
+   RESET & BASE STYLES
+======================================== */
+.sistur-dashboard-wrapper *,
+.sistur-dashboard-wrapper *::before,
+.sistur-dashboard-wrapper *::after {
+    box-sizing: border-box;
+}
+
+.sistur-dashboard-wrapper {
+    font-family: var(--sistur-font-family);
+    font-size: var(--sistur-font-size-base);
+    line-height: 1.6;
+    color: var(--sistur-text-primary);
+    background-color: var(--sistur-bg-page);
+    min-height: 80vh;
+    display: flex;
+    flex-direction: column;
+    margin: -20px -40px;
+    /* Compensar padding do tema */
+    padding: 0;
+}
+
+/* ========================================
+   CONTAINER
+======================================== */
+.sistur-container {
+    width: 100%;
+    max-width: 1200px;
+    margin: 0 auto;
+    padding: 0 var(--sistur-space-lg);
+}
+
+/* ========================================
+   NAVBAR - Barra de Navegação Superior
+======================================== */
+.sistur-navbar {
+    background-color: var(--sistur-navbar-bg);
+    box-shadow: var(--sistur-navbar-shadow);
+    position: sticky;
+    top: 0;
+    z-index: 100;
+}
+
+.sistur-navbar__container {
+    max-width: 1200px;
+    margin: 0 auto;
+    padding: var(--sistur-space-md) var(--sistur-space-lg);
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: var(--sistur-space-lg);
+}
+
+/* Logo */
+.sistur-navbar__brand {
+    flex-shrink: 0;
+}
+
+.sistur-navbar__logo {
+    display: flex;
+    align-items: center;
+    gap: var(--sistur-space-sm);
+    text-decoration: none;
+    color: var(--sistur-text-primary);
+    font-weight: 700;
+    font-size: var(--sistur-font-size-xl);
+    transition: opacity var(--sistur-transition-fast);
+}
+
+.sistur-navbar__logo:hover {
+    opacity: 0.8;
+}
+
+.sistur-navbar__logo-icon {
+    font-size: 1.5rem;
+}
+
+/* Ações da Navbar */
+.sistur-navbar__actions {
+    display: flex;
+    align-items: center;
+    gap: var(--sistur-space-lg);
+}
+
+/* Usuário */
+.sistur-navbar__user {
+    display: none;
+}
+
+@media (min-width: 768px) {
+    .sistur-navbar__user {
+        display: block;
+    }
+}
+
+.sistur-navbar__greeting {
+    font-size: var(--sistur-font-size-sm);
+    color: var(--sistur-text-secondary);
+}
+
+/* Botão de Logout */
+.sistur-navbar__logout {
+    display: flex;
+    align-items: center;
+    gap: var(--sistur-space-xs);
+    padding: var(--sistur-space-sm) var(--sistur-space-md);
+    color: var(--sistur-text-secondary);
+    text-decoration: none;
+    font-size: var(--sistur-font-size-sm);
+    border-radius: var(--sistur-radius-sm);
+    transition: all var(--sistur-transition-fast);
+}
+
+.sistur-navbar__logout:hover {
+    background-color: #FEE2E2;
+    color: #DC2626;
+}
+
+.sistur-navbar__logout-text {
+    display: none;
+}
+
+@media (min-width: 640px) {
+    .sistur-navbar__logout-text {
+        display: inline;
+    }
+}
+
+/* ========================================
+   BUTTONS
+======================================== */
+.sistur-btn {
+    display: inline-flex;
+    align-items: center;
+    gap: var(--sistur-space-sm);
+    padding: var(--sistur-space-sm) var(--sistur-space-lg);
+    font-family: inherit;
+    font-size: var(--sistur-font-size-sm);
+    font-weight: 600;
+    text-decoration: none;
+    border: none;
+    border-radius: var(--sistur-radius-sm);
+    cursor: pointer;
+    transition: all var(--sistur-transition-fast);
+    white-space: nowrap;
+}
+
+.sistur-btn--primary {
+    background-color: var(--sistur-btn-primary-bg);
+    color: var(--sistur-btn-primary-text);
+    box-shadow: var(--sistur-shadow-sm);
+}
+
+.sistur-btn--primary:hover {
+    background-color: var(--sistur-btn-primary-hover);
+    box-shadow: var(--sistur-shadow-md);
+    transform: translateY(-1px);
+}
+
+.sistur-btn--secondary {
+    background-color: transparent;
+    color: var(--sistur-btn-primary-bg);
+    border: 2px solid var(--sistur-btn-primary-bg);
+}
+
+.sistur-btn--secondary:hover {
+    background-color: var(--sistur-btn-primary-bg);
+    color: var(--sistur-btn-primary-text);
+}
+
+.sistur-btn__text {
+    display: none;
+}
+
+@media (min-width: 768px) {
+    .sistur-btn__text {
+        display: inline;
+    }
+}
+
+/* ========================================
+   MAIN CONTENT
+======================================== */
+.sistur-main {
+    flex: 1;
+    padding: var(--sistur-space-2xl) 0;
+}
+
+/* ========================================
+   SECTION
+======================================== */
+.sistur-section {
+    text-align: center;
+    margin-bottom: var(--sistur-space-2xl);
+}
+
+.sistur-section__title {
+    font-size: var(--sistur-font-size-3xl);
+    font-weight: 700;
+    color: var(--sistur-text-primary);
+    margin-bottom: var(--sistur-space-sm);
+}
+
+.sistur-section__subtitle {
+    font-size: var(--sistur-font-size-lg);
+    color: var(--sistur-text-secondary);
+}
+
+/* ========================================
+   MODULES GRID
+======================================== */
+.sistur-modules__grid {
+    display: grid;
+    grid-template-columns: 1fr;
+    gap: var(--sistur-space-lg);
+}
+
+@media (min-width: 640px) {
+    .sistur-modules__grid {
+        grid-template-columns: repeat(2, 1fr);
+    }
+}
+
+@media (min-width: 1024px) {
+    .sistur-modules__grid {
+        grid-template-columns: repeat(4, 1fr);
+    }
+}
+
+/* ========================================
+   CARDS
+======================================== */
+.sistur-card {
+    background-color: var(--sistur-bg-white);
+    border-radius: var(--sistur-radius-md);
+    box-shadow: var(--sistur-shadow-md);
+    overflow: hidden;
+    transition: all var(--sistur-transition-base);
+}
+
+.sistur-card:hover {
+    box-shadow: var(--sistur-shadow-hover);
+    transform: translateY(-4px);
+}
+
+.sistur-card__link {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    padding: var(--sistur-space-2xl) var(--sistur-space-lg);
+    text-decoration: none;
+    color: inherit;
+    text-align: center;
+}
+
+.sistur-card__link--disabled {
+    cursor: not-allowed;
+    opacity: 0.6;
+}
+
+/* Ícone do Card */
+.sistur-card__icon {
+    width: 72px;
+    height: 72px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border-radius: var(--sistur-radius-lg);
+    margin-bottom: var(--sistur-space-lg);
+    transition: all var(--sistur-transition-base);
+}
+
+.sistur-card__icon svg {
+    width: 36px;
+    height: 36px;
+}
+
+/* Título do Card */
+.sistur-card__title {
+    font-size: var(--sistur-font-size-xl);
+    font-weight: 700;
+    margin-bottom: var(--sistur-space-sm);
+    transition: color var(--sistur-transition-fast);
+}
+
+/* Descrição do Card */
+.sistur-card__description {
+    font-size: var(--sistur-font-size-sm);
+    color: var(--sistur-text-secondary);
+    line-height: 1.5;
+}
+
+/* ========================================
+   CARD VARIANTS - Cores por Módulo
+======================================== */
+
+/* RH - Azul */
+.sistur-card--rh .sistur-card__icon {
+    background-color: var(--sistur-color-rh-light);
+    color: var(--sistur-color-rh);
+}
+
+.sistur-card--rh:hover .sistur-card__icon {
+    background-color: var(--sistur-color-rh);
+    color: var(--sistur-bg-white);
+}
+
+.sistur-card--rh .sistur-card__title {
+    color: var(--sistur-color-rh);
+}
+
+.sistur-card--rh:hover .sistur-card__title {
+    color: var(--sistur-color-rh-hover);
+}
+
+/* Restaurante - Laranja/Terracota */
+.sistur-card--restaurante .sistur-card__icon {
+    background-color: var(--sistur-color-restaurante-light);
+    color: var(--sistur-color-restaurante);
+}
+
+.sistur-card--restaurante:hover .sistur-card__icon {
+    background-color: var(--sistur-color-restaurante);
+    color: var(--sistur-bg-white);
+}
+
+.sistur-card--restaurante .sistur-card__title {
+    color: var(--sistur-color-restaurante);
+}
+
+.sistur-card--restaurante:hover .sistur-card__title {
+    color: var(--sistur-color-restaurante-hover);
+}
+
+/* Financeiro - Verde */
+.sistur-card--financeiro .sistur-card__icon {
+    background-color: var(--sistur-color-financeiro-light);
+    color: var(--sistur-color-financeiro);
+}
+
+.sistur-card--financeiro:hover .sistur-card__icon {
+    background-color: var(--sistur-color-financeiro);
+    color: var(--sistur-bg-white);
+}
+
+.sistur-card--financeiro .sistur-card__title {
+    color: var(--sistur-color-financeiro);
+}
+
+.sistur-card--financeiro:hover .sistur-card__title {
+    color: var(--sistur-color-financeiro-hover);
+}
+
+/* Placeholder - Cinza Pontilhado */
+.sistur-card--placeholder {
+    background-color: var(--sistur-color-placeholder-light);
+    border: 2px dashed var(--sistur-color-placeholder);
+    box-shadow: none;
+}
+
+.sistur-card--placeholder:hover {
+    box-shadow: none;
+    transform: none;
+}
+
+.sistur-card--placeholder .sistur-card__icon {
+    background-color: var(--sistur-bg-white);
+    color: var(--sistur-color-placeholder);
+}
+
+.sistur-card--placeholder .sistur-card__title {
+    color: var(--sistur-color-placeholder);
+}
+
+/* ========================================
+   FOOTER
+======================================== */
+.sistur-footer {
+    background-color: var(--sistur-bg-white);
+    border-top: 1px solid #E2E8F0;
+    padding: var(--sistur-space-lg) 0;
+    margin-top: auto;
+}
+
+.sistur-footer__text {
+    text-align: center;
+    font-size: var(--sistur-font-size-sm);
+    color: var(--sistur-text-muted);
+}
+
+/* ========================================
+   ACCESSIBILITY
+======================================== */
+.sistur-card__link:focus,
+.sistur-btn:focus,
+.sistur-navbar__logo:focus,
+.sistur-navbar__logout:focus {
+    outline: 2px solid var(--sistur-btn-primary-bg);
+    outline-offset: 2px;
+}
+
+/* ========================================
+   ANIMATIONS
+======================================== */
+@keyframes fadeIn {
+    from {
+        opacity: 0;
+        transform: translateY(10px);
+    }
+
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+.sistur-card {
+    animation: fadeIn 0.4s ease forwards;
+}
+
+.sistur-card:nth-child(1) {
+    animation-delay: 0.1s;
+}
+
+.sistur-card:nth-child(2) {
+    animation-delay: 0.2s;
+}
+
+.sistur-card:nth-child(3) {
+    animation-delay: 0.3s;
+}
+
+.sistur-card:nth-child(4) {
+    animation-delay: 0.4s;
+}

@@ -1,0 +1,63 @@
+name: Deploy Automático Sistur
+
+
+
+on:
+
+  push:
+
+    branches: [main, develop]
+
+
+
+jobs:
+
+  deploy:
+
+    runs-on: ubuntu-latest
+
+    steps:
+
+      - name: Executar comandos na VPS
+
+        uses: appleboy/ssh-action@master
+
+        with:
+
+          host: ${{ secrets.HOST_IP }}
+
+          username: root
+
+          key: ${{ secrets.SSH_PRIVATE_KEY }}
+
+          script: |
+
+            if [ "${{ github.ref_name }}" == "main" ]; then
+
+              # Caminho completo até a pasta onde você deu o 'git init' na Produção
+
+              cd ~/apps/sistur/wordpress_data/wp-content/plugins/sistur2-main
+
+            else
+
+              # Caminho completo no Teste (lembre-se de conferir se tem o "-main" no nome da pasta)
+
+              cd ~/apps/sistur-test/wordpress_data_test/wp-content/plugins/sistur2-main
+
+            fi
+
+            
+
+            # Agora o git pull funciona porque estamos na pasta com o .git
+
+            git pull origin ${{ github.ref_name }}
+
+            
+
+            # (Opcional) Reinicia o container para garantir que o WordPress veja as mudanças no PHP
+
+            # Voltamos 4 níveis para chegar onde está o docker-compose.yml
+
+            cd ../../../.. 
+
+            docker compose restart wordpress

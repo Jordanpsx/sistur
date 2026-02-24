@@ -1,0 +1,51 @@
+# === SISTUR PYTHON (New Core) ===
+__pycache__/
+*.py[cod]
+*$py.class
+.python-version
+.venv/
+venv/
+ENV/
+env/
+build/
+dist/
+*.egg-info/
+.pytest_cache/
+
+# === LEGACY (Sistur Original em /legacy) ===
+/legacy/vendor/
+/legacy/composer.lock
+/legacy/wp-config-local.php
+/legacy/wp-cli.local.yml
+/legacy/node_modules/
+/legacy/wp-content/uploads/sistur/qrcodes/*.png
+/legacy/mu-plugins/externo/venv/
+
+# === GERAL & IDES (Global) ===
+.DS_Store
+Thumbs.db
+.idea/
+.vscode/
+*.swp
+*.swo
+*~
+.claude/settings.local.json
+
+# Logs
+*.log
+error_log
+debug.log
+
+# Temporary files
+*.tmp
+*.bak
+*.cache
+
+# Database (Local development)
+*.sqlite3
+*.db
+
+# Environment files
+.env
+.env.local
+.env.*

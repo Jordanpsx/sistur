@@ -1,0 +1,20 @@
+/* Pagamentos */
+.payments-list {
+    background: white;
+    padding: 20px;
+    border-radius: 8px;
+}
+
+.payment-item {
+    padding: 15px;
+    border-bottom: 1px solid #f0f0f1;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+}
+
+.payment-amount {
+    font-size: 18px;
+    font-weight: bold;
+    color: #00a32a;
+}

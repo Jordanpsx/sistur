@@ -1,0 +1,68 @@
+/**
+ * Estilos Administrativos Adicionais
+ *
+ * @package SISTUR
+ */
+
+.wrap.sistur-admin {
+    background: #f0f0f1;
+    margin: 0 -20px 0 -12px;
+    padding: 20px;
+}
+
+.sistur-page-header {
+    background: white;
+    padding: 20px;
+    border-radius: 8px;
+    margin-bottom: 20px;
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+}
+
+.sistur-form-group {
+    margin-bottom: 20px;
+}
+
+.sistur-form-group label {
+    display: block;
+    font-weight: 600;
+    margin-bottom: 8px;
+}
+
+.sistur-form-group input[type="text"],
+.sistur-form-group input[type="email"],
+.sistur-form-group input[type="number"],
+.sistur-form-group input[type="date"],
+.sistur-form-group input[type="time"],
+.sistur-form-group select,
+.sistur-form-group textarea {
+    width: 100%;
+    padding: 8px 12px;
+    border: 1px solid #dcdcde;
+    border-radius: 4px;
+    font-size: 14px;
+}
+
+.sistur-form-group input:focus,
+.sistur-form-group select:focus,
+.sistur-form-group textarea:focus {
+    outline: none;
+    border-color: #2271b1;
+    box-shadow: 0 0 0 1px #2271b1;
+}
+
+.sistur-button-group {
+    display: flex;
+    gap: 10px;
+    align-items: center;
+}
+
+.sistur-filters {
+    background: white;
+    padding: 15px;
+    border-radius: 4px;
+    margin-bottom: 20px;
+    display: flex;
+    gap: 10px;
+    align-items: center;
+    flex-wrap: wrap;
+}

@@ -1,0 +1,13 @@
+/* Grid de Funcionários */
+.employee-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+    gap: 15px;
+}
+
+.employee-card {
+    padding: 15px;
+    background: #f9f9f9;
+    border-radius: 4px;
+    text-align: center;
+}

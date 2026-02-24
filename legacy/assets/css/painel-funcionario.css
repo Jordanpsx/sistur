@@ -1,0 +1,21 @@
+/* Painel do Funcionário */
+.painel-funcionario {
+    max-width: 1000px;
+    margin: 30px auto;
+}
+
+.painel-welcome {
+    background: linear-gradient(135deg, #2271b1 0%, #135e96 100%);
+    color: white;
+    padding: 30px;
+    border-radius: 8px;
+    margin-bottom: 30px;
+}
+
+.painel-info-card {
+    background: white;
+    padding: 20px;
+    border-radius: 8px;
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+    margin-bottom: 20px;
+}
