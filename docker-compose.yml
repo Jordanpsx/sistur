@@ -1,15 +1,26 @@
 services:
+  sistur-db:
+    image: mariadb:10.11
+    container_name: sistur-python-db
+    restart: unless-stopped
+    environment:
+      - MARIADB_ROOT_PASSWORD=${MARIADB_ROOT_PASSWORD}
+      - MARIADB_DATABASE=${MARIADB_DATABASE:-sistur_db}
+      - MARIADB_USER=${MARIADB_USER:-sistur_user}
+      - MARIADB_PASSWORD=${MARIADB_PASSWORD}
+    volumes:
+      - sistur_db_data:/var/lib/mysql
+
   sistur-flask:
     build: .
     container_name: sistur-flask-app
+    restart: unless-stopped
+    depends_on:
+      - sistur-db
     env_file:
       - .env
     ports:
       - "${APP_PORT:-8083}:5000"
-    restart: unless-stopped
-    networks:
-      - sistur-network
 
-networks:
-  sistur-network:
-    external: true
+volumes:
+  sistur_db_data:
