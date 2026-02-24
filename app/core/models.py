@@ -93,7 +93,6 @@ class User(db.Model):
     area_permissions = db.relationship(
         "UserAreaPermission", back_populates="user", lazy="dynamic", cascade="all, delete-orphan"
     )
-    audit_logs = db.relationship("AuditLog", back_populates="actor", lazy="dynamic")
 
     def is_supervisor_of(self, area_slug: str) -> bool:
         """Returns True if this user is a supervisor in the given area."""
@@ -169,9 +168,9 @@ class AuditLog(db.Model):
     __tablename__ = "sistur_audit_logs"
 
     id = db.Column(db.BigInteger, primary_key=True)
-    user_id = db.Column(
-        db.Integer, db.ForeignKey("sistur_users.id", ondelete="SET NULL"), nullable=True
-    )
+    # No FK — user_id is polymorphic: holds a sistur_users.id OR sistur_funcionarios.id
+    # Disambiguated by user_type field below.
+    user_id = db.Column(db.Integer, nullable=True, index=True)
     user_type = db.Column(
         db.Enum(UserType), default=UserType.employee, nullable=False
     )
@@ -198,7 +197,6 @@ class AuditLog(db.Model):
     )
 
     # Relationships
-    actor = db.relationship("User", back_populates="audit_logs")
     area = db.relationship("Area", back_populates="audit_logs")
 
     def __repr__(self) -> str:

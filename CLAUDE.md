@@ -34,7 +34,17 @@ sistur/
 │
 │   ⚠️  Do not modify legacy/. It will be deleted once the Python port is complete.
 │
-├── app/                     # Python/Flask application (to be structured here)
+├── app/
+│   ├── blueprints/          # HTTP controllers — one per business module
+│   ├── core/                # Shared: models.py, audit.py, permissions.py
+│   ├── models/              # Domain models (Funcionario, etc.)
+│   ├── services/            # Business logic layer — Cython-ready
+│   ├── templates/           # Jinja2 templates
+│   ├── config.py            # Flask config (Dev / Prod)
+│   ├── extensions.py        # SQLAlchemy singleton
+│   └── __init__.py          # App factory
+├── docs/
+│   └── antigravity.md       # Non-negotiable architecture rules
 ├── requirements.txt         # Python dependencies (Flask, SQLAlchemy, MySQL)
 ├── .github/workflows/       # CI/CD: deploy.yml triggers on develop branch
 ├── CLAUDE.md                # This file
@@ -99,6 +109,103 @@ Schema for hour banking: `legacy/sql/create-timebank-tables.sql`
 ---
 
 ## Development Guidelines
+
+### Services Layer & Future Protection
+
+**All core business logic must reside in `app/services/`.**
+Routes must only call these services and handle HTTP responses.
+This structure is mandatory to facilitate future code obfuscation/compilation
+for commercial distribution.
+
+```
+app/services/
+├── base.py                  # BaseService: _snapshot(), _require()
+├── funcionario_service.py   # FuncionarioService: criar, atualizar, desativar
+└── banco_horas_service.py   # BancoDeHorasService: calcular_saldo_dia, formatar_minutos
+```
+
+**Rules for every service file:**
+1. **No Flask imports** — no `request`, `session`, `current_app`, `g`
+2. Receive explicit parameters; never reach into HTTP context
+3. Call `AuditService` for every mutation (Antigravity Rule #1)
+4. Use `BaseService._snapshot(obj, fields)` to build audit state dicts
+5. Accept `actor_id: int | None` (not a User object) for Cython compatibility
+
+**Blueprint → Service call pattern:**
+```python
+# In a route (blueprint):
+from app.services.funcionario_service import FuncionarioService
+
+@bp.route("/funcionarios", methods=["POST"])
+@login_required
+def criar_funcionario():
+    ator_id = session["funcionario_id"]
+    try:
+        f = FuncionarioService.criar(
+            nome=request.form["nome"],
+            cpf=request.form["cpf"],
+            ator_id=ator_id,
+        )
+    except ValueError as exc:
+        flash(str(exc), "erro")
+        return render_template("..."), 400
+    return redirect(url_for("..."))
+```
+
+See `docs/antigravity.md` for the full layered architecture specification.
+
+---
+
+### Testing Protocol
+
+Every new feature **must** include unit tests before merging to `develop`.
+
+**Run tests:**
+```bash
+pytest                        # all tests
+pytest tests/services/        # service layer only
+pytest -v --tb=short          # verbose with short tracebacks
+```
+
+**Rules:**
+1. Tests run against **SQLite in-memory** — never against dev/prod database
+2. Every mutation test must assert that **exactly one `AuditLog` row** was created
+3. Hardware integrations (printer, QR scanner) must use mocks from `tests/hardware/mocks.py`
+4. The `db` fixture in `conftest.py` is `autouse=True` — no manual teardown needed
+5. Use `app.app_context()` inside tests when calling services directly
+
+**Audit assertion pattern:**
+```python
+def test_criar_dispara_audit(app, db):
+    with app.app_context():
+        f = FuncionarioService.criar(nome="Teste", cpf="52998224725")
+        count = db.session.query(AuditLog).filter_by(
+            action=AuditAction.create, entity_id=f.id
+        ).count()
+    assert count == 1
+```
+
+### Documentation Protocol
+
+Every module has a dedicated directory under `docs/`:
+
+```
+docs/
+├── antigravity.md            # Non-negotiable architecture rules
+├── api_catalog.md            # All endpoints, schemas, error codes
+├── auth/README.md
+├── funcionarios/README.md
+├── banco_horas/README.md
+├── ponto/README.md
+└── estoque/README.md
+```
+
+**Rules:**
+- Document new endpoints in `docs/api_catalog.md` when adding routes
+- Document business rules and edge cases in the module's `README.md`
+- Reference the legacy PHP equivalent when porting a module
+
+---
 
 ### When implementing a feature
 1. Read the corresponding PHP class in `legacy/includes/` to understand the business logic

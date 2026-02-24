@@ -1,0 +1,223 @@
+# Copyright (c) 2026 Jordan Barbosa Machado — All Rights Reserved
+
+"""
+FuncionarioService — all business logic for the Funcionario domain.
+
+Antigravity Rule #1: every mutation calls AuditService.
+Antigravity Rule #2: no Flask imports — pure Python, Cython-compatible.
+"""
+
+from __future__ import annotations
+
+from typing import Any
+
+from app.core.audit import AuditService
+from app.extensions import db
+from app.models.funcionario import Funcionario, validar_cpf
+from app.services.base import BaseService
+
+
+# Fields captured in audit snapshots for this entity
+_AUDIT_FIELDS = [
+    "id", "nome", "cpf", "cargo", "matricula",
+    "area_id", "ativo", "minutos_esperados_dia", "minutos_almoco",
+]
+
+
+class FuncionarioService(BaseService):
+    """
+    CRUD + business rules for Funcionario.
+
+    All methods are static — no instance state — so the class compiles
+    cleanly via Cython and is importable with no side effects.
+    """
+
+    # ------------------------------------------------------------------
+    # Queries (read-only)
+    # ------------------------------------------------------------------
+
+    @staticmethod
+    def buscar_por_id(funcionario_id: int) -> Funcionario | None:
+        """Return active Funcionario by PK, or None."""
+        return db.session.get(Funcionario, funcionario_id)
+
+    @staticmethod
+    def buscar_por_cpf(cpf: str) -> Funcionario | None:
+        """Return active Funcionario by CPF (raw 11 digits), or None."""
+        from app.models.funcionario import validar_cpf as _validar
+        try:
+            cpf_limpo = _validar(cpf)
+        except ValueError:
+            return None
+        return (
+            db.session.query(Funcionario)
+            .filter_by(cpf=cpf_limpo, ativo=True)
+            .first()
+        )
+
+    @staticmethod
+    def listar_ativos() -> list[Funcionario]:
+        """Return all active employees ordered by name."""
+        return (
+            db.session.query(Funcionario)
+            .filter_by(ativo=True)
+            .order_by(Funcionario.nome)
+            .all()
+        )
+
+    # ------------------------------------------------------------------
+    # Mutations
+    # ------------------------------------------------------------------
+
+    @staticmethod
+    def criar(
+        nome: str,
+        cpf: str,
+        *,
+        cargo: str | None = None,
+        matricula: str | None = None,
+        area_id: int | None = None,
+        minutos_esperados_dia: int = 480,
+        minutos_almoco: int = 60,
+        ator_id: int | None = None,
+    ) -> Funcionario:
+        """
+        Create a new Funcionario.
+
+        Args:
+            nome:                   Full name.
+            cpf:                    CPF in any format — validated internally.
+            cargo:                  Job title.
+            matricula:              Employee registration number.
+            area_id:                FK to sistur_areas.
+            minutos_esperados_dia:  Daily expected work minutes (default 480 = 8h).
+            minutos_almoco:         Lunch break minutes (default 60 = 1h).
+            ator_id:                ID of the User/Funcionario performing the action.
+
+        Returns:
+            Persisted Funcionario instance.
+
+        Raises:
+            ValueError: If CPF is invalid or already registered.
+        """
+        BaseService._require(nome, "nome")
+        cpf_limpo = validar_cpf(cpf)
+
+        # Uniqueness check
+        existing = (
+            db.session.query(Funcionario).filter_by(cpf=cpf_limpo).first()
+        )
+        if existing:
+            raise ValueError(f"CPF {cpf_limpo} já está cadastrado.")
+
+        funcionario = Funcionario(
+            nome=nome.strip(),
+            cpf=cpf_limpo,
+            cargo=cargo,
+            matricula=matricula,
+            area_id=area_id,
+            minutos_esperados_dia=minutos_esperados_dia,
+            minutos_almoco=minutos_almoco,
+            ativo=True,
+        )
+        db.session.add(funcionario)
+        db.session.flush()  # get PK before audit commit
+
+        # Antigravity Rule #1
+        AuditService.log_create(
+            "funcionarios",
+            entity_id=funcionario.id,
+            new_state=BaseService._snapshot(funcionario, _AUDIT_FIELDS),
+            actor_id=ator_id,
+        )
+        db.session.commit()
+        return funcionario
+
+    @staticmethod
+    def atualizar(
+        funcionario_id: int,
+        dados: dict[str, Any],
+        ator_id: int | None = None,
+    ) -> Funcionario:
+        """
+        Update writable fields on a Funcionario.
+
+        Args:
+            funcionario_id: PK of the employee to update.
+            dados:          Dict of field → new value.  Only whitelisted
+                            fields are applied; others are silently ignored.
+            ator_id:        ID of the actor performing the update.
+
+        Returns:
+            Updated Funcionario instance.
+
+        Raises:
+            ValueError: If employee not found or CPF conflict.
+        """
+        funcionario = db.session.get(Funcionario, funcionario_id)
+        if not funcionario:
+            raise ValueError(f"Funcionário {funcionario_id} não encontrado.")
+
+        snapshot_antes = BaseService._snapshot(funcionario, _AUDIT_FIELDS)
+
+        _CAMPOS_PERMITIDOS = {
+            "nome", "cargo", "matricula", "area_id",
+            "minutos_esperados_dia", "minutos_almoco",
+            "email", "telefone", "data_admissao", "bio",
+        }
+
+        for campo, valor in dados.items():
+            if campo not in _CAMPOS_PERMITIDOS:
+                continue
+            if campo == "nome" and valor is not None:
+                valor = valor.strip()
+            setattr(funcionario, campo, valor)
+
+        db.session.flush()
+
+        # Antigravity Rule #1
+        AuditService.log_update(
+            "funcionarios",
+            entity_id=funcionario.id,
+            previous_state=snapshot_antes,
+            new_state=BaseService._snapshot(funcionario, _AUDIT_FIELDS),
+            actor_id=ator_id,
+        )
+        db.session.commit()
+        return funcionario
+
+    @staticmethod
+    def desativar(
+        funcionario_id: int,
+        ator_id: int | None = None,
+    ) -> Funcionario:
+        """
+        Soft-delete: set ativo=False.
+
+        Args:
+            funcionario_id: PK of the employee to deactivate.
+            ator_id:        ID of the actor.
+
+        Returns:
+            Deactivated Funcionario instance.
+        """
+        funcionario = db.session.get(Funcionario, funcionario_id)
+        if not funcionario:
+            raise ValueError(f"Funcionário {funcionario_id} não encontrado.")
+        if not funcionario.ativo:
+            raise ValueError(f"Funcionário {funcionario_id} já está inativo.")
+
+        snapshot_antes = BaseService._snapshot(funcionario, _AUDIT_FIELDS)
+        funcionario.ativo = False
+        db.session.flush()
+
+        # Antigravity Rule #1
+        AuditService.log_update(
+            "funcionarios",
+            entity_id=funcionario.id,
+            previous_state=snapshot_antes,
+            new_state=BaseService._snapshot(funcionario, _AUDIT_FIELDS),
+            actor_id=ator_id,
+        )
+        db.session.commit()
+        return funcionario

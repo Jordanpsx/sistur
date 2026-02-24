@@ -15,7 +15,7 @@ from __future__ import annotations
 
 import functools
 
-from flask import Blueprint, abort, jsonify, redirect, request, session, url_for
+from flask import Blueprint, abort, flash, redirect, render_template, request, session, url_for
 
 from app.core.audit import AuditService
 from app.extensions import db
@@ -57,14 +57,14 @@ def _get_funcionario_sessao() -> Funcionario:
 @bp.route("/login", methods=["GET", "POST"])
 def login():
     """
-    GET  → return login form descriptor (JSON for now; HTML template added later)
+    GET  → render login.html template
     POST → authenticate via CPF, create session, audit log
     """
     if request.method == "GET":
         # If already authenticated, go straight to dashboard
         if session.get("funcionario_id"):
             return redirect(url_for("portal.dashboard"))
-        return jsonify({"rota": "login", "campos": ["cpf"]})
+        return render_template("auth/login.html")
 
     # --- POST: authenticate ---
     cpf_raw: str = (request.form.get("cpf") or "").strip()
@@ -75,7 +75,8 @@ def login():
     except ValueError as exc:
         # Audit failed attempt (no user identified → guest)
         AuditService.log_login(None, success=False)
-        return jsonify({"erro": str(exc)}), 400
+        flash(str(exc), "erro")
+        return render_template("auth/login.html"), 400
 
     # 2. Look up active employee
     funcionario = (
@@ -87,7 +88,8 @@ def login():
     if funcionario is None:
         # Audit failed attempt — CPF not found or inactive
         AuditService.log_login(None, success=False)
-        return jsonify({"erro": "CPF não encontrado ou funcionário inativo."}), 401
+        flash("CPF não encontrado ou funcionário inativo.", "erro")
+        return render_template("auth/login.html"), 401
 
     # 3. Create session
     session.clear()
@@ -115,20 +117,7 @@ def dashboard():
     BancoDeHoras module is fully ported.
     """
     funcionario = _get_funcionario_sessao()
-
-    return jsonify(
-        {
-            "funcionario_id": funcionario.id,
-            "nome": funcionario.nome,
-            "cpf": funcionario.cpf_formatado(),
-            "cargo": funcionario.cargo,
-            "area": funcionario.area.name if funcionario.area else None,
-            "banco_de_horas": {
-                "saldo_minutos": funcionario.saldo_banco_horas(),
-                "saldo_formatado": funcionario.saldo_banco_horas_formatado(),
-            },
-        }
-    )
+    return render_template("portal/dashboard.html", funcionario=funcionario)
 
 
 # ---------------------------------------------------------------------------

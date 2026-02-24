@@ -36,6 +36,7 @@ class AuditService:
         previous_state: dict[str, Any] | None = None,
         new_state: dict[str, Any] | None = None,
         actor: "User | None" = None,
+        actor_id: int | None = None,
         area_slug: str | None = None,
     ) -> AuditLog:
         """
@@ -68,6 +69,9 @@ class AuditService:
         if actor is not None:
             user_id = actor.id
             user_type = UserType.employee
+        elif actor_id is not None:
+            user_id = actor_id
+            user_type = UserType.employee
 
         log = AuditLog(
             user_id=user_id,
@@ -96,6 +100,7 @@ class AuditService:
         new_state: dict[str, Any],
         *,
         actor: "User | None" = None,
+        actor_id: int | None = None,
         area_slug: str | None = None,
     ) -> AuditLog:
         return AuditService.log(
@@ -104,6 +109,7 @@ class AuditService:
             entity_id=entity_id,
             new_state=new_state,
             actor=actor,
+            actor_id=actor_id,
             area_slug=area_slug,
         )
 
@@ -115,6 +121,7 @@ class AuditService:
         new_state: dict[str, Any],
         *,
         actor: "User | None" = None,
+        actor_id: int | None = None,
         area_slug: str | None = None,
     ) -> AuditLog:
         return AuditService.log(
@@ -124,6 +131,7 @@ class AuditService:
             previous_state=previous_state,
             new_state=new_state,
             actor=actor,
+            actor_id=actor_id,
             area_slug=area_slug,
         )
 
@@ -134,6 +142,7 @@ class AuditService:
         previous_state: dict[str, Any],
         *,
         actor: "User | None" = None,
+        actor_id: int | None = None,
         area_slug: str | None = None,
     ) -> AuditLog:
         return AuditService.log(
@@ -142,6 +151,7 @@ class AuditService:
             entity_id=entity_id,
             previous_state=previous_state,
             actor=actor,
+            actor_id=actor_id,
             area_slug=area_slug,
         )
 

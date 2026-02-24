@@ -10,6 +10,10 @@ class Config:
     SESSION_COOKIE_SAMESITE = "Lax"
     PERMANENT_SESSION_LIFETIME = 60 * 60 * 8  # 8 hours — matches legacy behavior
 
+    # White-label branding — override via environment variables
+    COMPANY_NAME = os.environ.get("COMPANY_NAME", "SISTUR")
+    COMPANY_LOGO = os.environ.get("COMPANY_LOGO", "")  # URL; empty = SVG fallback
+
 
 class DevelopmentConfig(Config):
     DEBUG = True
@@ -24,8 +28,18 @@ class ProductionConfig(Config):
     SQLALCHEMY_DATABASE_URI = os.environ.get("DATABASE_URL")
 
 
+class TestingConfig(Config):
+    TESTING = True
+    DEBUG = True
+    # In-memory SQLite — fast, isolated, no external dependencies
+    SQLALCHEMY_DATABASE_URI = "sqlite:///:memory:"
+    # Disable CSRF-equivalent protections in tests
+    WTF_CSRF_ENABLED = False
+
+
 config = {
     "development": DevelopmentConfig,
     "production": ProductionConfig,
+    "testing": TestingConfig,
     "default": DevelopmentConfig,
 }
