@@ -1,0 +1,55 @@
+/* Ponto Eletrônico Público */
+.time-tracking-public {
+    max-width: 500px;
+    margin: 30px auto;
+    background: white;
+    padding: 30px;
+    border-radius: 8px;
+    box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+}
+
+.time-clock-display {
+    text-align: center;
+    font-size: 48px;
+    font-weight: bold;
+    color: #2271b1;
+    margin: 20px 0;
+}
+
+.time-punch-buttons {
+    display: grid;
+    grid-template-columns: repeat(2, 1fr);
+    gap: 15px;
+    margin-top: 30px;
+}
+
+.time-punch-btn {
+    padding: 15px;
+    border: none;
+    border-radius: 8px;
+    font-size: 16px;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.2s;
+}
+
+.time-punch-btn.clock-in {
+    background: #00a32a;
+    color: white;
+}
+
+.time-punch-btn.lunch {
+    background: #f0b849;
+    color: white;
+}
+
+.time-punch-btn.clock-out {
+    background: #d63638;
+    color: white;
+}
+
+.time-history {
+    margin-top: 30px;
+    border-top: 1px solid #f0f0f1;
+    padding-top: 20px;
+}

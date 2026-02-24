@@ -1,0 +1,35 @@
+{
+    "name": "sistur/sistur-plugin",
+    "description": "Sistema completo para gerenciamento de operações turísticas incluindo RH, ponto eletrônico, inventário e leads",
+    "type": "wordpress-plugin",
+    "license": "GPL-2.0-or-later",
+    "version": "1.1.0",
+    "require": {
+        "php": ">=7.2",
+        "endroid/qr-code": "^4.0"
+    },
+    "require-dev": {
+        "phpunit/phpunit": "^9.0"
+    },
+    "autoload": {
+        "psr-4": {
+            "SISTUR\\": "includes/"
+        }
+    },
+    "authors": [
+        {
+            "name": "WebFluence",
+            "email": "contato@webfluence.com.br",
+            "homepage": "https://webfluence.com.br/girassol/"
+        }
+    ],
+    "keywords": [
+        "wordpress",
+        "plugin",
+        "turismo",
+        "rh",
+        "ponto-eletronico",
+        "inventario",
+        "leads"
+    ]
+}
