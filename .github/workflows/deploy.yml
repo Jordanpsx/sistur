@@ -1,0 +1,23 @@
+name: Deploy Sistur Python (Develop)
+
+on:
+  push:
+    branches:
+      - develop  # Agora o deploy automático só acontece no push para a develop
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Executar comandos na VPS via SSH
+        uses: appleboy/ssh-action@master
+        with:
+          host: ${{ secrets.SSH_HOST }}
+          username: ${{ secrets.SSH_USER }}
+          key: ${{ secrets.SSH_PRIVATE_KEY }}
+          script: |
+            cd ~/apps/sistur-python
+            # Garante que a VPS mude para a branch develop antes do pull
+            git checkout develop
+            git pull origin develop
+            docker-compose up -d --build
