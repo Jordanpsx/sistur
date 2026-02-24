@@ -1,0 +1,12 @@
+services:
+  sistur-flask:
+    build: .
+    container_name: sistur-flask-app
+    env_file:
+      - .env
+    environment:
+      - COMPANY_NAME=Cachoeira do Girassol
+      - COMPANY_LOGO=/static/images/logo_client.png
+    ports:
+      - "8083:5000"
+    restart: unless-stopped
