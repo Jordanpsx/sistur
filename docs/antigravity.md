@@ -93,3 +93,36 @@ Do not modify the WordPress admin panel unless explicitly instructed.
 
 Before making any change, read `CLAUDE.md` for project conventions,
 naming rules, port priority, and the legacy reference index.
+
+---
+
+## Rule #6 — Tests are Mandatory
+
+Every new feature or mutation in `app/services/` **must** have a corresponding
+pytest test before the code is pushed to `develop`.
+
+**Minimum test coverage per service method:**
+
+| Scenario | Required assertion |
+|---|---|
+| Happy path | Return value is correct |
+| AuditLog created | `db.session.query(AuditLog).filter_by(action=..., entity_id=...).count() == 1` |
+| Invalid input | `pytest.raises(ValueError)` |
+| Not found | `pytest.raises(ValueError, match="não encontrado")` |
+
+**Test isolation contract:**
+- Tests use `TestingConfig` → SQLite in-memory, never production DB
+- The `db` fixture (`conftest.py`) auto-creates and auto-drops schema per test
+- Hardware (printers, QR scanners) must be mocked via `tests/hardware/mocks.py`
+
+**Run before every push:**
+```bash
+pytest --tb=short
+```
+
+---
+
+## Rule #7 — Document Every Endpoint
+
+Every new route must be added to `docs/api_catalog.md` before the PR is merged.
+Module-specific business rules go in `docs/<module>/README.md`.

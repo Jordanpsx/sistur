@@ -156,6 +156,57 @@ See `docs/antigravity.md` for the full layered architecture specification.
 
 ---
 
+### Testing Protocol
+
+Every new feature **must** include unit tests before merging to `develop`.
+
+**Run tests:**
+```bash
+pytest                        # all tests
+pytest tests/services/        # service layer only
+pytest -v --tb=short          # verbose with short tracebacks
+```
+
+**Rules:**
+1. Tests run against **SQLite in-memory** — never against dev/prod database
+2. Every mutation test must assert that **exactly one `AuditLog` row** was created
+3. Hardware integrations (printer, QR scanner) must use mocks from `tests/hardware/mocks.py`
+4. The `db` fixture in `conftest.py` is `autouse=True` — no manual teardown needed
+5. Use `app.app_context()` inside tests when calling services directly
+
+**Audit assertion pattern:**
+```python
+def test_criar_dispara_audit(app, db):
+    with app.app_context():
+        f = FuncionarioService.criar(nome="Teste", cpf="52998224725")
+        count = db.session.query(AuditLog).filter_by(
+            action=AuditAction.create, entity_id=f.id
+        ).count()
+    assert count == 1
+```
+
+### Documentation Protocol
+
+Every module has a dedicated directory under `docs/`:
+
+```
+docs/
+├── antigravity.md            # Non-negotiable architecture rules
+├── api_catalog.md            # All endpoints, schemas, error codes
+├── auth/README.md
+├── funcionarios/README.md
+├── banco_horas/README.md
+├── ponto/README.md
+└── estoque/README.md
+```
+
+**Rules:**
+- Document new endpoints in `docs/api_catalog.md` when adding routes
+- Document business rules and edge cases in the module's `README.md`
+- Reference the legacy PHP equivalent when porting a module
+
+---
+
 ### When implementing a feature
 1. Read the corresponding PHP class in `legacy/includes/` to understand the business logic
 2. Check `legacy/docs/` for documentation and edge cases — especially for Banco de Horas

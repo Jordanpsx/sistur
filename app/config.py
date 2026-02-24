@@ -28,8 +28,18 @@ class ProductionConfig(Config):
     SQLALCHEMY_DATABASE_URI = os.environ.get("DATABASE_URL")
 
 
+class TestingConfig(Config):
+    TESTING = True
+    DEBUG = True
+    # In-memory SQLite — fast, isolated, no external dependencies
+    SQLALCHEMY_DATABASE_URI = "sqlite:///:memory:"
+    # Disable CSRF-equivalent protections in tests
+    WTF_CSRF_ENABLED = False
+
+
 config = {
     "development": DevelopmentConfig,
     "production": ProductionConfig,
+    "testing": TestingConfig,
     "default": DevelopmentConfig,
 }
