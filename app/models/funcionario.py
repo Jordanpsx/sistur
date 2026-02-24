@@ -1,8 +1,11 @@
 # Copyright (c) 2026 Jordan Barbosa Machado — All Rights Reserved
 
 """
-Funcionario — core business entity for the Portal do Colaborador.
-Maps to legacy wp_sistur_employees. Business fields use Portuguese names (CLAUDE.md).
+Funcionario — core business entity for the Employee Portal.
+
+Maps to legacy wp_sistur_employees. All business-domain fields use
+Portuguese names as required by CLAUDE.md.
+
 CPF is the single login identifier (no password required in this phase).
 """
 
@@ -15,24 +18,35 @@ from app.extensions import db
 
 
 # ---------------------------------------------------------------------------
-# CPF helpers
+# CPF validation
 # ---------------------------------------------------------------------------
 
 def validar_cpf(cpf: str) -> str:
     """
     Validate a Brazilian CPF and return the cleaned 11-digit string.
-    Ported from legacy/includes/login-funcionario-new.php :: sistur_validate_cpf().
 
-    Raises ValueError if invalid.
+    Ported verbatim from the PHP algorithm in:
+        legacy/includes/login-funcionario-new.php :: sistur_validate_cpf()
+
+    Args:
+        cpf: CPF string in any format (e.g. '529.982.247-25' or '52998224725').
+
+    Returns:
+        Cleaned 11-digit CPF string if valid.
+
+    Raises:
+        ValueError: If the CPF is structurally or algorithmically invalid.
     """
     cleaned = re.sub(r"[^0-9]", "", cpf)
 
     if len(cleaned) != 11:
         raise ValueError("CPF deve conter 11 dígitos.")
 
+    # Reject sequences of identical digits (e.g. 111.111.111-11)
     if len(set(cleaned)) == 1:
         raise ValueError("CPF inválido.")
 
+    # Validate the two check digits (positions 9 and 10)
     for t in range(9, 11):
         d = 0
         for c in range(t):
@@ -55,32 +69,60 @@ def formatar_cpf(cpf: str) -> str:
 # ---------------------------------------------------------------------------
 
 class Funcionario(db.Model):
+    """
+    Employee record — the primary entity for the Portal do Colaborador.
+
+    Field naming convention (CLAUDE.md):
+        Business fields → Portuguese (nome, cpf, cargo, …)
+        Technical/infra fields → English (id, created_at pattern kept as criado_em/atualizado_em
+        for consistency with the team's convention)
+    """
     __tablename__ = "sistur_funcionarios"
 
+    # ------------------------------------------------------------------
     # Identity & auth
+    # ------------------------------------------------------------------
     id = db.Column(db.Integer, primary_key=True)
+
     nome = db.Column(db.String(255), nullable=False)
+
+    # CPF is the login identifier — format stored as raw 11 digits (no punctuation)
     cpf = db.Column(db.String(11), unique=True, nullable=False, index=True)
+
     email = db.Column(db.String(255), nullable=True)
     telefone = db.Column(db.String(20), nullable=True)
-    senha_hash = db.Column(db.String(255), nullable=True)  # nullable: CPF-only login this phase
+
+    # Nullable: CPF-only login in this phase; hash stored when password is set later
+    senha_hash = db.Column(db.String(255), nullable=True)
+
+    # QR token used by the clock-in scanner (legacy: token_qr)
     token_qr = db.Column(db.String(36), unique=True, nullable=True)
 
-    # Employment
-    cargo = db.Column(db.String(255), nullable=True)
-    matricula = db.Column(db.String(50), nullable=True)
-    data_admissao = db.Column(db.Date, nullable=True)
-    ctps = db.Column(db.String(50), nullable=True)
-    ctps_uf = db.Column(db.String(2), nullable=True)
-    cbo = db.Column(db.String(20), nullable=True)
-    foto = db.Column(db.String(500), nullable=True)
+    # ------------------------------------------------------------------
+    # Employment details
+    # ------------------------------------------------------------------
+    cargo = db.Column(db.String(255), nullable=True)          # job title / position
+    matricula = db.Column(db.String(50), nullable=True)        # employee registration number
+    data_admissao = db.Column(db.Date, nullable=True)          # hire date
+    ctps = db.Column(db.String(50), nullable=True)             # work card number
+    ctps_uf = db.Column(db.String(2), nullable=True)           # work card state
+    cbo = db.Column(db.String(20), nullable=True)              # job classification code
+    foto = db.Column(db.String(500), nullable=True)            # profile photo URL
     bio = db.Column(db.Text, nullable=True)
 
-    # Work schedule (legacy: time_expected_minutes / lunch_minutes)
-    minutos_esperados_dia = db.Column(db.SmallInteger, default=480, nullable=False)
-    minutos_almoco = db.Column(db.SmallInteger, default=60, nullable=False)
+    # ------------------------------------------------------------------
+    # Work schedule — mirrors legacy time_expected_minutes / lunch_minutes
+    # ------------------------------------------------------------------
+    minutos_esperados_dia = db.Column(
+        db.SmallInteger, default=480, nullable=False
+    )  # 8 h × 60 = 480 min
+    minutos_almoco = db.Column(
+        db.SmallInteger, default=60, nullable=False
+    )  # 1 h lunch
 
+    # ------------------------------------------------------------------
     # Organisation
+    # ------------------------------------------------------------------
     area_id = db.Column(
         db.Integer,
         db.ForeignKey("sistur_areas.id", ondelete="SET NULL"),
@@ -88,10 +130,14 @@ class Funcionario(db.Model):
         index=True,
     )
 
-    # State
+    # ------------------------------------------------------------------
+    # State & timestamps
+    # ------------------------------------------------------------------
     ativo = db.Column(db.Boolean, default=True, nullable=False)
     criado_em = db.Column(
-        db.DateTime, default=lambda: datetime.now(timezone.utc), nullable=False
+        db.DateTime,
+        default=lambda: datetime.now(timezone.utc),
+        nullable=False,
     )
     atualizado_em = db.Column(
         db.DateTime,
@@ -100,24 +146,36 @@ class Funcionario(db.Model):
         nullable=False,
     )
 
+    # ------------------------------------------------------------------
+    # Relationships
+    # ------------------------------------------------------------------
     area = db.relationship("Area", foreign_keys=[area_id], lazy="select")
 
+    # ------------------------------------------------------------------
     # Business logic
+    # ------------------------------------------------------------------
 
     def saldo_banco_horas(self) -> int:
         """
-        Current hour-bank balance in minutes.
-        Stub — returns 0 until BancoDeHoras module is ported.
+        Return the employee's current hour-bank balance in minutes.
+
+        Stub — returns 0 until the BancoDeHoras module is ported.
+        Full implementation will query sistur_timebank_deductions for
+        the latest balance_after_minutes for this employee.
         """
         return 0
 
     def saldo_banco_horas_formatado(self) -> str:
+        """Return the hour-bank balance as a human-readable string (e.g. '2h 30min')."""
         total = self.saldo_banco_horas()
         sinal = "-" if total < 0 else ""
         total = abs(total)
-        return f"{sinal}{total // 60}h {total % 60:02d}min"
+        horas = total // 60
+        minutos = total % 60
+        return f"{sinal}{horas}h {minutos:02d}min"
 
     def cpf_formatado(self) -> str:
+        """Return CPF in display format '000.000.000-00'."""
         return formatar_cpf(self.cpf)
 
     def __repr__(self) -> str:

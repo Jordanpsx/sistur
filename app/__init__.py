@@ -19,19 +19,10 @@ def create_app(config_name: str = "default") -> Flask:
     # Extensions
     db.init_app(app)
 
-    # Branding context processor — injects {{ company_name }} and {{ company_logo }}
-    # into every Jinja2 template automatically, no manual passing required.
-    @app.context_processor
-    def inject_branding():
-        return {
-            "company_name": app.config["COMPANY_NAME"],
-            "company_logo": app.config["COMPANY_LOGO"],
-        }
-
-    # Register all models with SQLAlchemy so create_all() picks them up
+    # Import models so SQLAlchemy registers all tables before create_all()
     with app.app_context():
-        from app.core import models  # noqa: F401 — User, Area, UserAreaPermission, AuditLog
-        from app.models import funcionario  # noqa: F401 — Funcionario
+        from app.core import models  # noqa: F401
+        from app.models import funcionario  # noqa: F401
 
     # Blueprints
     from app.blueprints.portal.routes import bp as portal_bp

@@ -2,7 +2,10 @@
 
 """
 AuditService — mandatory logging for every mutation in the Employee Portal.
-Antigravity Rule #1: every mutation records previous_state and new_state.
+
+Antigravity Rule #1:
+    Every mutation must record previous_state and new_state as JSON snapshots,
+    along with the actor, timestamp, and action context.
 """
 
 from __future__ import annotations
@@ -20,6 +23,10 @@ if TYPE_CHECKING:
 
 class AuditService:
 
+    # ------------------------------------------------------------------
+    # Core log method
+    # ------------------------------------------------------------------
+
     @staticmethod
     def log(
         action: AuditAction | str,
@@ -31,6 +38,19 @@ class AuditService:
         actor: "User | None" = None,
         area_slug: str | None = None,
     ) -> AuditLog:
+        """
+        Persist one audit record.
+
+        Args:
+            action:         AuditAction enum value or its string equivalent.
+            module:         System module name (e.g. 'employees', 'timebank').
+            entity_id:      PK of the affected row (None for non-entity actions).
+            previous_state: Dict snapshot of the record *before* the change.
+            new_state:      Dict snapshot of the record *after* the change.
+            actor:          User who performed the action (None = guest).
+            area_slug:      Slug of the Area this mutation belongs to.
+                            Required for supervisors to filter logs by area.
+        """
         if isinstance(action, str):
             action = AuditAction(action)
 
@@ -39,6 +59,9 @@ class AuditService:
             area = db.session.query(Area).filter_by(slug=area_slug).first()
             if area:
                 area_id = area.id
+
+        ip = AuditService._get_ip()
+        ua = AuditService._get_user_agent()
 
         user_type = UserType.guest
         user_id = None
@@ -55,43 +78,80 @@ class AuditService:
             previous_state=previous_state,
             new_state=new_state,
             area_id=area_id,
-            ip_address=AuditService._get_ip(),
-            user_agent=AuditService._get_user_agent(),
+            ip_address=ip,
+            user_agent=ua,
         )
         db.session.add(log)
         db.session.commit()
         return log
 
+    # ------------------------------------------------------------------
+    # Convenience helpers
+    # ------------------------------------------------------------------
+
     @staticmethod
-    def log_create(module, entity_id, new_state, *, actor=None, area_slug=None):
+    def log_create(
+        module: str,
+        entity_id: int,
+        new_state: dict[str, Any],
+        *,
+        actor: "User | None" = None,
+        area_slug: str | None = None,
+    ) -> AuditLog:
         return AuditService.log(
-            AuditAction.create, module,
-            entity_id=entity_id, new_state=new_state,
-            actor=actor, area_slug=area_slug,
+            AuditAction.create,
+            module,
+            entity_id=entity_id,
+            new_state=new_state,
+            actor=actor,
+            area_slug=area_slug,
         )
 
     @staticmethod
-    def log_update(module, entity_id, previous_state, new_state, *, actor=None, area_slug=None):
+    def log_update(
+        module: str,
+        entity_id: int,
+        previous_state: dict[str, Any],
+        new_state: dict[str, Any],
+        *,
+        actor: "User | None" = None,
+        area_slug: str | None = None,
+    ) -> AuditLog:
         return AuditService.log(
-            AuditAction.update, module,
-            entity_id=entity_id, previous_state=previous_state, new_state=new_state,
-            actor=actor, area_slug=area_slug,
+            AuditAction.update,
+            module,
+            entity_id=entity_id,
+            previous_state=previous_state,
+            new_state=new_state,
+            actor=actor,
+            area_slug=area_slug,
         )
 
     @staticmethod
-    def log_delete(module, entity_id, previous_state, *, actor=None, area_slug=None):
+    def log_delete(
+        module: str,
+        entity_id: int,
+        previous_state: dict[str, Any],
+        *,
+        actor: "User | None" = None,
+        area_slug: str | None = None,
+    ) -> AuditLog:
         return AuditService.log(
-            AuditAction.delete, module,
-            entity_id=entity_id, previous_state=previous_state,
-            actor=actor, area_slug=area_slug,
+            AuditAction.delete,
+            module,
+            entity_id=entity_id,
+            previous_state=previous_state,
+            actor=actor,
+            area_slug=area_slug,
         )
 
     @staticmethod
-    def log_login(user_id: int | None, *, success: bool = True) -> AuditLog:
+    def log_login(user_id: int, *, success: bool = True) -> AuditLog:
+        action = AuditAction.login
         log = AuditLog(
             user_id=user_id,
-            user_type=UserType.employee if user_id else UserType.guest,
-            action=AuditAction.login,
+            user_type=UserType.employee,
+            action=action,
             module="auth",
             new_state={"success": success},
             ip_address=AuditService._get_ip(),
@@ -115,14 +175,28 @@ class AuditService:
         db.session.commit()
         return log
 
+    # ------------------------------------------------------------------
+    # Query
+    # ------------------------------------------------------------------
+
     @staticmethod
     def get_logs(
         *,
-        module=None, area_slug=None, user_id=None,
-        start_date=None, end_date=None,
-        limit=50, offset=0,
+        module: str | None = None,
+        area_slug: str | None = None,
+        user_id: int | None = None,
+        start_date=None,
+        end_date=None,
+        limit: int = 50,
+        offset: int = 0,
     ) -> list[AuditLog]:
+        """
+        Fetch audit log rows with optional filters.
+
+        area_slug is used by supervisors to see only their area's logs.
+        """
         query = db.session.query(AuditLog)
+
         if module:
             query = query.filter(AuditLog.module == module)
         if user_id:
@@ -133,7 +207,17 @@ class AuditService:
             query = query.filter(AuditLog.created_at >= start_date)
         if end_date:
             query = query.filter(AuditLog.created_at <= end_date)
-        return query.order_by(AuditLog.created_at.desc()).limit(limit).offset(offset).all()
+
+        return (
+            query.order_by(AuditLog.created_at.desc())
+            .limit(limit)
+            .offset(offset)
+            .all()
+        )
+
+    # ------------------------------------------------------------------
+    # Internal helpers
+    # ------------------------------------------------------------------
 
     @staticmethod
     def _get_ip() -> str | None:

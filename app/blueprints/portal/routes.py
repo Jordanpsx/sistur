@@ -3,7 +3,9 @@
 """
 Portal do Colaborador — Employee Portal routes.
 
-GET  /portal/login      → login form (branded HTML)
+Routes
+------
+GET  /portal/login      → login form
 POST /portal/login      → CPF authentication
 GET  /portal/dashboard  → employee dashboard (Banco de Horas placeholder)
 POST /portal/logout     → end session
@@ -13,17 +15,7 @@ from __future__ import annotations
 
 import functools
 
-from flask import (
-    Blueprint,
-    abort,
-    flash,
-    jsonify,
-    redirect,
-    render_template,
-    request,
-    session,
-    url_for,
-)
+from flask import Blueprint, abort, jsonify, redirect, request, session, url_for
 
 from app.core.audit import AuditService
 from app.extensions import db
@@ -37,6 +29,7 @@ bp = Blueprint("portal", __name__)
 # ---------------------------------------------------------------------------
 
 def login_required(fn):
+    """Redirect to login if no active session."""
     @functools.wraps(fn)
     def wrapper(*args, **kwargs):
         if not session.get("funcionario_id"):
@@ -46,6 +39,7 @@ def login_required(fn):
 
 
 def _get_funcionario_sessao() -> Funcionario:
+    """Load the authenticated Funcionario from session or abort 401."""
     funcionario_id = session.get("funcionario_id")
     if not funcionario_id:
         abort(401)
@@ -62,20 +56,28 @@ def _get_funcionario_sessao() -> Funcionario:
 
 @bp.route("/login", methods=["GET", "POST"])
 def login():
+    """
+    GET  → return login form descriptor (JSON for now; HTML template added later)
+    POST → authenticate via CPF, create session, audit log
+    """
     if request.method == "GET":
+        # If already authenticated, go straight to dashboard
         if session.get("funcionario_id"):
             return redirect(url_for("portal.dashboard"))
-        return render_template("auth/login.html")
+        return jsonify({"rota": "login", "campos": ["cpf"]})
 
+    # --- POST: authenticate ---
     cpf_raw: str = (request.form.get("cpf") or "").strip()
 
+    # 1. Validate CPF format and algorithm
     try:
         cpf_limpo = validar_cpf(cpf_raw)
     except ValueError as exc:
+        # Audit failed attempt (no user identified → guest)
         AuditService.log_login(None, success=False)
-        flash(str(exc), "erro")
-        return render_template("auth/login.html"), 400
+        return jsonify({"erro": str(exc)}), 400
 
+    # 2. Look up active employee
     funcionario = (
         db.session.query(Funcionario)
         .filter_by(cpf=cpf_limpo, ativo=True)
@@ -83,15 +85,16 @@ def login():
     )
 
     if funcionario is None:
+        # Audit failed attempt — CPF not found or inactive
         AuditService.log_login(None, success=False)
-        flash("CPF não encontrado ou funcionário inativo.", "erro")
-        return render_template("auth/login.html"), 401
+        return jsonify({"erro": "CPF não encontrado ou funcionário inativo."}), 401
 
+    # 3. Create session
     session.clear()
     session["funcionario_id"] = funcionario.id
-    session.permanent = True
+    session.permanent = True  # honour PERMANENT_SESSION_LIFETIME from config
 
-    # Antigravity Rule #1
+    # 4. Audit — Antigravity Rule #1
     AuditService.log_login(funcionario.id, success=True)
 
     return redirect(url_for("portal.dashboard"))
@@ -104,7 +107,15 @@ def login():
 @bp.route("/dashboard", methods=["GET"])
 @login_required
 def dashboard():
+    """
+    Employee dashboard.
+
+    Returns the authenticated employee's basic data and current
+    Banco de Horas balance.  The balance is a stub (0) until the
+    BancoDeHoras module is fully ported.
+    """
     funcionario = _get_funcionario_sessao()
+
     return jsonify(
         {
             "funcionario_id": funcionario.id,
@@ -126,8 +137,12 @@ def dashboard():
 
 @bp.route("/logout", methods=["POST"])
 def logout():
+    """End the session and audit the logout event."""
     funcionario_id = session.get("funcionario_id")
+
     if funcionario_id:
+        # Antigravity Rule #1 — log before clearing
         AuditService.log_logout(funcionario_id)
+
     session.clear()
     return redirect(url_for("portal.login"))

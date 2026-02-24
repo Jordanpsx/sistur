@@ -17,7 +17,7 @@ jobs:
           key: ${{ secrets.SSH_PRIVATE_KEY }}
           script: |
             cd ~/apps/sistur-python
-            # Garante que a VPS mude para a branch develop antes do pull
             git checkout develop
             git pull origin develop
-            docker-compose up -d --build
+            # Usando 'docker compose' sem hífen (V2)
+            docker compose up -d --build
