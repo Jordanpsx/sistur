@@ -10,6 +10,10 @@ class Config:
     SESSION_COOKIE_SAMESITE = "Lax"
     PERMANENT_SESSION_LIFETIME = 60 * 60 * 8  # 8 hours — matches legacy behavior
 
+    # White-label branding — override via environment variables
+    COMPANY_NAME = os.environ.get("COMPANY_NAME", "SISTUR")
+    COMPANY_LOGO = os.environ.get("COMPANY_LOGO", "")  # URL; empty = SVG fallback
+
 
 class DevelopmentConfig(Config):
     DEBUG = True
