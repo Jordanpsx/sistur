@@ -1,0 +1,843 @@
+<!DOCTYPE html>
+<!--
+  Copyright (c) 2026 Jordan Barbosa Machado — All Rights Reserved
+  Ponto Eletrônico — Análise Detalhada
+-->
+<html lang="pt-BR">
+
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>{{ company_name }} | Análise de Ponto</title>
+
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link
+        href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=DM+Mono:wght@400;500&display=swap"
+        rel="stylesheet" />
+    <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.3/dist/chart.umd.min.js"></script>
+
+    <style>
+        :root {
+            --teal-50: #f0fdfa;
+            --teal-100: #ccfbf1;
+            --teal-500: #14b8a6;
+            --teal-600: #0d9488;
+            --teal-700: #0f766e;
+            --slate-50: #f8fafc;
+            --slate-100: #f1f5f9;
+            --slate-200: #e2e8f0;
+            --slate-400: #94a3b8;
+            --slate-500: #64748b;
+            --slate-600: #475569;
+            --slate-700: #334155;
+            --slate-800: #1e293b;
+            --green-50: #f0fdf4;
+            --green-500: #22c55e;
+            --green-600: #16a34a;
+            --amber-50: #fffbeb;
+            --amber-500: #f59e0b;
+            --red-50: #fef2f2;
+            --red-500: #ef4444;
+            --red-600: #dc2626;
+            --violet-500: #8b5cf6;
+            --shadow-md: 0 4px 6px -1px rgba(0, 0, 0, .07), 0 2px 4px -1px rgba(0, 0, 0, .04);
+            --shadow-lg: 0 10px 25px -5px rgba(0, 0, 0, .08);
+            --radius-sm: 8px;
+            --radius-md: 14px;
+            --radius-lg: 20px;
+            --radius-xl: 28px;
+            --radius-full: 9999px;
+            --font: 'Inter', -apple-system, sans-serif;
+            --font-mono: 'DM Mono', monospace;
+        }
+
+        *,
+        *::before,
+        *::after {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+        }
+
+        body {
+            font-family: var(--font);
+            background: linear-gradient(145deg, var(--teal-50) 0%, #f0f9ff 40%, var(--slate-50) 100%);
+            min-height: 100vh;
+            color: var(--slate-800);
+            -webkit-font-smoothing: antialiased;
+        }
+
+        /* ── TOP BAR ── */
+        .top-bar {
+            background: rgba(255, 255, 255, .88);
+            backdrop-filter: blur(16px);
+            border-bottom: 1px solid var(--slate-100);
+            position: sticky;
+            top: 0;
+            z-index: 100;
+        }
+
+        .top-bar__inner {
+            max-width: 1080px;
+            margin: 0 auto;
+            padding: 0 1.25rem;
+            height: 3.75rem;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            gap: 1rem;
+        }
+
+        .top-bar__left {
+            display: flex;
+            align-items: center;
+            gap: .75rem;
+        }
+
+        .back-link {
+            display: inline-flex;
+            align-items: center;
+            gap: .4rem;
+            font-size: .8rem;
+            font-weight: 600;
+            color: var(--slate-500);
+            text-decoration: none;
+            padding: .35rem .65rem;
+            border-radius: var(--radius-sm);
+            transition: all .15s;
+        }
+
+        .back-link:hover {
+            background: var(--teal-100);
+            color: var(--teal-700);
+        }
+
+        .top-bar__sep {
+            color: var(--slate-200);
+        }
+
+        .top-bar__title {
+            font-size: .9rem;
+            font-weight: 700;
+            color: var(--slate-700);
+        }
+
+        .top-bar__user {
+            font-size: .8rem;
+            font-weight: 600;
+            color: var(--slate-500);
+        }
+
+        /* ── LAYOUT ── */
+        .page-wrap {
+            max-width: 1080px;
+            margin: 0 auto;
+            padding: 1.75rem 1.25rem 4rem;
+        }
+
+        /* ── PAGE HEADER ── */
+        .page-header {
+            display: flex;
+            align-items: flex-end;
+            justify-content: space-between;
+            gap: 1rem;
+            flex-wrap: wrap;
+            margin-bottom: 1.75rem;
+        }
+
+        .page-header__title {
+            font-size: 1.4rem;
+            font-weight: 800;
+            color: var(--slate-800);
+            letter-spacing: -.03em;
+        }
+
+        .page-header__sub {
+            font-size: .85rem;
+            color: var(--slate-500);
+            font-weight: 500;
+            margin-top: .2rem;
+        }
+
+        .month-nav {
+            display: flex;
+            align-items: center;
+            gap: .5rem;
+        }
+
+        .month-nav__label {
+            font-size: .82rem;
+            font-weight: 700;
+            color: var(--slate-600);
+            min-width: 6rem;
+            text-align: center;
+        }
+
+        .btn-ghost {
+            display: inline-flex;
+            align-items: center;
+            gap: .3rem;
+            padding: .4rem .75rem;
+            border-radius: var(--radius-sm);
+            font-size: .8rem;
+            font-weight: 600;
+            color: var(--slate-500);
+            background: white;
+            text-decoration: none;
+            border: 1px solid var(--slate-200);
+            transition: all .15s;
+            box-shadow: 0 1px 2px rgba(0, 0, 0, .04);
+        }
+
+        .btn-ghost:hover {
+            border-color: var(--teal-500);
+            color: var(--teal-700);
+        }
+
+        /* ── STATS GRID ── */
+        .stats-grid {
+            display: grid;
+            grid-template-columns: repeat(4, 1fr);
+            gap: 1rem;
+            margin-bottom: 1.5rem;
+        }
+
+        .stat-card {
+            background: white;
+            border-radius: var(--radius-md);
+            padding: 1.25rem;
+            box-shadow: var(--shadow-md);
+            border: 1px solid var(--slate-100);
+            border-bottom: 3px solid var(--slate-200);
+            transition: transform .15s;
+        }
+
+        .stat-card:hover {
+            transform: translateY(-2px);
+        }
+
+        .stat-card--total {
+            border-bottom-color: var(--teal-500);
+        }
+
+        .stat-card--saldo {
+            border-bottom-color: var(--green-500);
+        }
+
+        .stat-card--ok {
+            border-bottom-color: var(--violet-500);
+        }
+
+        .stat-card--review {
+            border-bottom-color: var(--amber-500);
+        }
+
+        .stat-card__icon {
+            font-size: 1.4rem;
+            margin-bottom: .6rem;
+        }
+
+        .stat-card__label {
+            font-size: .68rem;
+            font-weight: 700;
+            letter-spacing: .08em;
+            text-transform: uppercase;
+            color: var(--slate-400);
+            margin-bottom: .3rem;
+        }
+
+        .stat-card__value {
+            font-family: var(--font-mono);
+            font-size: 1.4rem;
+            font-weight: 500;
+            color: var(--slate-800);
+            line-height: 1;
+        }
+
+        .stat-card__value--pos {
+            color: var(--green-600);
+        }
+
+        .stat-card__value--neg {
+            color: var(--red-500);
+        }
+
+        /* ── CARD ── */
+        .card {
+            background: white;
+            border-radius: var(--radius-lg);
+            box-shadow: var(--shadow-md);
+            border: 1px solid var(--slate-100);
+            margin-bottom: 1.5rem;
+            overflow: hidden;
+        }
+
+        .card__header {
+            padding: 1.25rem 1.5rem .9rem;
+            border-bottom: 1px solid var(--slate-100);
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            gap: 1rem;
+        }
+
+        .card__title {
+            font-size: .82rem;
+            font-weight: 700;
+            letter-spacing: .06em;
+            text-transform: uppercase;
+            color: var(--slate-500);
+        }
+
+        .card__body {
+            padding: 1.25rem 1.5rem;
+        }
+
+        /* ── CHARTS ── */
+        .charts-row {
+            display: grid;
+            grid-template-columns: 2fr 1fr;
+            gap: 1.5rem;
+            margin-bottom: 1.5rem;
+        }
+
+        .chart-wrap {
+            position: relative;
+            height: 260px;
+        }
+
+        /* ── TABLE ── */
+        .table-scroll {
+            overflow-x: auto;
+        }
+
+        .detail-table {
+            width: 100%;
+            border-collapse: collapse;
+            font-size: .84rem;
+            min-width: 680px;
+        }
+
+        .detail-table thead th {
+            padding: .7rem 1rem;
+            text-align: center;
+            font-size: .68rem;
+            font-weight: 700;
+            letter-spacing: .07em;
+            text-transform: uppercase;
+            color: var(--slate-400);
+            background: var(--slate-50);
+            border-bottom: 1px solid var(--slate-100);
+            white-space: nowrap;
+        }
+
+        .detail-table thead th:first-child {
+            text-align: left;
+        }
+
+        .detail-table tbody tr {
+            transition: background .12s;
+        }
+
+        .detail-table tbody tr:hover {
+            background: var(--slate-50);
+        }
+
+        .detail-table tbody tr.is-today {
+            background: var(--teal-50) !important;
+        }
+
+        .detail-table tbody tr.needs-review {
+            background: var(--amber-50) !important;
+        }
+
+        .detail-table td {
+            padding: .85rem 1rem;
+            border-bottom: 1px solid #f8fafc;
+            text-align: center;
+            vertical-align: middle;
+            white-space: nowrap;
+            color: var(--slate-700);
+        }
+
+        .detail-table td:first-child {
+            text-align: left;
+        }
+
+        .date-cell__day {
+            font-weight: 700;
+            color: var(--slate-800);
+        }
+
+        .date-cell__dow {
+            font-size: .75rem;
+            color: var(--slate-400);
+            margin-left: .3rem;
+        }
+
+        .punch-time {
+            font-family: var(--font-mono);
+            font-size: .88rem;
+            font-weight: 500;
+            color: var(--slate-800);
+        }
+
+        .punch-time--empty {
+            color: var(--slate-300);
+        }
+
+        .worked-cell {
+            font-family: var(--font-mono);
+            font-size: .88rem;
+            font-weight: 600;
+        }
+
+        .saldo-cell {
+            font-family: var(--font-mono);
+            font-weight: 700;
+        }
+
+        .saldo-cell--pos {
+            color: var(--green-600);
+        }
+
+        .saldo-cell--neg {
+            color: var(--red-500);
+        }
+
+        .saldo-cell--zero {
+            color: var(--slate-400);
+        }
+
+        .badge {
+            display: inline-flex;
+            align-items: center;
+            gap: .2rem;
+            font-size: .68rem;
+            font-weight: 700;
+            padding: .2rem .5rem;
+            border-radius: var(--radius-full);
+            white-space: nowrap;
+        }
+
+        .badge--ok {
+            background: #dcfce7;
+            color: var(--green-600);
+        }
+
+        .badge--review {
+            background: #fef3c7;
+            color: #92400e;
+        }
+
+        .badge--today {
+            background: var(--teal-100);
+            color: var(--teal-700);
+        }
+
+        .extras-chip {
+            font-family: var(--font-mono);
+            font-size: .75rem;
+            background: #ede9fe;
+            color: var(--violet-500);
+            padding: .15rem .45rem;
+            border-radius: var(--radius-sm);
+            margin-left: .2rem;
+        }
+
+        /* ── EMPTY ── */
+        .empty-state {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            padding: 4rem 1rem;
+            color: var(--slate-300);
+            gap: .6rem;
+            text-align: center;
+        }
+
+        .empty-state__icon {
+            font-size: 3rem;
+            opacity: .5;
+        }
+
+        .empty-state__text {
+            font-size: .9rem;
+            font-weight: 500;
+            color: var(--slate-400);
+        }
+
+        /* ── RESPONSIVE ── */
+        @media (max-width: 768px) {
+            .stats-grid {
+                grid-template-columns: repeat(2, 1fr);
+            }
+
+            .charts-row {
+                grid-template-columns: 1fr;
+            }
+        }
+
+        @media (max-width: 480px) {
+            .stats-grid {
+                grid-template-columns: 1fr 1fr;
+            }
+        }
+    </style>
+</head>
+
+<body>
+
+    <!-- ── TOP BAR ── -->
+    <header class="top-bar">
+        <div class="top-bar__inner">
+            <div class="top-bar__left">
+                <a href="{{ url_for('ponto.historico', mes=mes, ano=ano) }}" class="back-link">
+                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none">
+                        <path d="M19 12H5M12 19l-7-7 7-7" stroke="currentColor" stroke-width="2.5"
+                            stroke-linecap="round" stroke-linejoin="round" />
+                    </svg>
+                    Ponto
+                </a>
+                <span class="top-bar__sep">·</span>
+                <span class="top-bar__title">Análise Detalhada</span>
+            </div>
+            <span class="top-bar__user">{{ funcionario.nome.split()[0] | e }}</span>
+        </div>
+    </header>
+
+    <main class="page-wrap">
+
+        <!-- ── PAGE HEADER ── -->
+        <div class="page-header">
+            <div>
+                <div class="page-header__title">Banco de Horas</div>
+                <div class="page-header__sub">
+                    {{ ["Janeiro","Fevereiro","Março","Abril","Maio","Junho",
+                    "Julho","Agosto","Setembro","Outubro","Novembro","Dezembro"][mes-1] }}
+                    {{ ano }} · {{ funcionario.nome | e }}
+                </div>
+            </div>
+
+            <div class="month-nav">
+                {% set mes_ant = mes - 1 if mes > 1 else 12 %}
+                {% set ano_ant = ano if mes > 1 else ano - 1 %}
+                {% set mes_prox = mes + 1 if mes < 12 else 1 %} {% set ano_prox=ano if mes < 12 else ano + 1 %} <a
+                    href="{{ url_for('ponto.analise', mes=mes_ant, ano=ano_ant) }}" class="btn-ghost">← Anterior</a>
+                    <span class="month-nav__label">{{ "%02d/%d" | format(mes, ano) }}</span>
+                    <a href="{{ url_for('ponto.analise', mes=mes_prox, ano=ano_prox) }}" class="btn-ghost">Próximo →</a>
+            </div>
+        </div>
+
+        <!-- ── STATS ── -->
+        <div class="stats-grid">
+
+            <!-- Total trabalhado -->
+            <div class="stat-card stat-card--total">
+                <div class="stat-card__icon">⏱️</div>
+                <div class="stat-card__label">Total Trabalhado</div>
+                <div class="stat-card__value">{{ "%dh%02d" | format(total_min // 60, total_min % 60) }}</div>
+            </div>
+
+            <!-- Saldo do mês -->
+            <div class="stat-card stat-card--saldo">
+                <div class="stat-card__icon">{% if total_saldo >= 0 %}📈{% else %}📉{% endif %}</div>
+                <div class="stat-card__label">Saldo do Mês</div>
+                {% if total_saldo > 0 %}
+                <div class="stat-card__value stat-card__value--pos">+{{ (total_saldo//60) }}h{{ "%02d" |
+                    format(total_saldo%60) }}</div>
+                {% elif total_saldo < 0 %} {% set as=-total_saldo %} <div
+                    class="stat-card__value stat-card__value--neg">-{{ (as//60) }}h{{ "%02d" | format(as%60) }}
+            </div>
+            {% else %}
+            <div class="stat-card__value">0h00</div>
+            {% endif %}
+        </div>
+
+        <!-- Dias completos -->
+        <div class="stat-card stat-card--ok">
+            <div class="stat-card__icon">✅</div>
+            <div class="stat-card__label">Dias Completos</div>
+            <div class="stat-card__value">{{ dias_ok }}</div>
+        </div>
+
+        <!-- Dias p/ revisar -->
+        <div class="stat-card stat-card--review">
+            <div class="stat-card__icon">⚠️</div>
+            <div class="stat-card__label">Para Revisar</div>
+            <div class="stat-card__value">{{ dias_revisar }}</div>
+        </div>
+
+        </div>
+
+        <!-- ── CHARTS ROW ── -->
+        {% if days %}
+        <div class="charts-row">
+
+            <!-- Bar chart: horas por dia -->
+            <div class="card">
+                <div class="card__header">
+                    <span class="card__title">📊 Horas Trabalhadas por Dia</span>
+                </div>
+                <div class="card__body">
+                    <div class="chart-wrap">
+                        <canvas id="chartWorked"></canvas>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Line chart: saldo acumulado -->
+            <div class="card">
+                <div class="card__header">
+                    <span class="card__title">📈 Saldo Acumulado</span>
+                </div>
+                <div class="card__body">
+                    <div class="chart-wrap">
+                        <canvas id="chartBalance"></canvas>
+                    </div>
+                </div>
+            </div>
+
+        </div>
+        {% endif %}
+
+        <!-- ── DETAIL TABLE ── -->
+        <div class="card">
+            <div class="card__header">
+                <span class="card__title">📋 Folha de Ponto Detalhada</span>
+                <span style="font-size:.78rem; color:var(--slate-400); font-weight:600;">{{ days | length }} dias</span>
+            </div>
+
+            {% if tabela_rows %}
+            <div class="table-scroll">
+                <table class="detail-table">
+                    <thead>
+                        <tr>
+                            <th>Data</th>
+                            <th>Entrada</th>
+                            <th>Saída Almoço</th>
+                            <th>Retorno</th>
+                            <th>Saída</th>
+                            <th>Extras</th>
+                            <th>Trabalhado</th>
+                            <th>Saldo</th>
+                            <th>Status</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for row in tabela_rows %}
+                        <tr class="{{ 'is-today' if row.is_today }} {{ 'needs-review' if row.needs_review }}">
+
+                            <!-- Data -->
+                            <td>
+                                <span class="date-cell__day">{{ row.shift_date.strftime('%d/%m') }}</span>
+                                <span class="date-cell__dow">{{ row.dow }}</span>
+                                {% if row.is_today %}
+                                <span class="badge badge--today" style="margin-left:.4rem;">Hoje</span>
+                                {% endif %}
+                            </td>
+
+                            <!-- Batidas CLT-style -->
+                            <td>
+                                {% if row.clock_in != '—' %}
+                                <span class="punch-time">{{ row.clock_in }}</span>
+                                {% else %}
+                                <span class="punch-time punch-time--empty">—</span>
+                                {% endif %}
+                            </td>
+                            <td>
+                                {% if row.lunch_start != '—' %}
+                                <span class="punch-time">{{ row.lunch_start }}</span>
+                                {% else %}
+                                <span class="punch-time punch-time--empty">—</span>
+                                {% endif %}
+                            </td>
+                            <td>
+                                {% if row.lunch_end != '—' %}
+                                <span class="punch-time">{{ row.lunch_end }}</span>
+                                {% else %}
+                                <span class="punch-time punch-time--empty">—</span>
+                                {% endif %}
+                            </td>
+                            <td>
+                                {% if row.clock_out != '—' %}
+                                <span class="punch-time">{{ row.clock_out }}</span>
+                                {% else %}
+                                <span class="punch-time punch-time--empty">—</span>
+                                {% endif %}
+                            </td>
+
+                            <!-- Extras -->
+                            <td>
+                                {% if row.extras %}
+                                {% for t in row.extras %}
+                                <span class="extras-chip">{{ t }}</span>
+                                {% endfor %}
+                                {% else %}
+                                <span class="punch-time punch-time--empty">—</span>
+                                {% endif %}
+                            </td>
+
+                            <!-- Trabalhado -->
+                            <td>
+                                <span class="worked-cell">
+                                    {{ "%dh%02d" | format(row.minutos_trabalhados // 60, row.minutos_trabalhados % 60)
+                                    }}
+                                </span>
+                            </td>
+
+                            <!-- Saldo -->
+                            <td>
+                                {% set s = row.saldo_calculado %}
+                                {% if s > 0 %}
+                                <span class="saldo-cell saldo-cell--pos">+{{ (s//60) }}h{{ "%02d" | format(s%60)
+                                    }}</span>
+                                {% elif s < 0 %} {% set as=-s %} <span class="saldo-cell saldo-cell--neg">-{{ (as//60)
+                                    }}h{{ "%02d" | format(as%60) }}</span>
+                                    {% else %}
+                                    <span class="saldo-cell saldo-cell--zero">0h00</span>
+                                    {% endif %}
+                            </td>
+
+                            <!-- Status -->
+                            <td>
+                                {% if row.needs_review %}
+                                <span class="badge badge--review">⚠️ Revisar</span>
+                                {% else %}
+                                <span class="badge badge--ok">✓ OK</span>
+                                {% endif %}
+                            </td>
+
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+            {% else %}
+            <div class="empty-state">
+                <span class="empty-state__icon">📭</span>
+                <span class="empty-state__text">Nenhum registro para este mês.</span>
+            </div>
+            {% endif %}
+        </div>
+
+    </main>
+
+    <!-- ── CHARTS JS ── -->
+    {% if days %}
+    <script>
+        const LABELS = {{ chart_labels | safe }};
+        const WORKED = {{ chart_worked | safe }};
+        const EXPECTED = {{ chart_expected | safe }};
+        const BALANCE = {{ chart_balance | safe }};
+
+        const TEAL = '#0d9488';
+        const TEAL_L = 'rgba(13,148,136,.15)';
+        const GREEN = '#22c55e';
+        const RED = '#ef4444';
+        const SLATE = '#94a3b8';
+
+        Chart.defaults.font.family = "'Inter', sans-serif";
+        Chart.defaults.color = '#64748b';
+
+        /* Bar chart — horas trabalhadas */
+        new Chart(document.getElementById('chartWorked'), {
+            type: 'bar',
+            data: {
+                labels: LABELS,
+                datasets: [
+                    {
+                        label: 'Trabalhado (h)',
+                        data: WORKED,
+                        backgroundColor: WORKED.map((v, i) => v >= EXPECTED[i] ? 'rgba(13,148,136,.75)' : 'rgba(239,68,68,.65)'),
+                        borderRadius: 6,
+                        borderSkipped: false,
+                    },
+                    {
+                        label: 'Esperado (h)',
+                        data: EXPECTED,
+                        type: 'line',
+                        borderColor: SLATE,
+                        borderDash: [5, 3],
+                        borderWidth: 2,
+                        pointRadius: 0,
+                        fill: false,
+                    }
+                ]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                interaction: { mode: 'index', intersect: false },
+                plugins: {
+                    legend: { display: true, position: 'bottom', labels: { boxWidth: 12, font: { size: 11 } } },
+                    tooltip: {
+                        callbacks: {
+                            label: ctx => {
+                                const v = ctx.parsed.y;
+                                const h = Math.floor(v);
+                                const m = Math.round((v - h) * 60);
+                                return `${ctx.dataset.label}: ${h}h${String(m).padStart(2, '0')}`;
+                            }
+                        }
+                    }
+                },
+                scales: {
+                    x: { grid: { display: false }, ticks: { font: { size: 10 }, maxRotation: 45, minRotation: 30 } },
+                    y: { beginAtZero: true, ticks: { stepSize: 1, callback: v => v + 'h' }, grid: { color: '#f1f5f9' } }
+                }
+            }
+        });
+
+        /* Line chart — saldo acumulado */
+        new Chart(document.getElementById('chartBalance'), {
+            type: 'line',
+            data: {
+                labels: LABELS,
+                datasets: [{
+                    label: 'Saldo (h)',
+                    data: BALANCE,
+                    borderColor: BALANCE.at(-1) >= 0 ? TEAL : RED,
+                    backgroundColor: BALANCE.at(-1) >= 0 ? TEAL_L : 'rgba(239,68,68,.1)',
+                    borderWidth: 2.5,
+                    pointBackgroundColor: BALANCE.map(v => v >= 0 ? TEAL : RED),
+                    pointRadius: 3,
+                    fill: true,
+                    tension: 0.3,
+                }]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                plugins: {
+                    legend: { display: false },
+                    tooltip: {
+                        callbacks: {
+                            label: ctx => {
+                                const v = ctx.parsed.y;
+                                const sign = v >= 0 ? '+' : '-';
+                                const abs = Math.abs(v);
+                                const h = Math.floor(abs);
+                                const m = Math.round((abs - h) * 60);
+                                return `Saldo: ${sign}${h}h${String(m).padStart(2, '0')}`;
+                            }
+                        }
+                    }
+                },
+                scales: {
+                    x: { grid: { display: false }, ticks: { font: { size: 10 }, maxRotation: 45, minRotation: 30 } },
+                    y: {
+                        ticks: { callback: v => (v >= 0 ? '+' : '') + v + 'h' },
+                        grid: { color: ctx => ctx.tick.value === 0 ? '#cbd5e1' : '#f1f5f9' }
+                    }
+                }
+            }
+        });
+    </script>
+    {% endif %}
+
+</body>
+
+</html>

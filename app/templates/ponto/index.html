@@ -1057,15 +1057,28 @@
                 📋 Histórico — {{ ["Janeiro","Fevereiro","Março","Abril","Maio","Junho",
                 "Julho","Agosto","Setembro","Outubro","Novembro","Dezembro"][mes-1] }} {{ ano }}
               </span>
-              <div class="month-nav">
-                {% set mes_ant = mes - 1 if mes > 1 else 12 %}
-                {% set ano_ant = ano if mes > 1 else ano - 1 %}
-                {% set mes_prox = mes + 1 if mes < 12 else 1 %} {% set ano_prox=ano if mes < 12 else ano + 1 %} <a
-                  href="{{ url_for('ponto.historico', mes=mes_ant, ano=ano_ant) }}" class="btn-ghost">← Anterior</a>
-                  <span class="month-nav__label">{{ "%02d/%d" | format(mes, ano) }}</span>
-                  <a href="{{ url_for('ponto.historico', mes=mes_prox, ano=ano_prox) }}" class="btn-ghost">Próximo →</a>
+              <div style="display:flex; align-items:center; gap:.75rem; flex-wrap:wrap;">
+                <a href="{{ url_for('ponto.analise', mes=mes, ano=ano) }}" style="display:inline-flex; align-items:center; gap:.4rem;
+                          font-size:.78rem; font-weight:700; color:var(--teal-700);
+                          background:var(--teal-100); padding:.35rem .75rem;
+                          border-radius:var(--radius-full); text-decoration:none;
+                          transition:all .15s;"
+                  onmouseover="this.style.background='var(--teal-500)';this.style.color='white';"
+                  onmouseout="this.style.background='var(--teal-100)';this.style.color='var(--teal-700)';">
+                  📊 Ver Análise Completa ↗
+                </a>
+                <div class="month-nav">
+                  {% set mes_ant = mes - 1 if mes > 1 else 12 %}
+                  {% set ano_ant = ano if mes > 1 else ano - 1 %}
+                  {% set mes_prox = mes + 1 if mes < 12 else 1 %} {% set ano_prox=ano if mes < 12 else ano + 1 %} <a
+                    href="{{ url_for('ponto.historico', mes=mes_ant, ano=ano_ant) }}" class="btn-ghost">← Anterior</a>
+                    <span class="month-nav__label">{{ "%02d/%d" | format(mes, ano) }}</span>
+                    <a href="{{ url_for('ponto.historico', mes=mes_prox, ano=ano_prox) }}" class="btn-ghost">Próximo
+                      →</a>
+                </div>
               </div>
             </div>
+
 
             {% if days %}
             <div class="history-table-wrap">
