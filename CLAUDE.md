@@ -299,6 +299,51 @@ pip install -r requirements.txt
 
 ---
 
+## Database Management & Migrations
+
+**Flask-Migrate** is configured for automatic schema versioning. Use it whenever models change.
+
+### Initial Setup (VPS after first deployment)
+
+```bash
+# Create migrations folder (one-time, after flask deploy)
+flask db init
+
+# Run pending migrations to initialize production schema
+flask db upgrade
+```
+
+### Development Workflow
+
+When you **modify or add SQLAlchemy models**:
+
+```bash
+# 1. Auto-generate migration from model changes
+flask db migrate -m "Descriptive message of what changed"
+
+# 2. Review the generated migration file in migrations/versions/
+# 3. Commit to git
+git add migrations/ && git commit -m "...migration..."
+
+# 4. On VPS: deployment automatically runs `flask db upgrade`
+#    (configured in .github/workflows/deploy.yml)
+```
+
+### Common Commands
+
+| Command | Purpose |
+|---------|---------|
+| `flask db init` | Create migrations folder (one-time) |
+| `flask db migrate -m "message"` | Auto-generate migration from model changes |
+| `flask db upgrade` | Apply pending migrations to database |
+| `flask db downgrade` | Rollback to previous schema version |
+| `flask db current` | Show current schema revision |
+| `flask db history` | View migration history |
+
+**Important:** Never edit migration files manually — they are version-controlled source of truth.
+
+---
+
 ## Commit Guidelines
 
 1. Write commit messages in **English**, clear and descriptive
