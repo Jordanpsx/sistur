@@ -13,32 +13,36 @@
   <script src="https://cdn.tailwindcss.com"></script>
   <link rel="preconnect" href="https://fonts.googleapis.com" />
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
-  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&family=DM+Mono:wght@400;500&display=swap" rel="stylesheet" />
+  <link
+    href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&family=DM+Mono:wght@400;500&display=swap"
+    rel="stylesheet" />
 
   <style>
     /* ─── White-label CSS Variables ─────────────────────────────────────────── */
     :root {
-      --primary:         #0d9488;
-      --primary-light:   #ccfbf1;
-      --primary-dark:    #0f766e;
-      --primary-hero:    #134e4a;
-      --primary-hero-2:  #0f766e;
-      --bg-page:         #f0fdfa;
+      --primary: #0d9488;
+      --primary-light: #ccfbf1;
+      --primary-dark: #0f766e;
+      --primary-hero: #134e4a;
+      --primary-hero-2: #0f766e;
+      --bg-page: #f0fdfa;
 
       /* Module accent colors */
-      --mod-rh:            #6366f1;
-      --mod-rh-bg:         #eef2ff;
-      --mod-ponto:         #0d9488;
-      --mod-ponto-bg:      #ccfbf1;
-      --mod-holerite:      #d97706;
-      --mod-holerite-bg:   #fef3c7;
-      --mod-estoque:       #ea580c;
-      --mod-estoque-bg:    #ffedd5;
-      --mod-restaurante:   #059669;
-      --mod-restaurante-bg:#d1fae5;
+      --mod-rh: #6366f1;
+      --mod-rh-bg: #eef2ff;
+      --mod-ponto: #0d9488;
+      --mod-ponto-bg: #ccfbf1;
+      --mod-holerite: #d97706;
+      --mod-holerite-bg: #fef3c7;
+      --mod-estoque: #ea580c;
+      --mod-estoque-bg: #ffedd5;
+      --mod-restaurante: #059669;
+      --mod-restaurante-bg: #d1fae5;
     }
 
-    * { box-sizing: border-box; }
+    * {
+      box-sizing: border-box;
+    }
 
     body {
       font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
@@ -100,7 +104,9 @@
     }
 
     @media (min-width: 640px) {
-      .topbar-name { display: block; }
+      .topbar-name {
+        display: block;
+      }
     }
 
     .topbar-sub {
@@ -122,7 +128,9 @@
     }
 
     @media (min-width: 640px) {
-      .topbar-employee { display: block; }
+      .topbar-employee {
+        display: block;
+      }
     }
 
     .btn-logout {
@@ -157,35 +165,54 @@
     .hero::before {
       content: '';
       position: absolute;
-      top: -60px; right: -60px;
-      width: 220px; height: 220px;
+      top: -60px;
+      right: -60px;
+      width: 220px;
+      height: 220px;
       border-radius: 50%;
-      background: rgba(255,255,255,0.04);
+      background: rgba(255, 255, 255, 0.04);
       pointer-events: none;
     }
 
     .hero::after {
       content: '';
       position: absolute;
-      bottom: -40px; left: 15%;
-      width: 160px; height: 160px;
+      bottom: -40px;
+      left: 15%;
+      width: 160px;
+      height: 160px;
       border-radius: 50%;
-      background: rgba(255,255,255,0.03);
+      background: rgba(255, 255, 255, 0.03);
       pointer-events: none;
     }
 
     .hero-inner {
       max-width: 1100px;
       margin: 0 auto;
-      display: grid;
-      grid-template-columns: 1fr auto;
-      gap: 1.5rem;
-      align-items: start;
+      display: flex;
+      flex-direction: row;
+      flex-wrap: wrap;
+      gap: 1rem;
+      align-items: stretch;
+    }
+
+    .hero-glass {
+      flex: 1 1 280px;
+    }
+
+    .banco-horas-widget {
+      flex: 0 0 auto;
     }
 
     @media (max-width: 640px) {
       .hero-inner {
-        grid-template-columns: 1fr;
+        flex-direction: column;
+        gap: 0.875rem;
+      }
+
+      .hero-glass,
+      .banco-horas-widget {
+        flex: 1 1 100%;
       }
     }
 
@@ -194,11 +221,12 @@
       background: rgba(255, 255, 255, 0.10);
       backdrop-filter: blur(12px);
       -webkit-backdrop-filter: blur(12px);
-      border: 1px solid rgba(255,255,255,0.18);
+      border: 1px solid rgba(255, 255, 255, 0.18);
       border-radius: 18px;
       padding: 1.75rem 2rem;
       position: relative;
       z-index: 1;
+      min-width: 0;
     }
 
     .hero-greeting {
@@ -211,20 +239,20 @@
 
     .hero-subtitle {
       font-size: 0.78rem;
-      color: rgba(255,255,255,0.55);
+      color: rgba(255, 255, 255, 0.55);
       margin: 0 0 1.25rem;
     }
 
     .hero-divider {
       border: none;
-      border-top: 1px solid rgba(255,255,255,0.12);
+      border-top: 1px solid rgba(255, 255, 255, 0.12);
       margin: 0 0 1.25rem;
     }
 
     .hero-data-grid {
       display: grid;
       grid-template-columns: 1fr 1fr;
-      gap: 0.75rem 1.5rem;
+      gap: 0.75rem 1.25rem;
     }
 
     .hero-data-item dt {
@@ -232,14 +260,14 @@
       font-weight: 700;
       letter-spacing: 0.08em;
       text-transform: uppercase;
-      color: rgba(255,255,255,0.45);
+      color: rgba(255, 255, 255, 0.45);
       margin: 0 0 0.15rem;
     }
 
     .hero-data-item dd {
       font-size: 0.85rem;
       font-weight: 600;
-      color: rgba(255,255,255,0.9);
+      color: rgba(255, 255, 255, 0.9);
       margin: 0;
       font-family: 'Inter', sans-serif;
     }
@@ -255,11 +283,10 @@
       background: rgba(255, 255, 255, 0.10);
       backdrop-filter: blur(12px);
       -webkit-backdrop-filter: blur(12px);
-      border: 1px solid rgba(255,255,255,0.18);
+      border: 1px solid rgba(255, 255, 255, 0.18);
       border-radius: 18px;
       padding: 1.5rem 1.75rem;
       text-align: center;
-      min-width: 180px;
       position: relative;
       z-index: 1;
     }
@@ -269,7 +296,7 @@
       font-weight: 700;
       letter-spacing: 0.1em;
       text-transform: uppercase;
-      color: rgba(255,255,255,0.5);
+      color: rgba(255, 255, 255, 0.5);
       margin: 0 0 0.75rem;
       display: flex;
       align-items: center;
@@ -286,13 +313,21 @@
       margin: 0 0 0.5rem;
     }
 
-    .banco-horas-value.positive { color: #6ee7b7; }
-    .banco-horas-value.negative { color: #fca5a5; }
-    .banco-horas-value.zero     { color: rgba(255,255,255,0.45); }
+    .banco-horas-value.positive {
+      color: #6ee7b7;
+    }
+
+    .banco-horas-value.negative {
+      color: #fca5a5;
+    }
+
+    .banco-horas-value.zero {
+      color: rgba(255, 255, 255, 0.45);
+    }
 
     .banco-horas-sublabel {
       font-size: 0.7rem;
-      color: rgba(255,255,255,0.4);
+      color: rgba(255, 255, 255, 0.4);
       margin: 0;
     }
 
@@ -315,15 +350,26 @@
     .modules-grid {
       display: grid;
       grid-template-columns: repeat(3, 1fr);
-      gap: 1rem;
+      gap: 0.875rem;
     }
 
     @media (max-width: 900px) {
-      .modules-grid { grid-template-columns: repeat(2, 1fr); }
+      .modules-grid {
+        grid-template-columns: repeat(2, 1fr);
+      }
     }
 
-    @media (max-width: 560px) {
-      .modules-grid { grid-template-columns: 1fr; }
+    @media (max-width: 640px) {
+      .modules-grid {
+        grid-template-columns: repeat(2, 1fr);
+        gap: 0.75rem;
+      }
+    }
+
+    @media (max-width: 400px) {
+      .modules-grid {
+        grid-template-columns: 1fr;
+      }
     }
 
     /* ─── Module Card ───────────────────────────────────────────────────────── */
@@ -337,22 +383,47 @@
       display: block;
       transition: transform 0.2s ease, box-shadow 0.2s ease, border-color 0.2s ease;
       cursor: pointer;
+      min-width: 0;
 
       /* staggered fade-in */
       opacity: 0;
       animation: fadeUp 0.4s ease-out forwards;
     }
 
-    .mod-card:nth-child(1) { animation-delay: 0.05s; }
-    .mod-card:nth-child(2) { animation-delay: 0.12s; }
-    .mod-card:nth-child(3) { animation-delay: 0.19s; }
-    .mod-card:nth-child(4) { animation-delay: 0.26s; }
-    .mod-card:nth-child(5) { animation-delay: 0.33s; }
-    .mod-card:nth-child(6) { animation-delay: 0.40s; }
+    .mod-card:nth-child(1) {
+      animation-delay: 0.05s;
+    }
+
+    .mod-card:nth-child(2) {
+      animation-delay: 0.12s;
+    }
+
+    .mod-card:nth-child(3) {
+      animation-delay: 0.19s;
+    }
+
+    .mod-card:nth-child(4) {
+      animation-delay: 0.26s;
+    }
+
+    .mod-card:nth-child(5) {
+      animation-delay: 0.33s;
+    }
+
+    .mod-card:nth-child(6) {
+      animation-delay: 0.40s;
+    }
 
     @keyframes fadeUp {
-      from { opacity: 0; transform: translateY(10px); }
-      to   { opacity: 1; transform: translateY(0); }
+      from {
+        opacity: 0;
+        transform: translateY(10px);
+      }
+
+      to {
+        opacity: 1;
+        transform: translateY(0);
+      }
     }
 
     /* Active card hover */
@@ -411,19 +482,60 @@
       transition: background 0.2s ease;
     }
 
-    .mod-card.mod-rh     .mod-icon { background: var(--mod-rh-bg);          color: var(--mod-rh); }
-    .mod-card.mod-ponto  .mod-icon { background: var(--mod-ponto-bg);        color: var(--mod-ponto); }
-    .mod-card.mod-holerite .mod-icon { background: var(--mod-holerite-bg);   color: var(--mod-holerite); }
-    .mod-card.mod-estoque .mod-icon { background: var(--mod-estoque-bg);     color: var(--mod-estoque); }
-    .mod-card.mod-restaurante .mod-icon { background: var(--mod-restaurante-bg); color: var(--mod-restaurante); }
-    .mod-card.mod-disabled .mod-icon { background: #f1f5f9; color: #94a3b8; }
+    .mod-card.mod-rh .mod-icon {
+      background: var(--mod-rh-bg);
+      color: var(--mod-rh);
+    }
 
-    .mod-card.mod-active.mod-rh:hover .mod-icon         { background: var(--mod-rh);          color: #fff; }
-    .mod-card.mod-active.mod-ponto:hover .mod-icon      { background: var(--mod-ponto);        color: #fff; }
-    .mod-card.mod-active.mod-estoque:hover .mod-icon    { background: var(--mod-estoque);      color: #fff; }
-    .mod-card.mod-active.mod-restaurante:hover .mod-icon { background: var(--mod-restaurante); color: #fff; }
+    .mod-card.mod-ponto .mod-icon {
+      background: var(--mod-ponto-bg);
+      color: var(--mod-ponto);
+    }
 
-    .mod-card-titles { flex: 1; min-width: 0; }
+    .mod-card.mod-holerite .mod-icon {
+      background: var(--mod-holerite-bg);
+      color: var(--mod-holerite);
+    }
+
+    .mod-card.mod-estoque .mod-icon {
+      background: var(--mod-estoque-bg);
+      color: var(--mod-estoque);
+    }
+
+    .mod-card.mod-restaurante .mod-icon {
+      background: var(--mod-restaurante-bg);
+      color: var(--mod-restaurante);
+    }
+
+    .mod-card.mod-disabled .mod-icon {
+      background: #f1f5f9;
+      color: #94a3b8;
+    }
+
+    .mod-card.mod-active.mod-rh:hover .mod-icon {
+      background: var(--mod-rh);
+      color: #fff;
+    }
+
+    .mod-card.mod-active.mod-ponto:hover .mod-icon {
+      background: var(--mod-ponto);
+      color: #fff;
+    }
+
+    .mod-card.mod-active.mod-estoque:hover .mod-icon {
+      background: var(--mod-estoque);
+      color: #fff;
+    }
+
+    .mod-card.mod-active.mod-restaurante:hover .mod-icon {
+      background: var(--mod-restaurante);
+      color: #fff;
+    }
+
+    .mod-card-titles {
+      flex: 1;
+      min-width: 0;
+    }
 
     .mod-card-title {
       font-size: 0.9rem;
@@ -433,10 +545,21 @@
       transition: color 0.2s ease;
     }
 
-    .mod-card.mod-active.mod-rh:hover .mod-card-title         { color: var(--mod-rh); }
-    .mod-card.mod-active.mod-ponto:hover .mod-card-title      { color: var(--mod-ponto); }
-    .mod-card.mod-active.mod-estoque:hover .mod-card-title    { color: var(--mod-estoque); }
-    .mod-card.mod-active.mod-restaurante:hover .mod-card-title { color: var(--mod-restaurante); }
+    .mod-card.mod-active.mod-rh:hover .mod-card-title {
+      color: var(--mod-rh);
+    }
+
+    .mod-card.mod-active.mod-ponto:hover .mod-card-title {
+      color: var(--mod-ponto);
+    }
+
+    .mod-card.mod-active.mod-estoque:hover .mod-card-title {
+      color: var(--mod-estoque);
+    }
+
+    .mod-card.mod-active.mod-restaurante:hover .mod-card-title {
+      color: var(--mod-restaurante);
+    }
 
     .mod-badge {
       display: inline-block;
@@ -448,12 +571,35 @@
       border-radius: 99px;
     }
 
-    .badge-rh          { background: var(--mod-rh-bg);          color: var(--mod-rh); }
-    .badge-ponto       { background: var(--mod-ponto-bg);        color: var(--mod-ponto); }
-    .badge-holerite    { background: var(--mod-holerite-bg);     color: var(--mod-holerite); }
-    .badge-estoque     { background: var(--mod-estoque-bg);      color: var(--mod-estoque); }
-    .badge-restaurante { background: var(--mod-restaurante-bg);  color: var(--mod-restaurante); }
-    .badge-em-breve    { background: #fef3c7; color: #d97706; }
+    .badge-rh {
+      background: var(--mod-rh-bg);
+      color: var(--mod-rh);
+    }
+
+    .badge-ponto {
+      background: var(--mod-ponto-bg);
+      color: var(--mod-ponto);
+    }
+
+    .badge-holerite {
+      background: var(--mod-holerite-bg);
+      color: var(--mod-holerite);
+    }
+
+    .badge-estoque {
+      background: var(--mod-estoque-bg);
+      color: var(--mod-estoque);
+    }
+
+    .badge-restaurante {
+      background: var(--mod-restaurante-bg);
+      color: var(--mod-restaurante);
+    }
+
+    .badge-em-breve {
+      background: #fef3c7;
+      color: #d97706;
+    }
 
     .mod-card-desc {
       font-size: 0.775rem;
@@ -464,39 +610,87 @@
 
     @media (max-width: 640px) {
       .hero {
-        padding: 1.5rem 1rem;
+        padding: 1.25rem 1rem;
       }
+
       .hero-glass {
-        padding: 1.25rem 1.25rem;
+        padding: 1.25rem;
       }
+
       .hero-greeting {
-        font-size: 1.35rem;
+        font-size: 1.3rem;
       }
+
+      .hero-subtitle {
+        font-size: 0.75rem;
+        margin-bottom: 1rem;
+      }
+
       .hero-data-grid {
-        grid-template-columns: 1fr;
-        gap: 0.6rem;
+        grid-template-columns: 1fr 1fr;
+        gap: 0.6rem 1rem;
       }
+
+      /* Banco de Horas: linha horizontal compacta no mobile */
       .banco-horas-widget {
-        min-width: 0;
         width: 100%;
-        padding: 1.25rem 1.25rem;
+        padding: 1rem 1.25rem;
         display: flex;
+        flex-direction: row;
         align-items: center;
-        gap: 1rem;
+        justify-content: space-between;
         text-align: left;
+        gap: 0.75rem;
       }
+
       .banco-horas-label {
         margin-bottom: 0;
         justify-content: flex-start;
-        flex-direction: column;
-        gap: 0.2rem;
+        font-size: 0.6rem;
+        gap: 0.25rem;
       }
+
       .banco-horas-value {
-        font-size: 1.8rem;
+        font-size: 2rem;
         margin-bottom: 0;
       }
+
+      .banco-horas-sublabel {
+        font-size: 0.65rem;
+      }
+
       .modules-section {
-        padding: 1.25rem 1rem 2rem;
+        padding: 1.25rem 1rem 2.5rem;
+      }
+
+      /* Cards menores no mobile */
+      .mod-card {
+        padding: 1rem 1rem 1rem 0.9rem;
+        border-radius: 14px;
+      }
+
+      .mod-card-header {
+        margin-bottom: 0.5rem;
+        gap: 0.625rem;
+      }
+
+      .mod-icon {
+        width: 36px;
+        height: 36px;
+        border-radius: 10px;
+      }
+
+      .mod-card-title {
+        font-size: 0.82rem;
+      }
+
+      .mod-card-desc {
+        font-size: 0.72rem;
+        line-height: 1.4;
+      }
+
+      .topbar-inner {
+        padding: 0 1rem;
       }
     }
   </style>
@@ -510,14 +704,14 @@
 
       <div class="topbar-brand">
         {% if company_logo %}
-          <img src="{{ company_logo | e }}" alt="{{ company_name | e }}" class="topbar-logo" />
+        <img src="{{ company_logo | e }}" alt="{{ company_name | e }}" class="topbar-logo" />
         {% else %}
-          <div class="topbar-logo-fallback">
-            <svg width="18" height="18" viewBox="0 0 24 24" fill="none">
-              <circle cx="12" cy="12" r="10" stroke="currentColor" stroke-width="2"/>
-              <path d="M12 8V12L15 15" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
-            </svg>
-          </div>
+        <div class="topbar-logo-fallback">
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none">
+            <circle cx="12" cy="12" r="10" stroke="currentColor" stroke-width="2" />
+            <path d="M12 8V12L15 15" stroke="currentColor" stroke-width="2" stroke-linecap="round" />
+          </svg>
+        </div>
         {% endif %}
         <span class="topbar-name">
           {{ company_name | e }}
@@ -531,8 +725,8 @@
           <button type="submit" class="btn-logout">
             <svg width="14" height="14" viewBox="0 0 24 24" fill="none">
               <path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4
-                       M16 17l5-5-5-5M21 12H9"
-                stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+                       M16 17l5-5-5-5M21 12H9" stroke="currentColor" stroke-width="2" stroke-linecap="round"
+                stroke-linejoin="round" />
             </svg>
             Sair
           </button>
@@ -588,8 +782,8 @@
       <div class="banco-horas-widget">
         <p class="banco-horas-label">
           <svg width="13" height="13" viewBox="0 0 24 24" fill="none">
-            <circle cx="12" cy="12" r="10" stroke="currentColor" stroke-width="2"/>
-            <path d="M12 8V12L15 15" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
+            <circle cx="12" cy="12" r="10" stroke="currentColor" stroke-width="2" />
+            <path d="M12 8V12L15 15" stroke="currentColor" stroke-width="2" stroke-linecap="round" />
           </svg>
           Banco de Horas
         </p>
@@ -617,8 +811,8 @@
               <path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2
                        M9 11a4 4 0 1 0 0-8 4 4 0 0 0 0 8z
                        M23 21v-2a4 4 0 0 0-3-3.87
-                       M16 3.13a4 4 0 0 1 0 7.75"
-                stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+                       M16 3.13a4 4 0 0 1 0 7.75" stroke="currentColor" stroke-width="2" stroke-linecap="round"
+                stroke-linejoin="round" />
             </svg>
           </div>
           <div class="mod-card-titles">
@@ -636,8 +830,8 @@
         <div class="mod-card-header">
           <div class="mod-icon">
             <svg width="20" height="20" viewBox="0 0 24 24" fill="none">
-              <rect x="5" y="2" width="14" height="20" rx="2" stroke="currentColor" stroke-width="2"/>
-              <path d="M12 11v5M12 7v.01" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
+              <rect x="5" y="2" width="14" height="20" rx="2" stroke="currentColor" stroke-width="2" />
+              <path d="M12 11v5M12 7v.01" stroke="currentColor" stroke-width="2" stroke-linecap="round" />
             </svg>
           </div>
           <div class="mod-card-titles">
@@ -652,8 +846,8 @@
         <div class="mod-card-header">
           <div class="mod-icon">
             <svg width="20" height="20" viewBox="0 0 24 24" fill="none">
-              <rect x="5" y="2" width="14" height="20" rx="2" stroke="currentColor" stroke-width="2"/>
-              <path d="M12 11v5M12 7v.01" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
+              <rect x="5" y="2" width="14" height="20" rx="2" stroke="currentColor" stroke-width="2" />
+              <path d="M12 11v5M12 7v.01" stroke="currentColor" stroke-width="2" stroke-linecap="round" />
             </svg>
           </div>
           <div class="mod-card-titles">
@@ -670,10 +864,10 @@
         <div class="mod-card-header">
           <div class="mod-icon">
             <svg width="20" height="20" viewBox="0 0 24 24" fill="none">
-              <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"
-                stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
-              <path d="M14 2v6h6M16 13H8M16 17H8M10 9H8"
-                stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+              <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z" stroke="currentColor"
+                stroke-width="2" stroke-linecap="round" stroke-linejoin="round" />
+              <path d="M14 2v6h6M16 13H8M16 17H8M10 9H8" stroke="currentColor" stroke-width="2" stroke-linecap="round"
+                stroke-linejoin="round" />
             </svg>
           </div>
           <div class="mod-card-titles">
@@ -690,10 +884,11 @@
         <div class="mod-card-header">
           <div class="mod-icon">
             <svg width="20" height="20" viewBox="0 0 24 24" fill="none">
-              <path d="M21 16V8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16z"
-                stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
-              <path d="M3.27 6.96L12 12.01l8.73-5.05M12 22.08V12"
-                stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+              <path
+                d="M21 16V8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16z"
+                stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" />
+              <path d="M3.27 6.96L12 12.01l8.73-5.05M12 22.08V12" stroke="currentColor" stroke-width="2"
+                stroke-linecap="round" stroke-linejoin="round" />
             </svg>
           </div>
           <div class="mod-card-titles">
@@ -711,10 +906,9 @@
         <div class="mod-card-header">
           <div class="mod-icon">
             <svg width="20" height="20" viewBox="0 0 24 24" fill="none">
-              <path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2z"
-                stroke="currentColor" stroke-width="2"/>
-              <path d="M8 12h8M12 8v8"
-                stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
+              <path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2z" stroke="currentColor"
+                stroke-width="2" />
+              <path d="M8 12h8M12 8v8" stroke="currentColor" stroke-width="2" stroke-linecap="round" />
             </svg>
           </div>
           <div class="mod-card-titles">
@@ -730,4 +924,5 @@
   </main>
 
 </body>
+
 </html>
