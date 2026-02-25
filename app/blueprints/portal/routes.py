@@ -138,6 +138,15 @@ def dashboard():
             "view":   has_permission(fid, "ponto", "view"),
             "create": has_permission(fid, "ponto", "create"),
         },
+        "estoque": {
+            "view":    has_permission(fid, "estoque", "view"),
+            "create":  has_permission(fid, "estoque", "create"),
+            "edit":    has_permission(fid, "estoque", "edit"),
+            "delete":  has_permission(fid, "estoque", "delete"),
+        },
+        "restaurante": {
+            "view": has_permission(fid, "restaurante", "view"),
+        },
     }
 
     return render_template("portal/dashboard.html", funcionario=funcionario, perms=perms)
