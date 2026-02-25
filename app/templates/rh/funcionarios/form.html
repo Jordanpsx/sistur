@@ -425,14 +425,14 @@
       </div>
 
       <!-- Botões -->
-      <div class="flex items-center justify-between gap-3">
+      <div class="flex flex-col-reverse sm:flex-row sm:items-center sm:justify-between gap-3">
         <a href="{{ url_for('rh.listar_funcionarios') }}"
-           class="px-5 py-2.5 rounded-xl border border-slate-200 text-sm font-medium
+           class="w-full sm:w-auto text-center px-5 py-2.5 rounded-xl border border-slate-200 text-sm font-medium
                   text-slate-600 bg-white hover:bg-slate-50 transition-colors">
           Cancelar
         </a>
         <button type="submit"
-                class="px-6 py-2.5 rounded-xl bg-primary text-white text-sm font-semibold
+                class="w-full sm:w-auto px-6 py-2.5 rounded-xl bg-primary text-white text-sm font-semibold
                        hover:bg-primary-dark transition-colors shadow-sm">
           {% if funcionario %}Salvar alterações{% else %}Cadastrar funcionário{% endif %}
         </button>

@@ -90,7 +90,7 @@
 
     <!-- Busca -->
     <form method="GET" action="{{ url_for('rh.listar_funcionarios') }}" class="mb-5">
-      <div class="flex gap-2">
+      <div class="flex flex-col sm:flex-row gap-2">
         <input type="text" name="q" value="{{ q | e }}"
                placeholder="Buscar por nome ou CPF…"
                class="flex-1 px-4 py-2.5 rounded-xl border border-slate-200 bg-white

@@ -478,11 +478,22 @@
             .charts-row {
                 grid-template-columns: 1fr;
             }
+
+            .month-nav {
+                flex-wrap: wrap;
+                justify-content: center;
+            }
         }
 
         @media (max-width: 480px) {
             .stats-grid {
                 grid-template-columns: 1fr 1fr;
+            }
+        }
+
+        @media (max-width: 360px) {
+            .stats-grid {
+                grid-template-columns: 1fr;
             }
         }
     </style>

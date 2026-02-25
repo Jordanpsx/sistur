@@ -50,7 +50,7 @@
     <form method="GET" class="bg-white rounded-2xl p-4 shadow-sm border border-slate-100 flex flex-wrap gap-3 items-end">
       <div>
         <label class="block text-xs font-medium text-slate-500 mb-1">Local</label>
-        <select name="local_id" class="border border-slate-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-primary/30">
+        <select name="local_id" class="w-full border border-slate-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-primary/30">
           <option value="">— Selecione um local —</option>
           {% for local in locais %}
             <option value="{{ local.id }}" {% if local_id_selecionado == local.id %}selected{% endif %}>
@@ -66,16 +66,16 @@
 
     <!-- Lotes -->
     {% if lotes %}
-      <div class="bg-white rounded-2xl shadow-sm border border-slate-100 overflow-hidden">
+      <div class="bg-white rounded-2xl shadow-sm border border-slate-100 overflow-x-auto">
         <table class="w-full text-sm">
           <thead class="bg-slate-50 border-b border-slate-100">
             <tr>
               <th class="text-left px-4 py-3 font-semibold text-slate-600">Produto</th>
-              <th class="text-left px-4 py-3 font-semibold text-slate-600">Lote</th>
+              <th class="text-left px-4 py-3 font-semibold text-slate-600 hidden sm:table-cell">Lote</th>
               <th class="text-right px-4 py-3 font-semibold text-slate-600">Qtd.</th>
-              <th class="text-left px-4 py-3 font-semibold text-slate-600">Unidade</th>
+              <th class="text-left px-4 py-3 font-semibold text-slate-600 hidden md:table-cell">Unidade</th>
               <th class="text-right px-4 py-3 font-semibold text-slate-600">Custo Unit.</th>
-              <th class="text-left px-4 py-3 font-semibold text-slate-600">Validade</th>
+              <th class="text-left px-4 py-3 font-semibold text-slate-600 hidden md:table-cell">Validade</th>
               <th class="text-left px-4 py-3 font-semibold text-slate-600">Entrada</th>
             </tr>
           </thead>
@@ -83,11 +83,11 @@
             {% for lote in lotes %}
               <tr class="hover:bg-slate-50/50 transition-colors">
                 <td class="px-4 py-3 font-medium text-slate-800">{{ lote.produto.nome | e }}</td>
-                <td class="px-4 py-3 text-slate-500 font-mono text-xs">{{ lote.codigo_lote | e if lote.codigo_lote else '—' }}</td>
+                <td class="px-4 py-3 text-slate-500 font-mono text-xs hidden sm:table-cell">{{ lote.codigo_lote | e if lote.codigo_lote else '—' }}</td>
                 <td class="px-4 py-3 text-right font-semibold text-slate-700">{{ '%.3f' | format(lote.quantidade | float) }}</td>
-                <td class="px-4 py-3 text-slate-500">{{ lote.unidade.simbolo | e if lote.unidade else '—' }}</td>
+                <td class="px-4 py-3 text-slate-500 hidden md:table-cell">{{ lote.unidade.simbolo | e if lote.unidade else '—' }}</td>
                 <td class="px-4 py-3 text-right text-slate-600">R$ {{ '%.4f' | format(lote.custo_unitario | float) }}</td>
-                <td class="px-4 py-3">
+                <td class="px-4 py-3 hidden md:table-cell">
                   {% if lote.data_validade %}
                     <span class="text-xs {% if lote.data_validade.strftime('%Y-%m-%d') <= '2026-03-01' %}text-red-600 font-medium{% else %}text-slate-500{% endif %}">
                       {{ lote.data_validade.strftime('%d/%m/%Y') }}

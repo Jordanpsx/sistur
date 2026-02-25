@@ -67,14 +67,14 @@
         <h2 class="font-semibold text-slate-700">Ingredientes</h2>
 
         {% if itens %}
-          <div class="bg-white rounded-2xl shadow-sm border border-slate-100 overflow-hidden">
+          <div class="bg-white rounded-2xl shadow-sm border border-slate-100 overflow-x-auto">
             <table class="w-full text-sm">
               <thead class="bg-slate-50 border-b border-slate-100">
                 <tr>
                   <th class="text-left px-4 py-3 font-semibold text-slate-600">Ingrediente</th>
                   <th class="text-right px-4 py-3 font-semibold text-slate-600">Qtd. Líq.</th>
-                  <th class="text-right px-4 py-3 font-semibold text-slate-600">Fator</th>
-                  <th class="text-right px-4 py-3 font-semibold text-slate-600">Qtd. Bruta</th>
+                  <th class="text-right px-4 py-3 font-semibold text-slate-600 hidden sm:table-cell">Fator</th>
+                  <th class="text-right px-4 py-3 font-semibold text-slate-600 hidden sm:table-cell">Qtd. Bruta</th>
                   <th class="text-right px-4 py-3 font-semibold text-slate-600">Custo Ingr.</th>
                   <th class="text-center px-4 py-3 font-semibold text-slate-600">Ações</th>
                 </tr>
@@ -87,8 +87,8 @@
                       {% if item.unidade %}<span class="text-slate-400 text-xs ml-1">({{ item.unidade.simbolo | e }})</span>{% endif %}
                     </td>
                     <td class="px-4 py-3 text-right text-slate-600">{{ '%.3f' | format(item.quantidade_liquida | float) }}</td>
-                    <td class="px-4 py-3 text-right text-slate-400">× {{ '%.2f' | format(item.fator_rendimento | float) }}</td>
-                    <td class="px-4 py-3 text-right font-medium text-slate-700">{{ '%.3f' | format(item.quantidade_bruta | float) }}</td>
+                    <td class="px-4 py-3 text-right text-slate-400 hidden sm:table-cell">× {{ '%.2f' | format(item.fator_rendimento | float) }}</td>
+                    <td class="px-4 py-3 text-right font-medium text-slate-700 hidden sm:table-cell">{{ '%.3f' | format(item.quantidade_bruta | float) }}</td>
                     <td class="px-4 py-3 text-right text-slate-600">
                       R$ {{ '%.4f' | format((item.quantidade_bruta * item.produto_filho.custo_medio) | float) }}
                     </td>

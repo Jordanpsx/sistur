@@ -64,7 +64,7 @@
     {% endwith %}
 
     <!-- Filtros -->
-    <form method="GET" class="bg-white rounded-2xl p-4 shadow-sm border border-slate-100 flex flex-wrap gap-3 items-end">
+    <form method="GET" class="bg-white rounded-2xl p-4 shadow-sm border border-slate-100 flex flex-col sm:flex-row flex-wrap gap-3 sm:items-end">
       <div class="flex-1 min-w-48">
         <label class="block text-xs font-medium text-slate-500 mb-1">Buscar</label>
         <input type="text" name="q" value="{{ q | e }}" placeholder="Nome ou SKU…"
@@ -72,7 +72,7 @@
       </div>
       <div>
         <label class="block text-xs font-medium text-slate-500 mb-1">Tipo</label>
-        <select name="tipo" class="border border-slate-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-primary/30">
+        <select name="tipo" class="w-full sm:w-auto border border-slate-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-primary/30">
           <option value="">Todos</option>
           {% for tipo in tipos %}
             <option value="{{ tipo.value }}" {% if tipo_selecionado == tipo.value %}selected{% endif %}>
@@ -83,7 +83,7 @@
       </div>
       <div>
         <label class="block text-xs font-medium text-slate-500 mb-1">Categoria</label>
-        <select name="categoria_id" class="border border-slate-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-primary/30">
+        <select name="categoria_id" class="w-full sm:w-auto border border-slate-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-primary/30">
           <option value="">Todas</option>
           {% for cat in categorias %}
             <option value="{{ cat.id }}" {% if categoria_selecionada == cat.id %}selected{% endif %}>{{ cat.nome | e }}</option>
@@ -94,16 +94,16 @@
     </form>
 
     <!-- Tabela -->
-    <div class="bg-white rounded-2xl shadow-sm border border-slate-100 overflow-hidden">
+    <div class="bg-white rounded-2xl shadow-sm border border-slate-100 overflow-hidden overflow-x-auto">
       {% if produtos %}
         <table class="w-full text-sm">
           <thead class="bg-slate-50 border-b border-slate-100">
             <tr>
               <th class="text-left px-4 py-3 font-semibold text-slate-600">Nome</th>
-              <th class="text-left px-4 py-3 font-semibold text-slate-600">SKU</th>
+              <th class="text-left px-4 py-3 font-semibold text-slate-600 hidden sm:table-cell">SKU</th>
               <th class="text-left px-4 py-3 font-semibold text-slate-600">Tipo</th>
-              <th class="text-left px-4 py-3 font-semibold text-slate-600">Categoria</th>
-              <th class="text-right px-4 py-3 font-semibold text-slate-600">Custo Médio</th>
+              <th class="text-left px-4 py-3 font-semibold text-slate-600 hidden sm:table-cell">Categoria</th>
+              <th class="text-right px-4 py-3 font-semibold text-slate-600 hidden md:table-cell">Custo Médio</th>
               <th class="text-center px-4 py-3 font-semibold text-slate-600">Ações</th>
             </tr>
           </thead>
@@ -114,7 +114,7 @@
                   {{ p.nome | e }}
                   {% if p.is_perecivel %}<span class="ml-1 text-xs text-orange-500">⚠ Perecível</span>{% endif %}
                 </td>
-                <td class="px-4 py-3 text-slate-500">{{ p.sku | e if p.sku else '—' }}</td>
+                <td class="px-4 py-3 text-slate-500 hidden sm:table-cell">{{ p.sku | e if p.sku else '—' }}</td>
                 <td class="px-4 py-3">
                   <span class="inline-flex px-2 py-0.5 rounded-full text-xs font-medium
                     {% if p.tipo.value == 'RAW' %}bg-blue-50 text-blue-700
@@ -124,8 +124,8 @@
                     {{ p.tipo.value }}
                   </span>
                 </td>
-                <td class="px-4 py-3 text-slate-500">{{ p.categoria.nome | e if p.categoria else '—' }}</td>
-                <td class="px-4 py-3 text-right text-slate-700">R$ {{ '%.4f' | format(p.custo_medio | float) }}</td>
+                <td class="px-4 py-3 text-slate-500 hidden sm:table-cell">{{ p.categoria.nome | e if p.categoria else '—' }}</td>
+                <td class="px-4 py-3 text-right text-slate-700 hidden md:table-cell">R$ {{ '%.4f' | format(p.custo_medio | float) }}</td>
                 <td class="px-4 py-3">
                   <div class="flex items-center justify-center gap-2">
                     <a href="{{ url_for('estoque.editar_produto', produto_id=p.id) }}"
