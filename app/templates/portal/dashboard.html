@@ -193,6 +193,39 @@
         </p>
       </div>
 
+      <!-- Card: RH — Funcionários (visível para quem tem funcionarios.view) -->
+      {% if perms.funcionarios.view %}
+      <a href="{{ url_for('rh.listar_funcionarios') }}"
+         class="card bg-white rounded-2xl shadow-sm border border-slate-100 p-6
+                hover:shadow-md hover:border-primary/20 transition-all duration-200 group">
+        <div class="flex items-center gap-3 mb-4">
+          <div class="w-10 h-10 rounded-xl bg-primary-light
+                      flex items-center justify-center text-primary flex-shrink-0
+                      group-hover:bg-primary group-hover:text-white transition-colors">
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="none">
+              <path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2
+                       M9 11a4 4 0 1 0 0-8 4 4 0 0 0 0 8z
+                       M23 21v-2a4 4 0 0 0-3-3.87
+                       M16 3.13a4 4 0 0 1 0 7.75"
+                    stroke="currentColor" stroke-width="2"
+                    stroke-linecap="round" stroke-linejoin="round"/>
+            </svg>
+          </div>
+          <div>
+            <h2 class="font-bold text-slate-700 group-hover:text-primary transition-colors">
+              Funcionários
+            </h2>
+            <span class="text-xs font-medium text-teal-600 bg-teal-50 px-2 py-0.5 rounded-full">
+              RH
+            </span>
+          </div>
+        </div>
+        <p class="text-xs text-slate-400">
+          Cadastre, edite e gerencie os colaboradores da empresa.
+        </p>
+      </a>
+      {% endif %}
+
       <!-- Card: Ponto Eletrônico (em breve) -->
       <div class="card bg-white rounded-2xl shadow-sm border border-slate-100 p-6
                   opacity-60 cursor-not-allowed">
