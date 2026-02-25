@@ -4,6 +4,7 @@
   Portal do Colaborador — Dashboard
 -->
 <html lang="pt-BR">
+
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
@@ -17,13 +18,13 @@
           colors: {
             primary: {
               DEFAULT: '#0d9488',
-              light:   '#ccfbf1',
-              dark:    '#0f766e',
+              light: '#ccfbf1',
+              dark: '#0f766e',
             }
           },
           keyframes: {
             fadeIn: {
-              '0%':   { opacity: '0', transform: 'translateY(12px)' },
+              '0%': { opacity: '0', transform: 'translateY(12px)' },
               '100%': { opacity: '1', transform: 'translateY(0)' },
             },
           },
@@ -37,14 +38,34 @@
 
   <style>
     @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap');
-    body { font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif; }
 
-    .card:nth-child(1) { animation: fadeIn 0.4s 0.05s ease-out both; }
-    .card:nth-child(2) { animation: fadeIn 0.4s 0.15s ease-out both; }
-    .card:nth-child(3) { animation: fadeIn 0.4s 0.25s ease-out both; }
-    .card:nth-child(4) { animation: fadeIn 0.4s 0.35s ease-out both; }
-    .card:nth-child(5) { animation: fadeIn 0.4s 0.45s ease-out both; }
-    .card:nth-child(6) { animation: fadeIn 0.4s 0.55s ease-out both; }
+    body {
+      font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+    }
+
+    .card:nth-child(1) {
+      animation: fadeIn 0.4s 0.05s ease-out both;
+    }
+
+    .card:nth-child(2) {
+      animation: fadeIn 0.4s 0.15s ease-out both;
+    }
+
+    .card:nth-child(3) {
+      animation: fadeIn 0.4s 0.25s ease-out both;
+    }
+
+    .card:nth-child(4) {
+      animation: fadeIn 0.4s 0.35s ease-out both;
+    }
+
+    .card:nth-child(5) {
+      animation: fadeIn 0.4s 0.45s ease-out both;
+    }
+
+    .card:nth-child(6) {
+      animation: fadeIn 0.4s 0.55s ease-out both;
+    }
   </style>
 </head>
 
@@ -57,15 +78,14 @@
       <!-- Brand -->
       <div class="flex items-center gap-3">
         {% if company_logo %}
-          <img src="{{ company_logo | e }}" alt="{{ company_name | e }}"
-               class="h-8 w-auto object-contain" />
+        <img src="{{ company_logo | e }}" alt="{{ company_name | e }}" class="h-8 w-auto object-contain" />
         {% else %}
-          <div class="w-8 h-8 rounded-full bg-primary-light flex items-center justify-center text-primary">
-            <svg width="16" height="16" viewBox="0 0 24 24" fill="none">
-              <circle cx="12" cy="12" r="10" stroke="currentColor" stroke-width="1.5"/>
-              <path d="M12 8V12L15 15" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/>
-            </svg>
-          </div>
+        <div class="w-8 h-8 rounded-full bg-primary-light flex items-center justify-center text-primary">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none">
+            <circle cx="12" cy="12" r="10" stroke="currentColor" stroke-width="1.5" />
+            <path d="M12 8V12L15 15" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" />
+          </svg>
+        </div>
         {% endif %}
         <span class="font-bold text-slate-700 text-sm hidden sm:block">
           {{ company_name | e }}
@@ -79,16 +99,14 @@
           {{ funcionario.nome.split()[0] | e }}
         </span>
         <form method="POST" action="{{ url_for('portal.logout') }}">
-          <button type="submit"
-                  class="flex items-center gap-2 px-3 py-1.5 rounded-lg
+          <button type="submit" class="flex items-center gap-2 px-3 py-1.5 rounded-lg
                          text-sm font-medium text-slate-500
                          hover:bg-red-50 hover:text-red-600
                          transition-colors duration-150">
             <svg width="16" height="16" viewBox="0 0 24 24" fill="none">
               <path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4
-                       M16 17l5-5-5-5M21 12H9"
-                    stroke="currentColor" stroke-width="2"
-                    stroke-linecap="round" stroke-linejoin="round"/>
+                       M16 17l5-5-5-5M21 12H9" stroke="currentColor" stroke-width="2" stroke-linecap="round"
+                stroke-linejoin="round" />
             </svg>
             Sair
           </button>
@@ -121,9 +139,8 @@
                       flex items-center justify-center text-primary flex-shrink-0">
             <svg width="20" height="20" viewBox="0 0 24 24" fill="none">
               <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2
-                       M16 7a4 4 0 1 1-8 0 4 4 0 0 1 8 0z"
-                    stroke="currentColor" stroke-width="2"
-                    stroke-linecap="round" stroke-linejoin="round"/>
+                       M16 7a4 4 0 1 1-8 0 4 4 0 0 1 8 0z" stroke="currentColor" stroke-width="2"
+                stroke-linecap="round" stroke-linejoin="round" />
             </svg>
           </div>
           <h2 class="font-bold text-slate-700">Dados do Colaborador</h2>
@@ -173,8 +190,8 @@
           <div class="w-10 h-10 rounded-xl bg-primary-light
                       flex items-center justify-center text-primary flex-shrink-0">
             <svg width="20" height="20" viewBox="0 0 24 24" fill="none">
-              <circle cx="12" cy="12" r="10" stroke="currentColor" stroke-width="2"/>
-              <path d="M12 8V12L15 15" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
+              <circle cx="12" cy="12" r="10" stroke="currentColor" stroke-width="2" />
+              <path d="M12 8V12L15 15" stroke="currentColor" stroke-width="2" stroke-linecap="round" />
             </svg>
           </div>
           <h2 class="font-bold text-slate-700">Banco de Horas</h2>
@@ -196,8 +213,7 @@
 
       <!-- Card: RH — Funcionários (visível para quem tem funcionarios.view) -->
       {% if perms.funcionarios.view %}
-      <a href="{{ url_for('rh.listar_funcionarios') }}"
-         class="card bg-white rounded-2xl shadow-sm border border-slate-100 p-6
+      <a href="{{ url_for('rh.listar_funcionarios') }}" class="card bg-white rounded-2xl shadow-sm border border-slate-100 p-6
                 hover:shadow-md hover:border-primary/20 transition-all duration-200 group">
         <div class="flex items-center gap-3 mb-4">
           <div class="w-10 h-10 rounded-xl bg-primary-light
@@ -207,9 +223,8 @@
               <path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2
                        M9 11a4 4 0 1 0 0-8 4 4 0 0 0 0 8z
                        M23 21v-2a4 4 0 0 0-3-3.87
-                       M16 3.13a4 4 0 0 1 0 7.75"
-                    stroke="currentColor" stroke-width="2"
-                    stroke-linecap="round" stroke-linejoin="round"/>
+                       M16 3.13a4 4 0 0 1 0 7.75" stroke="currentColor" stroke-width="2" stroke-linecap="round"
+                stroke-linejoin="round" />
             </svg>
           </div>
           <div>
@@ -227,17 +242,41 @@
       </a>
       {% endif %}
 
-      <!-- Card: Ponto Eletrônico (em breve) -->
+      <!-- Card: Ponto Eletrônico -->
+      {% if perms.ponto.view %}
+      <a href="{{ url_for('ponto.historico') }}" class="card bg-white rounded-2xl shadow-sm border border-slate-100 p-6
+                hover:shadow-md hover:border-primary/20 transition-all duration-200 group">
+        <div class="flex items-center gap-3 mb-4">
+          <div class="w-10 h-10 rounded-xl bg-primary-light
+                      flex items-center justify-center text-primary flex-shrink-0
+                      group-hover:bg-primary group-hover:text-white transition-colors">
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="none">
+              <rect x="5" y="2" width="14" height="20" rx="2" stroke="currentColor" stroke-width="2" />
+              <path d="M12 11v5M12 7v.01" stroke="currentColor" stroke-width="2" stroke-linecap="round" />
+            </svg>
+          </div>
+          <div>
+            <h2 class="font-bold text-slate-700 group-hover:text-primary transition-colors">
+              Ponto Eletrônico
+            </h2>
+            <span class="text-xs font-medium text-teal-600 bg-teal-50 px-2 py-0.5 rounded-full">
+              RH
+            </span>
+          </div>
+        </div>
+        <p class="text-xs text-slate-400">
+          Visualize e confirme seus registros de entrada e saída.
+        </p>
+      </a>
+      {% else %}
       <div class="card bg-white rounded-2xl shadow-sm border border-slate-100 p-6
                   opacity-60 cursor-not-allowed">
         <div class="flex items-center gap-3 mb-4">
           <div class="w-10 h-10 rounded-xl bg-slate-100
                       flex items-center justify-center text-slate-400 flex-shrink-0">
             <svg width="20" height="20" viewBox="0 0 24 24" fill="none">
-              <rect x="5" y="2" width="14" height="20" rx="2"
-                    stroke="currentColor" stroke-width="2"/>
-              <path d="M12 11v5M12 7v.01"
-                    stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
+              <rect x="5" y="2" width="14" height="20" rx="2" stroke="currentColor" stroke-width="2" />
+              <path d="M12 11v5M12 7v.01" stroke="currentColor" stroke-width="2" stroke-linecap="round" />
             </svg>
           </div>
           <div>
@@ -250,6 +289,7 @@
           Visualize e confirme seus registros de entrada e saída.
         </p>
       </div>
+      {% endif %}
 
       <!-- Card: Holerite (em breve) -->
       <div class="card bg-white rounded-2xl shadow-sm border border-slate-100 p-6
@@ -258,12 +298,10 @@
           <div class="w-10 h-10 rounded-xl bg-slate-100
                       flex items-center justify-center text-slate-400 flex-shrink-0">
             <svg width="20" height="20" viewBox="0 0 24 24" fill="none">
-              <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"
-                    stroke="currentColor" stroke-width="2"
-                    stroke-linecap="round" stroke-linejoin="round"/>
-              <path d="M14 2v6h6M16 13H8M16 17H8M10 9H8"
-                    stroke="currentColor" stroke-width="2"
-                    stroke-linecap="round" stroke-linejoin="round"/>
+              <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z" stroke="currentColor"
+                stroke-width="2" stroke-linecap="round" stroke-linejoin="round" />
+              <path d="M14 2v6h6M16 13H8M16 17H8M10 9H8" stroke="currentColor" stroke-width="2" stroke-linecap="round"
+                stroke-linejoin="round" />
             </svg>
           </div>
           <div>
@@ -281,4 +319,5 @@
   </main>
 
 </body>
+
 </html>

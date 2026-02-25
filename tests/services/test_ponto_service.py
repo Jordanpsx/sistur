@@ -1,21 +1,25 @@
 # Copyright (c) 2026 Jordan Barbosa Machado — All Rights Reserved
 
 """
-Unit tests for PontoService.
+Testes unitários e de integração para PontoService.
 
-Tests are pure Python — no DB, no Flask app context — because
-calculate_daily_balance is a pure calculation with no side effects.
-
-editar_batida_admin tests are skipped (marked) until the TimeEntry
-SQLAlchemy model is created.
+Separados em duas classes:
+    TestApplyTolerance       — função pura (sem DB)
+    TestCalculateDailyBalance — função pura (sem DB)
+    TestRegistrarBatida      — mutação com DB (usa fixture app/db do conftest)
+    TestProcessarDia         — mutação com DB
+    TestEditarBatidaAdmin    — mutação com DB (anteriormente stub)
 """
 
 from __future__ import annotations
 
-from datetime import datetime, timezone
+from datetime import datetime, timedelta, timezone
 
 import pytest
 
+from app.core.models import AuditAction, AuditLog
+from app.models.funcionario import Funcionario
+from app.models.ponto import ProcessingStatus, TimeDay, TimeEntry
 from app.services.ponto_service import PontoService, _apply_tolerance
 
 
@@ -24,63 +28,64 @@ from app.services.ponto_service import PontoService, _apply_tolerance
 # ---------------------------------------------------------------------------
 
 def _punch(hour: int, minute: int = 0) -> dict:
-    """Build a punch dict for a fixed day (2026-01-15)."""
+    """Constrói um dict de batida para o dia fixo 2026-01-15."""
     return {"time": datetime(2026, 1, 15, hour, minute, tzinfo=timezone.utc)}
 
 
+def _criar_funcionario(db) -> Funcionario:
+    """Cria e persiste um funcionário de teste."""
+    f = Funcionario(
+        nome="Colaborador Teste",
+        cpf="52998224725",
+        minutos_esperados_dia=480,
+        minutos_almoco=60,
+        ativo=True,
+    )
+    db.session.add(f)
+    db.session.commit()
+    return f
+
+
 # ---------------------------------------------------------------------------
-# _apply_tolerance (unit)
+# _apply_tolerance (puro — sem DB)
 # ---------------------------------------------------------------------------
 
 class TestApplyTolerance:
-    def test_overtime_unchanged(self):
+    def test_hora_extra_inalterada(self):
         assert _apply_tolerance(30, 10) == 30
 
-    def test_exact_zero_unchanged(self):
+    def test_zero_inalterado(self):
         assert _apply_tolerance(0, 10) == 0
 
-    def test_small_delay_forgiven(self):
-        # -8 min delay, tolerance 10 → forgiven to 0
+    def test_atraso_pequeno_perdoado(self):
         assert _apply_tolerance(-8, 10) == 0
 
-    def test_tolerance_boundary_forgiven(self):
-        # exactly -10 min → forgiven
+    def test_limite_da_tolerancia_perdoado(self):
         assert _apply_tolerance(-10, 10) == 0
 
-    def test_large_delay_only_excess_penalised(self):
-        # -25 min delay, tolerance 10 → only -15 charged
+    def test_atraso_grande_apenas_excesso_penalizado(self):
         assert _apply_tolerance(-25, 10) == -15
 
-    def test_one_over_tolerance(self):
-        # -11 min → -1 charged
+    def test_um_acima_da_tolerancia(self):
         assert _apply_tolerance(-11, 10) == -1
 
 
 # ---------------------------------------------------------------------------
-# calculate_daily_balance
+# calculate_daily_balance (puro — sem DB)
 # ---------------------------------------------------------------------------
 
 class TestCalculateDailyBalance:
 
     def test_saldo_par_normal_zero(self):
-        """
-        4 punches: 08:00 in, 12:00 lunch out, 13:00 lunch in, 17:00 out.
-        Worked = 4h + 4h = 8h (480 min), minus 60 min lunch = 420 min.
-        Expected = 420 → saldo = 0.
-        """
-        punches = [
-            _punch(8, 0),
-            _punch(12, 0),
-            _punch(13, 0),
-            _punch(17, 0),
-        ]
+        """4 batidas normais → saldo 0."""
+        punches = [_punch(8, 0), _punch(12, 0), _punch(13, 0), _punch(17, 0)]
         result = PontoService.calculate_daily_balance(punches, expected_minutes=420, almoco_minutes=60)
         assert result["minutos_trabalhados"] == 420
         assert result["saldo_calculado_minutos"] == 0
         assert result["needs_review"] is False
 
     def test_saldo_impar_congela(self):
-        """Rule #5: 3 punches → needs_review=True, balance frozen."""
+        """Rule #5: 3 batidas → needs_review=True, saldo congelado."""
         punches = [_punch(8), _punch(12), _punch(13)]
         result = PontoService.calculate_daily_balance(punches, expected_minutes=480)
         assert result["needs_review"] is True
@@ -88,84 +93,167 @@ class TestCalculateDailyBalance:
         assert result["minutos_trabalhados"] == 0
 
     def test_saldo_um_punch_congela(self):
-        """1 punch is also odd → needs_review=True."""
+        """1 batida também é ímpar → needs_review=True."""
         result = PontoService.calculate_daily_balance([_punch(8)], expected_minutes=480)
         assert result["needs_review"] is True
 
     def test_tolerancia_pequeno_atraso(self):
-        """
-        2 punches: 08:08 in, 17:00 out.
-        Worked = 532 min (no lunch deduction — only 2 punches).
-        Expected = 540 → saldo_bruto = -8 → within tolerance → 0.
-        """
+        """8 min de atraso com 2 batidas → dentro da tolerância → saldo 0."""
         punches = [_punch(8, 8), _punch(17, 0)]
         result = PontoService.calculate_daily_balance(punches, expected_minutes=540)
         assert result["saldo_calculado_minutos"] == 0
         assert result["needs_review"] is False
 
     def test_tolerancia_grande_atraso(self):
-        """
-        2 punches: 08:25 in, 17:00 out.
-        Worked = 515 min, expected 540 → saldo_bruto = -25 → penalise -15.
-        """
+        """25 min de atraso → apenas -15 penalizado."""
         punches = [_punch(8, 25), _punch(17, 0)]
         result = PontoService.calculate_daily_balance(punches, expected_minutes=540)
         assert result["saldo_calculado_minutos"] == -15
 
     def test_hora_extra_nao_afetada(self):
-        """
-        2 punches: 08:00 in, 18:00 out.
-        Worked = 600 min, expected 540 → saldo = +60 (no tolerance applied).
-        """
+        """Horas extras não sofrem tolerância."""
         punches = [_punch(8, 0), _punch(18, 0)]
         result = PontoService.calculate_daily_balance(punches, expected_minutes=540)
         assert result["saldo_calculado_minutos"] == 60
 
     def test_zero_punches_returns_review(self):
-        """0 is even — balance is 0 but no punches means nothing worked."""
+        """0 é par — sem batidas o saldo fica negativo."""
         result = PontoService.calculate_daily_balance([], expected_minutes=480)
         assert result["needs_review"] is False
         assert result["minutos_trabalhados"] == 0
         assert result["saldo_calculado_minutos"] == _apply_tolerance(-480, 10)
 
     def test_quatro_batidas_desconta_almoco(self):
-        """
-        With 4 punches, lunch deduction must be applied.
-        08:00–12:00 + 13:00–17:00 = 480 min − 60 almoco = 420 min worked.
-        Expected 420 → saldo = 0.
-        """
+        """Com 4 batidas, o almoço deve ser descontado."""
         punches = [_punch(8), _punch(12), _punch(13), _punch(17)]
         result = PontoService.calculate_daily_balance(punches, expected_minutes=420, almoco_minutes=60)
         assert result["minutos_trabalhados"] == 420
 
     def test_duas_batidas_nao_desconta_almoco(self):
-        """
-        With only 2 punches, lunch deduction must NOT be applied.
-        08:00–17:00 = 540 min worked (no deduction).
-        """
+        """Com apenas 2 batidas, o almoço NÃO deve ser descontado."""
         punches = [_punch(8), _punch(17)]
         result = PontoService.calculate_daily_balance(punches, expected_minutes=480)
         assert result["minutos_trabalhados"] == 540
 
 
 # ---------------------------------------------------------------------------
-# editar_batida_admin (stub)
+# registrar_batida (com DB)
+# ---------------------------------------------------------------------------
+
+class TestRegistrarBatida:
+
+    def test_registra_batida_e_cria_time_entry(self, app, db):
+        """Happy path: registrar_batida cria uma TimeEntry no banco."""
+        with app.app_context():
+            f = _criar_funcionario(db)
+            entry = PontoService.registrar_batida(
+                funcionario_id=f.id,
+                punch_time=datetime(2026, 1, 15, 8, 0, tzinfo=timezone.utc),
+                source="employee",
+                ator_id=f.id,
+            )
+            assert entry.id is not None
+            assert entry.funcionario_id == f.id
+            assert entry.processing_status == ProcessingStatus.PROCESSADO
+
+    def test_registrar_batida_gera_audit(self, app, db):
+        """Cada batida deve gerar exatamente um AuditLog com action=create."""
+        with app.app_context():
+            f = _criar_funcionario(db)
+            entry = PontoService.registrar_batida(
+                funcionario_id=f.id,
+                punch_time=datetime(2026, 1, 15, 8, 0, tzinfo=timezone.utc),
+                ator_id=f.id,
+            )
+            count = (
+                db.session.query(AuditLog)
+                .filter_by(action=AuditAction.create, entity_id=entry.id, module="ponto")
+                .count()
+            )
+            assert count == 1
+
+    def test_registrar_batida_cria_time_day(self, app, db):
+        """Após registrar batida, um TimeDay deve ser criado ou atualizado."""
+        with app.app_context():
+            f = _criar_funcionario(db)
+            punch_time = datetime(2026, 1, 15, 8, 0, tzinfo=timezone.utc)
+            PontoService.registrar_batida(
+                funcionario_id=f.id,
+                punch_time=punch_time,
+                ator_id=f.id,
+            )
+            day = (
+                db.session.query(TimeDay)
+                .filter_by(funcionario_id=f.id, shift_date=punch_time.date())
+                .first()
+            )
+            assert day is not None
+            assert day.needs_review is True  # 1 batida é ímpar
+
+    def test_duplicata_levanta_value_error(self, app, db):
+        """Batida duplicada em menos de 5 segundos deve levantar ValueError."""
+        with app.app_context():
+            f = _criar_funcionario(db)
+            t = datetime(2026, 1, 15, 8, 0, tzinfo=timezone.utc)
+            PontoService.registrar_batida(funcionario_id=f.id, punch_time=t, ator_id=f.id)
+            t2 = t + timedelta(seconds=2)
+            with pytest.raises(ValueError, match="duplicada"):
+                PontoService.registrar_batida(funcionario_id=f.id, punch_time=t2, ator_id=f.id)
+
+    def test_funcionario_inexistente_levanta_value_error(self, app, db):
+        """Funcionário não encontrado deve levantar ValueError."""
+        with app.app_context():
+            with pytest.raises(ValueError, match="não encontrado"):
+                PontoService.registrar_batida(funcionario_id=9999, ator_id=1)
+
+
+# ---------------------------------------------------------------------------
+# processar_dia (com DB)
+# ---------------------------------------------------------------------------
+
+class TestProcessarDia:
+
+    def test_par_de_batidas_gera_saldo_correto(self, app, db):
+        """2 batidas (08:00–17:00) → 540 min, esperado 480 → saldo +60."""
+        with app.app_context():
+            f = _criar_funcionario(db)
+            shift_date = datetime(2026, 1, 15, tzinfo=timezone.utc).date()
+            for h in [8, 17]:
+                PontoService.registrar_batida(
+                    funcionario_id=f.id,
+                    punch_time=datetime(2026, 1, 15, h, 0, tzinfo=timezone.utc),
+                    ator_id=f.id,
+                )
+            day = (
+                db.session.query(TimeDay)
+                .filter_by(funcionario_id=f.id, shift_date=shift_date)
+                .first()
+            )
+            assert day is not None
+            assert day.needs_review is False
+            assert day.saldo_calculado_minutos == 60   # +1h extra
+
+    def test_batida_impar_seta_needs_review(self, app, db):
+        """1 batida (ímpar) → needs_review=True."""
+        with app.app_context():
+            f = _criar_funcionario(db)
+            PontoService.registrar_batida(
+                funcionario_id=f.id,
+                punch_time=datetime(2026, 1, 15, 8, 0, tzinfo=timezone.utc),
+                ator_id=f.id,
+            )
+            day = db.session.query(TimeDay).filter_by(funcionario_id=f.id).first()
+            assert day.needs_review is True
+
+
+# ---------------------------------------------------------------------------
+# editar_batida_admin (com DB)
 # ---------------------------------------------------------------------------
 
 class TestEditarBatidaAdmin:
 
-    @pytest.mark.skip(reason="TimeEntry model not yet created")
-    def test_editar_batida_gera_audit(self, app, db):
-        """
-        When TimeEntry model is created, this test must assert:
-        - Entry's punch_time is updated
-        - Exactly one AuditLog row is created for the edit
-        - AuditLog contains previous and new punch_time
-        """
-        pass
-
     def test_motivo_vazio_levanta_value_error(self):
-        """editar_batida_admin must reject empty motivo before hitting the DB."""
+        """motivo vazio deve levantar ValueError antes de acessar o banco."""
         with pytest.raises(ValueError, match="motivo"):
             PontoService.editar_batida_admin(
                 time_entry_id=1,
@@ -174,12 +262,58 @@ class TestEditarBatidaAdmin:
                 ator_id=1,
             )
 
-    def test_sem_model_levanta_not_implemented(self):
-        """Until TimeEntry model exists, must raise NotImplementedError."""
-        with pytest.raises(NotImplementedError):
-            PontoService.editar_batida_admin(
-                time_entry_id=1,
-                novo_horario=datetime(2026, 1, 15, 9, 0),
-                motivo="Correção de horário",
-                ator_id=1,
+    def test_editar_batida_gera_audit(self, app, db):
+        """Editar uma batida deve gerar exatamente um AuditLog com action=update."""
+        with app.app_context():
+            f = _criar_funcionario(db)
+            entry = PontoService.registrar_batida(
+                funcionario_id=f.id,
+                punch_time=datetime(2026, 1, 15, 8, 0, tzinfo=timezone.utc),
+                ator_id=f.id,
             )
+            novo_horario = datetime(2026, 1, 15, 8, 30, tzinfo=timezone.utc)
+            PontoService.editar_batida_admin(
+                time_entry_id=entry.id,
+                novo_horario=novo_horario,
+                motivo="Correção de horário de entrada",
+                ator_id=f.id,
+            )
+            count = (
+                db.session.query(AuditLog)
+                .filter_by(action=AuditAction.update, entity_id=entry.id, module="ponto")
+                .count()
+            )
+            assert count == 1
+
+    def test_editar_batida_atualiza_punch_time(self, app, db):
+        """O punch_time da batida deve ser atualizado para o novo horário."""
+        with app.app_context():
+            f = _criar_funcionario(db)
+            entry = PontoService.registrar_batida(
+                funcionario_id=f.id,
+                punch_time=datetime(2026, 1, 15, 8, 0, tzinfo=timezone.utc),
+                ator_id=f.id,
+            )
+            novo_horario = datetime(2026, 1, 15, 9, 0, tzinfo=timezone.utc)
+            PontoService.editar_batida_admin(
+                time_entry_id=entry.id,
+                novo_horario=novo_horario,
+                motivo="Teste de edição",
+                ator_id=f.id,
+            )
+            db.session.expire(entry)
+            updated = db.session.get(TimeEntry, entry.id)
+            # SQLite retorna datetimes sem tzinfo; comparamos apenas o valor ingênuo
+            assert updated.punch_time.replace(tzinfo=None) == novo_horario.replace(tzinfo=None)
+            assert updated.admin_change_reason == "Teste de edição"
+
+    def test_batida_inexistente_levanta_value_error(self, app, db):
+        """Batida não encontrada deve levantar ValueError."""
+        with app.app_context():
+            with pytest.raises(ValueError, match="não encontrada"):
+                PontoService.editar_batida_admin(
+                    time_entry_id=9999,
+                    novo_horario=datetime(2026, 1, 15, 9, 0),
+                    motivo="Motivo qualquer",
+                    ator_id=1,
+                )

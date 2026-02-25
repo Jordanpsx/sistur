@@ -125,11 +125,46 @@ Employee dashboard page.
 
 ---
 
-## Module: Ponto Eletrônico (planned — `/ponto`)
+## Module: Ponto Eletrônico (`/ponto`)
 
-> Not yet implemented. Reference: `legacy/mu-plugins/externo/ponto.py`
+### `GET /ponto/`
 
-| Method | Path | Description |
+Exibe o histórico mensal de batidas do colaborador autenticado.
+
+**Auth required:** Yes → redirects to `/portal/login`
+**Query params:**
+
+| Param | Type | Default | Description |
+|---|---|---|---|
+| `mes` | int | mês corrente | Mês a exibir (1–12) |
+| `ano` | int | ano corrente | Ano a exibir |
+
+**Response:** `200 text/html` — `ponto/index.html`
+
+**Template variables:** `funcionario`, `days` (list[TimeDay]), `entries_by_day` (dict), `mes`, `ano`, `hoje`
+
+---
+
+### `POST /ponto/registrar`
+
+Registra uma nova batida de ponto para o colaborador autenticado.
+
+**Auth required:** Yes
+**Content-Type:** `application/x-www-form-urlencoded`
+
+**Request body:**
+
+| Field | Type | Required | Description |
+|---|---|---|---|
+| `punch_time` | string (ISO 8601) | No | Timestamp local do cliente. Se ausente, usa o servidor. |
+
+**Success response:** `302` → `GET /ponto/`
+
+**Error responses:**
+
+| Scenario | Flash category | Message |
 |---|---|---|
-| `POST` | `/ponto/registrar` | Register a clock-in/out via QR token |
-| `GET` | `/ponto/historico/<funcionario_id>` | Time entries for a period |
+| Batida duplicada (< 5s) | `erro` | "Batida duplicada detectada. Aguarde N segundos…" |
+| Funcionário inativo | `erro` | "Funcionário X não encontrado ou inativo." |
+
+**Audit:** `AuditLog(action=create, module='ponto', entity_id=TimeEntry.id)`
