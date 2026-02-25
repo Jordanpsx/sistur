@@ -1,9 +1,12 @@
 # Copyright (c) 2026 Jordan Barbosa Machado — All Rights Reserved
 
 from flask import Flask, redirect, url_for
+from flask_migrate import Migrate
 
 from app.config import config
 from app.extensions import db
+
+migrate = Migrate()
 
 
 def create_app(config_name: str = "default") -> Flask:
@@ -18,6 +21,7 @@ def create_app(config_name: str = "default") -> Flask:
 
     # Extensions
     db.init_app(app)
+    migrate.init_app(app, db)
 
     # Branding context processor — makes {{ company_name }} and {{ company_logo }}
     # available in every Jinja2 template without manual passing.
