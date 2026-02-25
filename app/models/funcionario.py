@@ -130,6 +130,14 @@ class Funcionario(db.Model):
         index=True,
     )
 
+    # Role que define as permissões de acesso ao portal (nullable = sem role atribuído)
+    role_id = db.Column(
+        db.Integer,
+        db.ForeignKey("sistur_roles.id", ondelete="SET NULL"),
+        nullable=True,
+        index=True,
+    )
+
     # ------------------------------------------------------------------
     # State & timestamps
     # ------------------------------------------------------------------
@@ -150,6 +158,7 @@ class Funcionario(db.Model):
     # Relationships
     # ------------------------------------------------------------------
     area = db.relationship("Area", foreign_keys=[area_id], lazy="select")
+    role = db.relationship("Role", foreign_keys=[role_id], back_populates="funcionarios", lazy="select")
 
     # ------------------------------------------------------------------
     # Business logic

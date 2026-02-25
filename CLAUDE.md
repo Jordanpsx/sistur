@@ -218,6 +218,54 @@ docs/
 - **SQLAlchemy models** for all DB access — no raw SQL unless absolutely necessary
 - **Naming:** Use Portuguese names for business entities (`funcionario`, `banco_horas`, `ponto`, `estoque`)
 - **Security:** Validate all input at the boundary, use parameterized queries, sanitize output
+- **Docstrings:** Every function and method must have a Google-style docstring in **Portuguese (pt-BR)**
+
+### Docstring Standard (Google-style, pt-BR)
+
+Every function and method — in services, blueprints, models, and utilities — **must** have a docstring.
+Use Google-style format. Write in Portuguese. Document intent, not implementation.
+
+**Template obrigatório para serviços:**
+```python
+def criar(cls, nome: str, cpf: str, ator_id: int | None = None) -> Funcionario:
+    """Cria um novo funcionário e registra o evento no log de auditoria.
+
+    Args:
+        nome: Nome completo do funcionário.
+        cpf: CPF no formato somente dígitos (11 caracteres).
+        ator_id: ID do usuário que está realizando a ação. None em operações de sistema.
+
+    Returns:
+        Instância de Funcionario persistida no banco de dados.
+
+    Raises:
+        ValueError: Se o CPF for inválido ou já estiver cadastrado.
+    """
+```
+
+**Template para rotas (blueprints):**
+```python
+@bp.route("/funcionarios", methods=["POST"])
+@login_required
+def criar_funcionario():
+    """Recebe o formulário de cadastro e delega criação ao FuncionarioService.
+
+    Form fields:
+        nome (str): Nome completo.
+        cpf (str): CPF somente dígitos.
+
+    Returns:
+        Redirect para a listagem em caso de sucesso, ou renderiza o
+        formulário com mensagem de erro (HTTP 400) em caso de falha.
+    """
+```
+
+**Regras:**
+1. Docstrings em **português (pt-BR)** — idioma do domínio de negócio do projeto
+2. A primeira linha é um resumo conciso da responsabilidade (imperativo, sem ponto final)
+3. Seções `Args:`, `Returns:` e `Raises:` são **obrigatórias** quando aplicáveis
+4. Não documente o óbvio — documente regras de negócio, restrições e comportamentos não triviais
+5. Métodos privados (prefixo `_`) também precisam de docstring se a lógica não for autoexplicativa
 
 ### Port priority order (reference)
 Follow the dependency order from the legacy system:

@@ -18,6 +18,7 @@ import functools
 from flask import Blueprint, abort, flash, redirect, render_template, request, session, url_for
 
 from app.core.audit import AuditService
+from app.core.permissions import has_permission
 from app.extensions import db
 from app.models.funcionario import Funcionario, validar_cpf
 
@@ -110,14 +111,32 @@ def login():
 @login_required
 def dashboard():
     """
-    Employee dashboard.
+    Painel principal do colaborador.
 
-    Returns the authenticated employee's basic data and current
-    Banco de Horas balance.  The balance is a stub (0) until the
-    BancoDeHoras module is fully ported.
+    Passa ao template um dicionário 'perms' com as permissões do funcionário
+    logado, permitindo que o template exiba ou oculte seções dinamicamente.
+    Funcionários sem role atribuído recebem perms vazias (somente dashboard).
+
+    Returns:
+        Renderização de portal/dashboard.html com o funcionário autenticado
+        e seu mapa de permissões por módulo.
     """
     funcionario = _get_funcionario_sessao()
-    return render_template("portal/dashboard.html", funcionario=funcionario)
+    fid = funcionario.id
+
+    perms = {
+        "dashboard": {
+            "view": has_permission(fid, "dashboard", "view"),
+        },
+        "funcionarios": {
+            "view":      has_permission(fid, "funcionarios", "view"),
+            "create":    has_permission(fid, "funcionarios", "create"),
+            "edit":      has_permission(fid, "funcionarios", "edit"),
+            "desativar": has_permission(fid, "funcionarios", "desativar"),
+        },
+    }
+
+    return render_template("portal/dashboard.html", funcionario=funcionario, perms=perms)
 
 
 # ---------------------------------------------------------------------------

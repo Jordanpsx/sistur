@@ -126,3 +126,52 @@ pytest --tb=short
 
 Every new route must be added to `docs/api_catalog.md` before the PR is merged.
 Module-specific business rules go in `docs/<module>/README.md`.
+
+---
+
+## Rule #8 — Mandatory Docstrings on Every Function
+
+Every function and method in the codebase **must** have a Google-style docstring written in **Portuguese (pt-BR)**.
+This is non-negotiable — undocumented functions will not be accepted in `develop`.
+
+**Why this matters:**
+The services layer will be compiled via Cython. Docstrings are the only human-readable
+documentation that survives compilation and describes business rules to future maintainers.
+
+**Required sections (when applicable):**
+
+| Section | When to include |
+|---|---|
+| Summary line | Always — one line, imperative mood, no period |
+| `Args:` | Whenever the function has parameters |
+| `Returns:` | Whenever the function returns a non-`None` value |
+| `Raises:` | Whenever the function raises an exception intentionally |
+
+**Minimal example — service method:**
+```python
+def calcular_saldo_dia(cls, funcionario_id: int, data: date) -> int:
+    """Calcula o saldo de horas trabalhadas em um dia, em minutos.
+
+    Considera tolerância de 5 minutos para entrada e saída conforme
+    as regras da CLT e a configuração do departamento do funcionário.
+
+    Args:
+        funcionario_id: ID do funcionário no banco de dados.
+        data: Data a ser calculada.
+
+    Returns:
+        Saldo em minutos. Positivo = horas extras. Negativo = débito.
+
+    Raises:
+        ValueError: Se o funcionário não for encontrado.
+        ValueError: Se não houver registro de ponto para a data informada.
+    """
+```
+
+**Rules:**
+1. Docstrings em **português (pt-BR)** — idioma do domínio de negócio
+2. Primeira linha: resumo da responsabilidade (verbo no imperativo, sem ponto final)
+3. `Args:`, `Returns:`, `Raises:` são obrigatórios quando aplicáveis
+4. Documente regras de negócio e restrições, não a implementação óbvia
+5. Métodos privados (`_prefixo`) também exigem docstring se a lógica não for trivial
+6. Rotas de blueprint devem documentar os campos do formulário ou parâmetros de URL

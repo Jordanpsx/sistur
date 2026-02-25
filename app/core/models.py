@@ -167,7 +167,8 @@ class AuditLog(db.Model):
     """
     __tablename__ = "sistur_audit_logs"
 
-    id = db.Column(db.BigInteger, primary_key=True)
+    # BigInteger no MySQL/MariaDB; Integer no SQLite (autoincrement exige INTEGER no SQLite)
+    id = db.Column(db.BigInteger().with_variant(db.Integer, "sqlite"), primary_key=True)
     # No FK — user_id is polymorphic: holds a sistur_users.id OR sistur_funcionarios.id
     # Disambiguated by user_type field below.
     user_id = db.Column(db.Integer, nullable=True, index=True)

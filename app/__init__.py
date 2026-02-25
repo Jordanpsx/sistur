@@ -37,6 +37,7 @@ def create_app(config_name: str = "default") -> Flask:
     with app.app_context():
         from app.core import models  # noqa: F401
         from app.models import funcionario  # noqa: F401
+        from app.models import role  # noqa: F401
 
     # Blueprints
     from app.blueprints.portal.routes import bp as portal_bp
