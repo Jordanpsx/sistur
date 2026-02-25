@@ -115,10 +115,15 @@ class Funcionario(db.Model):
     # ------------------------------------------------------------------
     minutos_esperados_dia = db.Column(
         db.SmallInteger, default=480, nullable=False
-    )  # 8 h × 60 = 480 min
+    )  # fallback global (8 h × 60 = 480 min)
     minutos_almoco = db.Column(
         db.SmallInteger, default=60, nullable=False
-    )  # 1 h lunch
+    )  # fallback global lunch (1 h)
+
+    # Jornada semanal por dia — sobrepõe os campos globais acima quando presente.
+    # Formato: {"segunda": {"ativo": true, "minutos": 480, "almoco": 60}, ...}
+    # Dias sem entrada assumem {"ativo": false}.
+    jornada_semanal = db.Column(db.JSON, nullable=True)
 
     # ------------------------------------------------------------------
     # Organisation
@@ -126,6 +131,14 @@ class Funcionario(db.Model):
     area_id = db.Column(
         db.Integer,
         db.ForeignKey("sistur_areas.id", ondelete="SET NULL"),
+        nullable=True,
+        index=True,
+    )
+
+    # Role que define as permissões de acesso ao portal (nullable = sem role atribuído)
+    role_id = db.Column(
+        db.Integer,
+        db.ForeignKey("sistur_roles.id", ondelete="SET NULL"),
         nullable=True,
         index=True,
     )
@@ -150,6 +163,7 @@ class Funcionario(db.Model):
     # Relationships
     # ------------------------------------------------------------------
     area = db.relationship("Area", foreign_keys=[area_id], lazy="select")
+    role = db.relationship("Role", foreign_keys=[role_id], back_populates="funcionarios", lazy="select")
 
     # ------------------------------------------------------------------
     # Business logic

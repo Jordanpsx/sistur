@@ -1,0 +1,215 @@
+<!DOCTYPE html>
+<!--
+  Copyright (c) 2026 Jordan Barbosa Machado — All Rights Reserved
+  RH — Lista de Funcionários
+-->
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>{{ company_name }} | Funcionários</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script>
+    tailwind.config = {
+      theme: {
+        extend: {
+          colors: {
+            primary: { DEFAULT: '#0d9488', light: '#ccfbf1', dark: '#0f766e' }
+          }
+        }
+      }
+    }
+  </script>
+  <style>
+    @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap');
+    body { font-family: 'Inter', sans-serif; }
+  </style>
+</head>
+<body class="min-h-screen bg-gradient-to-br from-teal-50 via-sky-50 to-slate-100">
+
+  <!-- Top bar -->
+  <header class="bg-white/80 backdrop-blur border-b border-slate-100 sticky top-0 z-10">
+    <div class="max-w-6xl mx-auto px-4 sm:px-6 h-16 flex items-center justify-between gap-4">
+      <div class="flex items-center gap-3">
+        {% if company_logo %}
+          <img src="{{ company_logo | e }}" alt="{{ company_name | e }}" class="h-8 w-auto object-contain" />
+        {% endif %}
+        <span class="font-bold text-slate-700 text-sm hidden sm:block">
+          {{ company_name | e }}
+          <span class="text-slate-400 font-normal">| RH</span>
+        </span>
+      </div>
+      <nav class="flex items-center gap-3">
+        <a href="{{ url_for('portal.dashboard') }}"
+           class="text-sm text-slate-500 hover:text-primary transition-colors">
+          ← Dashboard
+        </a>
+        <form method="POST" action="{{ url_for('portal.logout') }}">
+          <button type="submit"
+                  class="flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-sm font-medium
+                         text-slate-500 hover:bg-red-50 hover:text-red-600 transition-colors">
+            Sair
+          </button>
+        </form>
+      </nav>
+    </div>
+  </header>
+
+  <main class="max-w-6xl mx-auto px-4 sm:px-6 py-8">
+
+    <!-- Cabeçalho da página -->
+    <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 mb-6">
+      <div>
+        <h1 class="text-2xl font-extrabold text-slate-800">Funcionários</h1>
+        <p class="text-slate-500 text-sm mt-0.5">
+          {{ funcionarios | length }} funcionário{{ 's' if funcionarios | length != 1 else '' }} ativo{{ 's' if funcionarios | length != 1 else '' }}
+        </p>
+      </div>
+      <a href="{{ url_for('rh.novo_funcionario') }}"
+         class="inline-flex items-center gap-2 px-4 py-2.5 rounded-xl
+                bg-primary text-white text-sm font-semibold
+                hover:bg-primary-dark transition-colors shadow-sm">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none">
+          <path d="M12 5v14M5 12h14" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"/>
+        </svg>
+        Novo Funcionário
+      </a>
+    </div>
+
+    <!-- Flash messages -->
+    {% with messages = get_flashed_messages(with_categories=true) %}
+      {% for category, message in messages %}
+        <div class="mb-4 px-4 py-3 rounded-xl text-sm font-medium
+          {% if category == 'sucesso' %}bg-teal-50 text-teal-700 border border-teal-200
+          {% elif category == 'erro' %}bg-red-50 text-red-700 border border-red-200
+          {% else %}bg-amber-50 text-amber-700 border border-amber-200{% endif %}">
+          {{ message | e }}
+        </div>
+      {% endfor %}
+    {% endwith %}
+
+    <!-- Busca -->
+    <form method="GET" action="{{ url_for('rh.listar_funcionarios') }}" class="mb-5">
+      <div class="flex gap-2">
+        <input type="text" name="q" value="{{ q | e }}"
+               placeholder="Buscar por nome ou CPF…"
+               class="flex-1 px-4 py-2.5 rounded-xl border border-slate-200 bg-white
+                      text-sm text-slate-700 placeholder-slate-400
+                      focus:outline-none focus:ring-2 focus:ring-primary/30 focus:border-primary" />
+        <button type="submit"
+                class="px-4 py-2.5 rounded-xl bg-white border border-slate-200 text-sm
+                       text-slate-600 hover:bg-slate-50 transition-colors">
+          Buscar
+        </button>
+        {% if q %}
+          <a href="{{ url_for('rh.listar_funcionarios') }}"
+             class="px-4 py-2.5 rounded-xl bg-white border border-slate-200 text-sm
+                    text-slate-400 hover:bg-slate-50 transition-colors">
+            Limpar
+          </a>
+        {% endif %}
+      </div>
+    </form>
+
+    <!-- Tabela -->
+    <div class="bg-white rounded-2xl shadow-sm border border-slate-100 overflow-hidden">
+      {% if funcionarios %}
+        <table class="w-full text-sm">
+          <thead>
+            <tr class="border-b border-slate-100 bg-slate-50/60">
+              <th class="px-5 py-3.5 text-left text-xs font-semibold uppercase tracking-widest text-slate-400">Nome</th>
+              <th class="px-5 py-3.5 text-left text-xs font-semibold uppercase tracking-widest text-slate-400 hidden sm:table-cell">CPF</th>
+              <th class="px-5 py-3.5 text-left text-xs font-semibold uppercase tracking-widest text-slate-400 hidden md:table-cell">Cargo</th>
+              <th class="px-5 py-3.5 text-left text-xs font-semibold uppercase tracking-widest text-slate-400 hidden lg:table-cell">Área</th>
+              <th class="px-5 py-3.5 text-left text-xs font-semibold uppercase tracking-widest text-slate-400 hidden lg:table-cell">Role</th>
+              <th class="px-5 py-3.5 text-right text-xs font-semibold uppercase tracking-widest text-slate-400">Ações</th>
+            </tr>
+          </thead>
+          <tbody class="divide-y divide-slate-50">
+            {% for f in funcionarios %}
+              <tr class="hover:bg-slate-50/50 transition-colors">
+
+                <!-- Nome -->
+                <td class="px-5 py-4">
+                  <div class="font-medium text-slate-700">{{ f.nome | e }}</div>
+                  {% if f.matricula %}
+                    <div class="text-xs text-slate-400 mt-0.5">Mat. {{ f.matricula | e }}</div>
+                  {% endif %}
+                </td>
+
+                <!-- CPF -->
+                <td class="px-5 py-4 font-mono text-slate-500 hidden sm:table-cell">
+                  {{ f.cpf_formatado() }}
+                </td>
+
+                <!-- Cargo -->
+                <td class="px-5 py-4 text-slate-600 hidden md:table-cell">
+                  {{ f.cargo or '—' | e }}
+                </td>
+
+                <!-- Área -->
+                <td class="px-5 py-4 text-slate-600 hidden lg:table-cell">
+                  {{ f.area.name if f.area else '—' }}
+                </td>
+
+                <!-- Role -->
+                <td class="px-5 py-4 hidden lg:table-cell">
+                  {% if f.role %}
+                    <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium
+                                 {% if f.role.is_super_admin %}bg-violet-50 text-violet-700
+                                 {% else %}bg-teal-50 text-teal-700{% endif %}">
+                      {{ f.role.nome | e }}
+                    </span>
+                  {% else %}
+                    <span class="text-slate-400 text-xs">—</span>
+                  {% endif %}
+                </td>
+
+                <!-- Ações -->
+                <td class="px-5 py-4">
+                  <div class="flex items-center justify-end gap-2">
+                    <a href="{{ url_for('rh.editar_funcionario', funcionario_id=f.id) }}"
+                       class="px-3 py-1.5 rounded-lg text-xs font-medium
+                              text-primary bg-primary-light hover:bg-teal-100 transition-colors">
+                      Editar
+                    </a>
+                    <form method="POST"
+                          action="{{ url_for('rh.desativar_funcionario', funcionario_id=f.id) }}"
+                          onsubmit="return confirm('Desativar {{ f.nome | e }}? Esta ação pode ser revertida.')">
+                      <button type="submit"
+                              class="px-3 py-1.5 rounded-lg text-xs font-medium
+                                     text-red-600 bg-red-50 hover:bg-red-100 transition-colors">
+                        Desativar
+                      </button>
+                    </form>
+                  </div>
+                </td>
+
+              </tr>
+            {% endfor %}
+          </tbody>
+        </table>
+      {% else %}
+        <div class="py-16 text-center text-slate-400">
+          <svg class="mx-auto mb-3 text-slate-300" width="40" height="40" viewBox="0 0 24 24" fill="none">
+            <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2
+                     M16 7a4 4 0 1 1-8 0 4 4 0 0 1 8 0z"
+                  stroke="currentColor" stroke-width="1.5"
+                  stroke-linecap="round" stroke-linejoin="round"/>
+          </svg>
+          {% if q %}
+            <p class="text-sm">Nenhum funcionário encontrado para <strong>{{ q | e }}</strong>.</p>
+          {% else %}
+            <p class="text-sm">Nenhum funcionário cadastrado ainda.</p>
+            <a href="{{ url_for('rh.novo_funcionario') }}"
+               class="mt-3 inline-block text-sm text-primary hover:underline">
+              Cadastrar primeiro funcionário →
+            </a>
+          {% endif %}
+        </div>
+      {% endif %}
+    </div>
+
+  </main>
+</body>
+</html>

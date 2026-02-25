@@ -50,19 +50,17 @@ class TestCriar:
                 cpf=_CPF_VALIDO,
                 cargo="Recepcionista",
             )
-
-        assert f.id is not None
-        assert f.nome == "Maria Souza"
-        assert f.cpf == _CPF_VALIDO
-        assert f.cargo == "Recepcionista"
-        assert f.ativo is True
+            assert f.id is not None
+            assert f.nome == "Maria Souza"
+            assert f.cpf == _CPF_VALIDO
+            assert f.cargo == "Recepcionista"
+            assert f.ativo is True
 
     def test_cria_com_cpf_formatado(self, app, db):
         """CPF with punctuation must be accepted and stored clean."""
         with app.app_context():
             f = FuncionarioService.criar(nome="João Silva", cpf="529.982.247-25")
-
-        assert f.cpf == _CPF_VALIDO
+            assert f.cpf == _CPF_VALIDO
 
     def test_cria_dispara_audit_log(self, app, db):
         """Antigravity Rule #1 — criar() must produce one AuditLog(create)."""
@@ -104,16 +102,14 @@ class TestCriar:
     def test_cria_remove_espacos_do_nome(self, app, db):
         with app.app_context():
             f = FuncionarioService.criar(nome="  Luisa Fernanda  ", cpf=_CPF_VALIDO)
-
-        assert f.nome == "Luisa Fernanda"
+            assert f.nome == "Luisa Fernanda"
 
     def test_cria_defaults_jornada(self, app, db):
         """Default schedule must be 480 min work + 60 min lunch."""
         with app.app_context():
             f = FuncionarioService.criar(nome="Teste", cpf=_CPF_VALIDO)
-
-        assert f.minutos_esperados_dia == 480
-        assert f.minutos_almoco == 60
+            assert f.minutos_esperados_dia == 480
+            assert f.minutos_almoco == 60
 
 
 # ---------------------------------------------------------------------------
@@ -132,9 +128,8 @@ class TestAtualizar:
             f = FuncionarioService.atualizar(
                 f.id, {"nome": "Atualizado", "cargo": "Gerente"}
             )
-
-        assert f.nome == "Atualizado"
-        assert f.cargo == "Gerente"
+            assert f.nome == "Atualizado"
+            assert f.cargo == "Gerente"
 
     def test_atualiza_dispara_audit_log(self, app, db):
         with app.app_context():
@@ -184,8 +179,7 @@ class TestDesativar:
         with app.app_context():
             f = FuncionarioService.criar(nome="Ativo", cpf=_CPF_VALIDO)
             f = FuncionarioService.desativar(f.id)
-
-        assert f.ativo is False
+            assert f.ativo is False
 
     def test_desativa_dispara_audit_log(self, app, db):
         with app.app_context():

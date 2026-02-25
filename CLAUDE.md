@@ -85,6 +85,31 @@ sistur/
 
 ---
 
+## Module: Ponto Eletrônico — Strict Business Rules
+
+These rules are non-negotiable. Any implementation must satisfy all six.
+
+| # | Rule | Detail |
+|---|------|--------|
+| 1 | **Dual input** | Portal touch/click AND QR code camera scan (`ponto.py`) are equally valid; both write to the same `time_entries` table |
+| 2 | **GPS geofencing only** | Use Haversine formula over lat/lon from `sistur_authorized_locations`; IP blocking is **forbidden** (browser privacy causes false positives) |
+| 3 | **Admin CRUD fully audited** | Every admin insert/update/delete requires a non-empty `admin_change_reason` and must call `AuditService` — no exceptions |
+| 4 | **10-minute tolerance** | Applies to delays (negative balance) only: if `abs(saldo) ≤ 10` → forgive to 0; if `abs(saldo) > 10` → penalize only the excess (`saldo + 10`); overtime is never affected |
+| 5 | **Even/Odd pairing** | A day with an odd number of punches gets `needs_review=True` and the balance is frozen at 0 until corrected |
+| 6 | **Review → Approvals** | Days with `needs_review=True` or unjustified absences must generate a pending item in the Aprovações module |
+
+### Key legacy references for this module
+- `legacy/includes/class-sistur-time-tracking.php` — Even/Odd pairing, duplicate-punch prevention (5-second window)
+- `legacy/includes/class-sistur-timebank-manager.php` — Tolerance calculation, daily balance, `expected_minutes_snapshot`
+- `legacy/mu-plugins/externo/ponto.py` — QR scanner: OpenCV + pyzbar, SHA256 auth, thermal printer receipt
+
+### DB tables (to be created as SQLAlchemy models)
+- `sistur_time_entries` — `employee_id`, `punch_time` (datetime), `shift_date` (date), `punch_type` (clock_in/lunch_start/lunch_end/clock_out/extra), `source` (employee/admin/KIOSK/QR), `processing_status` (PENDENTE/PROCESSADO), `admin_change_reason`, `changed_by_user_id`
+- `sistur_time_days` — `employee_id`, `shift_date`, `minutos_trabalhados`, `saldo_calculado_minutos`, `saldo_final_minutos`, `needs_review` (bool), `expected_minutes_snapshot`, `schedule_id_snapshot`
+- `sistur_authorized_locations` — `latitude`, `longitude`, `radius_meters`, `name`
+
+---
+
 ## Database Tables (WordPress prefix `wp_`)
 
 - `wp_sistur_employees`, `wp_sistur_departments`
@@ -218,6 +243,54 @@ docs/
 - **SQLAlchemy models** for all DB access — no raw SQL unless absolutely necessary
 - **Naming:** Use Portuguese names for business entities (`funcionario`, `banco_horas`, `ponto`, `estoque`)
 - **Security:** Validate all input at the boundary, use parameterized queries, sanitize output
+- **Docstrings:** Every function and method must have a Google-style docstring in **Portuguese (pt-BR)**
+
+### Docstring Standard (Google-style, pt-BR)
+
+Every function and method — in services, blueprints, models, and utilities — **must** have a docstring.
+Use Google-style format. Write in Portuguese. Document intent, not implementation.
+
+**Template obrigatório para serviços:**
+```python
+def criar(cls, nome: str, cpf: str, ator_id: int | None = None) -> Funcionario:
+    """Cria um novo funcionário e registra o evento no log de auditoria.
+
+    Args:
+        nome: Nome completo do funcionário.
+        cpf: CPF no formato somente dígitos (11 caracteres).
+        ator_id: ID do usuário que está realizando a ação. None em operações de sistema.
+
+    Returns:
+        Instância de Funcionario persistida no banco de dados.
+
+    Raises:
+        ValueError: Se o CPF for inválido ou já estiver cadastrado.
+    """
+```
+
+**Template para rotas (blueprints):**
+```python
+@bp.route("/funcionarios", methods=["POST"])
+@login_required
+def criar_funcionario():
+    """Recebe o formulário de cadastro e delega criação ao FuncionarioService.
+
+    Form fields:
+        nome (str): Nome completo.
+        cpf (str): CPF somente dígitos.
+
+    Returns:
+        Redirect para a listagem em caso de sucesso, ou renderiza o
+        formulário com mensagem de erro (HTTP 400) em caso de falha.
+    """
+```
+
+**Regras:**
+1. Docstrings em **português (pt-BR)** — idioma do domínio de negócio do projeto
+2. A primeira linha é um resumo conciso da responsabilidade (imperativo, sem ponto final)
+3. Seções `Args:`, `Returns:` e `Raises:` são **obrigatórias** quando aplicáveis
+4. Não documente o óbvio — documente regras de negócio, restrições e comportamentos não triviais
+5. Métodos privados (prefixo `_`) também precisam de docstring se a lógica não for autoexplicativa
 
 ### Port priority order (reference)
 Follow the dependency order from the legacy system:
@@ -248,6 +321,51 @@ Follow the dependency order from the legacy system:
 ```bash
 pip install -r requirements.txt
 ```
+
+---
+
+## Database Management & Migrations
+
+**Flask-Migrate** is configured for automatic schema versioning. Use it whenever models change.
+
+### Initial Setup (VPS after first deployment)
+
+```bash
+# Create migrations folder (one-time, after flask deploy)
+flask db init
+
+# Run pending migrations to initialize production schema
+flask db upgrade
+```
+
+### Development Workflow
+
+When you **modify or add SQLAlchemy models**:
+
+```bash
+# 1. Auto-generate migration from model changes
+flask db migrate -m "Descriptive message of what changed"
+
+# 2. Review the generated migration file in migrations/versions/
+# 3. Commit to git
+git add migrations/ && git commit -m "...migration..."
+
+# 4. On VPS: deployment automatically runs `flask db upgrade`
+#    (configured in .github/workflows/deploy.yml)
+```
+
+### Common Commands
+
+| Command | Purpose |
+|---------|---------|
+| `flask db init` | Create migrations folder (one-time) |
+| `flask db migrate -m "message"` | Auto-generate migration from model changes |
+| `flask db upgrade` | Apply pending migrations to database |
+| `flask db downgrade` | Rollback to previous schema version |
+| `flask db current` | Show current schema revision |
+| `flask db history` | View migration history |
+
+**Important:** Never edit migration files manually — they are version-controlled source of truth.
 
 ---
 

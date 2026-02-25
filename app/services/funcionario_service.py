@@ -162,8 +162,9 @@ class FuncionarioService(BaseService):
 
         _CAMPOS_PERMITIDOS = {
             "nome", "cargo", "matricula", "area_id",
-            "minutos_esperados_dia", "minutos_almoco",
+            "minutos_esperados_dia", "minutos_almoco", "jornada_semanal",
             "email", "telefone", "data_admissao", "bio",
+            "ctps", "ctps_uf", "cbo",
         }
 
         for campo, valor in dados.items():
@@ -181,6 +182,52 @@ class FuncionarioService(BaseService):
             entity_id=funcionario.id,
             previous_state=snapshot_antes,
             new_state=BaseService._snapshot(funcionario, _AUDIT_FIELDS),
+            actor_id=ator_id,
+        )
+        db.session.commit()
+        return funcionario
+
+    @staticmethod
+    def definir_senha(
+        funcionario_id: int,
+        senha: str,
+        ator_id: int | None = None,
+    ) -> Funcionario:
+        """
+        Define ou redefine a senha de acesso do funcionário ao portal.
+
+        A senha é armazenada como hash seguro (werkzeug pbkdf2:sha256).
+        O log de auditoria registra a ação mas nunca o valor da senha.
+
+        Args:
+            funcionario_id: PK do funcionário.
+            senha:          Senha em texto puro — será hasheada antes de persistir.
+            ator_id:        ID do ator que realizou a ação.
+
+        Returns:
+            Instância atualizada do Funcionario.
+
+        Raises:
+            ValueError: Se o funcionário não for encontrado ou a senha for vazia.
+        """
+        from werkzeug.security import generate_password_hash
+
+        if not senha or not senha.strip():
+            raise ValueError("A senha não pode ser vazia.")
+
+        funcionario = db.session.get(Funcionario, funcionario_id)
+        if not funcionario:
+            raise ValueError(f"Funcionário {funcionario_id} não encontrado.")
+
+        funcionario.senha_hash = generate_password_hash(senha)
+        db.session.flush()
+
+        # Audita sem expor a senha — previous/new state são ofuscados
+        AuditService.log_update(
+            "funcionarios",
+            entity_id=funcionario.id,
+            previous_state={"senha_hash": "[protegido]"},
+            new_state={"senha_hash": "[redefinida]"},
             actor_id=ator_id,
         )
         db.session.commit()

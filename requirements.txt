@@ -1,8 +1,10 @@
 Flask==3.0.0
 Flask-SQLAlchemy==3.1.1
 SQLAlchemy==2.0.23
+Flask-Migrate==4.0.5
 mysql-connector-python==8.2.0
 gunicorn==21.2.0
+python-dotenv==1.0.0
 
 # Testing
 pytest==8.1.1

@@ -1,0 +1,444 @@
+<!DOCTYPE html>
+<!--
+  Copyright (c) 2026 Jordan Barbosa Machado — All Rights Reserved
+  RH — Formulário de Funcionário (criar / editar)
+-->
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>
+    {{ company_name }} |
+    {% if funcionario %}Editar — {{ funcionario.nome }}{% else %}Novo Funcionário{% endif %}
+  </title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script>
+    tailwind.config = {
+      theme: {
+        extend: {
+          colors: {
+            primary: { DEFAULT: '#0d9488', light: '#ccfbf1', dark: '#0f766e' }
+          }
+        }
+      }
+    }
+  </script>
+  <style>
+    @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap');
+    body { font-family: 'Inter', sans-serif; }
+  </style>
+</head>
+<body class="min-h-screen bg-gradient-to-br from-teal-50 via-sky-50 to-slate-100">
+
+  <!-- Top bar -->
+  <header class="bg-white/80 backdrop-blur border-b border-slate-100 sticky top-0 z-10">
+    <div class="max-w-3xl mx-auto px-4 sm:px-6 h-16 flex items-center justify-between gap-4">
+      <div class="flex items-center gap-3">
+        {% if company_logo %}
+          <img src="{{ company_logo | e }}" alt="{{ company_name | e }}" class="h-8 w-auto object-contain" />
+        {% endif %}
+        <span class="font-bold text-slate-700 text-sm hidden sm:block">
+          {{ company_name | e }}
+          <span class="text-slate-400 font-normal">| RH</span>
+        </span>
+      </div>
+      <nav class="flex items-center gap-3">
+        <a href="{{ url_for('rh.listar_funcionarios') }}"
+           class="text-sm text-slate-500 hover:text-primary transition-colors">
+          ← Funcionários
+        </a>
+        <form method="POST" action="{{ url_for('portal.logout') }}">
+          <button type="submit"
+                  class="flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-sm font-medium
+                         text-slate-500 hover:bg-red-50 hover:text-red-600 transition-colors">
+            Sair
+          </button>
+        </form>
+      </nav>
+    </div>
+  </header>
+
+  <main class="max-w-3xl mx-auto px-4 sm:px-6 py-8">
+
+    <!-- Cabeçalho da página -->
+    <div class="mb-6">
+      <h1 class="text-2xl font-extrabold text-slate-800">
+        {% if funcionario %}Editar Funcionário{% else %}Novo Funcionário{% endif %}
+      </h1>
+      <p class="text-slate-500 text-sm mt-0.5">
+        {% if funcionario %}
+          Atualize os dados de <strong>{{ funcionario.nome | e }}</strong>.
+        {% else %}
+          Preencha os dados do novo colaborador.
+        {% endif %}
+      </p>
+    </div>
+
+    <!-- Flash messages -->
+    {% with messages = get_flashed_messages(with_categories=true) %}
+      {% for category, message in messages %}
+        <div class="mb-4 px-4 py-3 rounded-xl text-sm font-medium
+          {% if category == 'sucesso' %}bg-teal-50 text-teal-700 border border-teal-200
+          {% elif category == 'erro' %}bg-red-50 text-red-700 border border-red-200
+          {% else %}bg-amber-50 text-amber-700 border border-amber-200{% endif %}">
+          {{ message | e }}
+        </div>
+      {% endfor %}
+    {% endwith %}
+
+    <!-- Formulário -->
+    <form method="POST"
+          action="{% if funcionario %}{{ url_for('rh.editar_funcionario', funcionario_id=funcionario.id) }}{% else %}{{ url_for('rh.novo_funcionario') }}{% endif %}">
+
+      <!-- ------------------------------------------------------------------ -->
+      <!-- Seção 1 — Identificação                                             -->
+      <!-- ------------------------------------------------------------------ -->
+      <div class="bg-white rounded-2xl shadow-sm border border-slate-100 p-6 mb-4">
+        <h2 class="text-sm font-semibold text-slate-500 uppercase tracking-widest mb-4">Identificação</h2>
+
+        <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+
+          <!-- Nome -->
+          <div class="sm:col-span-2">
+            <label for="nome" class="block text-sm font-medium text-slate-700 mb-1">
+              Nome completo <span class="text-red-500">*</span>
+            </label>
+            <input type="text" id="nome" name="nome" required
+                   value="{{ funcionario.nome | e if funcionario else '' }}"
+                   placeholder="Ex.: Maria da Silva"
+                   class="w-full px-4 py-2.5 rounded-xl border border-slate-200 bg-white
+                          text-sm text-slate-700 placeholder-slate-400
+                          focus:outline-none focus:ring-2 focus:ring-primary/30 focus:border-primary" />
+          </div>
+
+          <!-- CPF -->
+          <div>
+            <label for="cpf" class="block text-sm font-medium text-slate-700 mb-1">
+              CPF <span class="text-red-500">*</span>
+            </label>
+            {% if funcionario %}
+              <!-- CPF não pode ser alterado após cadastro -->
+              <input type="text"
+                     value="{{ funcionario.cpf_formatado() }}"
+                     disabled
+                     class="w-full px-4 py-2.5 rounded-xl border border-slate-200 bg-slate-50
+                            text-sm text-slate-400 font-mono cursor-not-allowed" />
+            {% else %}
+              <input type="text" id="cpf" name="cpf" required
+                     placeholder="000.000.000-00"
+                     maxlength="14"
+                     class="w-full px-4 py-2.5 rounded-xl border border-slate-200 bg-white
+                            text-sm text-slate-700 placeholder-slate-400 font-mono
+                            focus:outline-none focus:ring-2 focus:ring-primary/30 focus:border-primary" />
+            {% endif %}
+          </div>
+
+          <!-- E-mail -->
+          <div>
+            <label for="email" class="block text-sm font-medium text-slate-700 mb-1">E-mail</label>
+            <input type="email" id="email" name="email"
+                   value="{{ funcionario.email | e if funcionario and funcionario.email else '' }}"
+                   placeholder="colaborador@empresa.com"
+                   class="w-full px-4 py-2.5 rounded-xl border border-slate-200 bg-white
+                          text-sm text-slate-700 placeholder-slate-400
+                          focus:outline-none focus:ring-2 focus:ring-primary/30 focus:border-primary" />
+          </div>
+
+          <!-- Telefone -->
+          <div>
+            <label for="telefone" class="block text-sm font-medium text-slate-700 mb-1">Telefone</label>
+            <input type="text" id="telefone" name="telefone"
+                   value="{{ funcionario.telefone | e if funcionario and funcionario.telefone else '' }}"
+                   placeholder="(11) 99999-9999"
+                   class="w-full px-4 py-2.5 rounded-xl border border-slate-200 bg-white
+                          text-sm text-slate-700 placeholder-slate-400
+                          focus:outline-none focus:ring-2 focus:ring-primary/30 focus:border-primary" />
+          </div>
+
+        </div>
+      </div>
+
+      <!-- ------------------------------------------------------------------ -->
+      <!-- Seção 2 — Dados de emprego                                         -->
+      <!-- ------------------------------------------------------------------ -->
+      <div class="bg-white rounded-2xl shadow-sm border border-slate-100 p-6 mb-4">
+        <h2 class="text-sm font-semibold text-slate-500 uppercase tracking-widest mb-4">Dados de Emprego</h2>
+
+        <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+
+          <!-- Cargo -->
+          <div>
+            <label for="cargo" class="block text-sm font-medium text-slate-700 mb-1">Cargo</label>
+            <input type="text" id="cargo" name="cargo"
+                   value="{{ funcionario.cargo | e if funcionario and funcionario.cargo else '' }}"
+                   placeholder="Ex.: Recepcionista"
+                   class="w-full px-4 py-2.5 rounded-xl border border-slate-200 bg-white
+                          text-sm text-slate-700 placeholder-slate-400
+                          focus:outline-none focus:ring-2 focus:ring-primary/30 focus:border-primary" />
+          </div>
+
+          <!-- Matrícula -->
+          <div>
+            <label for="matricula" class="block text-sm font-medium text-slate-700 mb-1">Matrícula</label>
+            <input type="text" id="matricula" name="matricula"
+                   value="{{ funcionario.matricula | e if funcionario and funcionario.matricula else '' }}"
+                   placeholder="Ex.: 0042"
+                   class="w-full px-4 py-2.5 rounded-xl border border-slate-200 bg-white
+                          text-sm text-slate-700 placeholder-slate-400
+                          focus:outline-none focus:ring-2 focus:ring-primary/30 focus:border-primary" />
+          </div>
+
+          <!-- Data de admissão -->
+          <div>
+            <label for="data_admissao" class="block text-sm font-medium text-slate-700 mb-1">Data de admissão</label>
+            <input type="date" id="data_admissao" name="data_admissao"
+                   value="{{ funcionario.data_admissao.isoformat() if funcionario and funcionario.data_admissao else '' }}"
+                   class="w-full px-4 py-2.5 rounded-xl border border-slate-200 bg-white
+                          text-sm text-slate-700
+                          focus:outline-none focus:ring-2 focus:ring-primary/30 focus:border-primary" />
+          </div>
+
+          <!-- Área -->
+          <div>
+            <label for="area_id" class="block text-sm font-medium text-slate-700 mb-1">Área / Departamento</label>
+            <select id="area_id" name="area_id"
+                    class="w-full px-4 py-2.5 rounded-xl border border-slate-200 bg-white
+                           text-sm text-slate-700
+                           focus:outline-none focus:ring-2 focus:ring-primary/30 focus:border-primary">
+              <option value="">— Selecione —</option>
+              {% for area in areas %}
+                <option value="{{ area.id }}"
+                  {% if funcionario and funcionario.area_id == area.id %}selected{% endif %}>
+                  {{ area.name | e }}
+                </option>
+              {% endfor %}
+            </select>
+          </div>
+
+        </div>
+      </div>
+
+      <!-- ------------------------------------------------------------------ -->
+      <!-- Seção 3 — Documentação trabalhista                                 -->
+      <!-- ------------------------------------------------------------------ -->
+      <div class="bg-white rounded-2xl shadow-sm border border-slate-100 p-6 mb-4">
+        <h2 class="text-sm font-semibold text-slate-500 uppercase tracking-widest mb-4">Documentação Trabalhista</h2>
+
+        <div class="grid grid-cols-1 sm:grid-cols-3 gap-4">
+
+          <!-- CTPS -->
+          <div class="sm:col-span-2">
+            <label for="ctps" class="block text-sm font-medium text-slate-700 mb-1">CTPS (nº)</label>
+            <input type="text" id="ctps" name="ctps"
+                   value="{{ funcionario.ctps | e if funcionario and funcionario.ctps else '' }}"
+                   placeholder="Número da carteira de trabalho"
+                   class="w-full px-4 py-2.5 rounded-xl border border-slate-200 bg-white
+                          text-sm text-slate-700 placeholder-slate-400
+                          focus:outline-none focus:ring-2 focus:ring-primary/30 focus:border-primary" />
+          </div>
+
+          <!-- CTPS UF -->
+          <div>
+            <label for="ctps_uf" class="block text-sm font-medium text-slate-700 mb-1">CTPS — UF</label>
+            <input type="text" id="ctps_uf" name="ctps_uf"
+                   value="{{ funcionario.ctps_uf | e if funcionario and funcionario.ctps_uf else '' }}"
+                   placeholder="SP"
+                   maxlength="2"
+                   class="w-full px-4 py-2.5 rounded-xl border border-slate-200 bg-white
+                          text-sm text-slate-700 placeholder-slate-400 uppercase
+                          focus:outline-none focus:ring-2 focus:ring-primary/30 focus:border-primary" />
+          </div>
+
+          <!-- CBO -->
+          <div>
+            <label for="cbo" class="block text-sm font-medium text-slate-700 mb-1">CBO</label>
+            <input type="text" id="cbo" name="cbo"
+                   value="{{ funcionario.cbo | e if funcionario and funcionario.cbo else '' }}"
+                   placeholder="Código Bras. de Ocupações"
+                   class="w-full px-4 py-2.5 rounded-xl border border-slate-200 bg-white
+                          text-sm text-slate-700 placeholder-slate-400
+                          focus:outline-none focus:ring-2 focus:ring-primary/30 focus:border-primary" />
+          </div>
+
+        </div>
+      </div>
+
+      <!-- ------------------------------------------------------------------ -->
+      <!-- Seção 4 — Jornada semanal                                         -->
+      <!-- ------------------------------------------------------------------ -->
+      {% set dias = [
+        ('segunda', 'Segunda-feira'),
+        ('terca',   'Terça-feira'),
+        ('quarta',  'Quarta-feira'),
+        ('quinta',  'Quinta-feira'),
+        ('sexta',   'Sexta-feira'),
+        ('sabado',  'Sábado'),
+        ('domingo', 'Domingo'),
+      ] %}
+      {% set jornada = funcionario.jornada_semanal if funcionario and funcionario.jornada_semanal else {} %}
+      {% set dias_uteis = ('segunda','terca','quarta','quinta','sexta') %}
+
+      <div class="bg-white rounded-2xl shadow-sm border border-slate-100 p-6 mb-4">
+        <h2 class="text-sm font-semibold text-slate-500 uppercase tracking-widest mb-1">Jornada de Trabalho</h2>
+        <p class="text-xs text-slate-400 mb-4">Marque os dias trabalhados e informe a carga horária em minutos.</p>
+
+        <div class="overflow-x-auto">
+          <table class="w-full text-sm">
+            <thead>
+              <tr class="border-b border-slate-100">
+                <th class="text-left py-2 pr-4 text-xs font-semibold text-slate-400 uppercase tracking-widest w-36">Dia</th>
+                <th class="text-center py-2 px-3 text-xs font-semibold text-slate-400 uppercase tracking-widest w-24">Trabalha</th>
+                <th class="text-left py-2 px-3 text-xs font-semibold text-slate-400 uppercase tracking-widest">Min / dia</th>
+                <th class="text-left py-2 px-3 text-xs font-semibold text-slate-400 uppercase tracking-widest">Almoço (min)</th>
+              </tr>
+            </thead>
+            <tbody class="divide-y divide-slate-50" id="jornada-tbody">
+              {% for slug, label in dias %}
+                {% set d = jornada.get(slug, {}) %}
+                {% set ativo = d.get('ativo', slug in dias_uteis) if funcionario else (slug in dias_uteis) %}
+                {% set minutos = d.get('minutos', 480) if ativo else 0 %}
+                {% set almoco  = d.get('almoco', 60)   if ativo else 0 %}
+                <tr class="jornada-row">
+                  <td class="py-2.5 pr-4 font-medium text-slate-700">{{ label }}</td>
+                  <td class="py-2.5 px-3 text-center">
+                    <input type="checkbox"
+                           name="jornada_{{ slug }}_ativo"
+                           id="jornada_{{ slug }}_ativo"
+                           {% if ativo %}checked{% endif %}
+                           class="w-4 h-4 rounded border-slate-300 text-primary
+                                  focus:ring-primary/30 day-checkbox"
+                           data-day="{{ slug }}" />
+                  </td>
+                  <td class="py-2.5 px-3">
+                    <input type="number"
+                           name="jornada_{{ slug }}_minutos"
+                           id="jornada_{{ slug }}_minutos"
+                           value="{{ minutos }}"
+                           min="0" max="1440"
+                           {% if not ativo %}disabled{% endif %}
+                           class="w-24 px-3 py-1.5 rounded-lg border border-slate-200 bg-white
+                                  text-sm text-slate-700 text-right
+                                  focus:outline-none focus:ring-2 focus:ring-primary/30 focus:border-primary
+                                  disabled:bg-slate-50 disabled:text-slate-300" />
+                  </td>
+                  <td class="py-2.5 px-3">
+                    <input type="number"
+                           name="jornada_{{ slug }}_almoco"
+                           id="jornada_{{ slug }}_almoco"
+                           value="{{ almoco }}"
+                           min="0" max="480"
+                           {% if not ativo %}disabled{% endif %}
+                           class="w-24 px-3 py-1.5 rounded-lg border border-slate-200 bg-white
+                                  text-sm text-slate-700 text-right
+                                  focus:outline-none focus:ring-2 focus:ring-primary/30 focus:border-primary
+                                  disabled:bg-slate-50 disabled:text-slate-300" />
+                  </td>
+                </tr>
+              {% endfor %}
+            </tbody>
+          </table>
+        </div>
+      </div>
+
+      <!-- ------------------------------------------------------------------ -->
+      <!-- Seção 4b — Senha de acesso                                         -->
+      <!-- ------------------------------------------------------------------ -->
+      <div class="bg-white rounded-2xl shadow-sm border border-slate-100 p-6 mb-4">
+        <h2 class="text-sm font-semibold text-slate-500 uppercase tracking-widest mb-1">Senha de Acesso</h2>
+        <p class="text-xs text-slate-400 mb-4">
+          {% if funcionario %}
+            Deixe em branco para manter a senha atual.
+          {% else %}
+            Opcional. Se não definida, o funcionário poderá acessar somente via CPF.
+          {% endif %}
+        </p>
+
+        <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+          <div>
+            <label for="nova_senha" class="block text-sm font-medium text-slate-700 mb-1">Nova senha</label>
+            <input type="password" id="nova_senha" name="nova_senha"
+                   autocomplete="new-password"
+                   placeholder="Mínimo 6 caracteres"
+                   class="w-full px-4 py-2.5 rounded-xl border border-slate-200 bg-white
+                          text-sm text-slate-700 placeholder-slate-400
+                          focus:outline-none focus:ring-2 focus:ring-primary/30 focus:border-primary" />
+          </div>
+          <div>
+            <label for="confirmar_senha" class="block text-sm font-medium text-slate-700 mb-1">Confirmar senha</label>
+            <input type="password" id="confirmar_senha" name="confirmar_senha"
+                   autocomplete="new-password"
+                   placeholder="Repita a nova senha"
+                   class="w-full px-4 py-2.5 rounded-xl border border-slate-200 bg-white
+                          text-sm text-slate-700 placeholder-slate-400
+                          focus:outline-none focus:ring-2 focus:ring-primary/30 focus:border-primary" />
+          </div>
+        </div>
+      </div>
+
+      <script>
+        // Habilita/desabilita os inputs de minutos ao marcar/desmarcar o dia
+        document.querySelectorAll('.day-checkbox').forEach(function(cb) {
+          cb.addEventListener('change', function() {
+            var day = this.dataset.day;
+            var minInput = document.getElementById('jornada_' + day + '_minutos');
+            var almInput = document.getElementById('jornada_' + day + '_almoco');
+            if (this.checked) {
+              minInput.disabled = false;
+              almInput.disabled = false;
+              if (!minInput.value || minInput.value === '0') minInput.value = '480';
+              if (!almInput.value || almInput.value === '0') almInput.value = '60';
+            } else {
+              minInput.disabled = true;
+              almInput.disabled = true;
+              minInput.value = '0';
+              almInput.value = '0';
+            }
+          });
+        });
+      </script>
+
+      <!-- ------------------------------------------------------------------ -->
+      <!-- Seção 5 — Permissões                                               -->
+      <!-- ------------------------------------------------------------------ -->
+      <div class="bg-white rounded-2xl shadow-sm border border-slate-100 p-6 mb-6">
+        <h2 class="text-sm font-semibold text-slate-500 uppercase tracking-widest mb-4">Permissões de Acesso</h2>
+
+        <div>
+          <label for="role_id" class="block text-sm font-medium text-slate-700 mb-1">Role</label>
+          <select id="role_id" name="role_id"
+                  class="w-full px-4 py-2.5 rounded-xl border border-slate-200 bg-white
+                         text-sm text-slate-700
+                         focus:outline-none focus:ring-2 focus:ring-primary/30 focus:border-primary">
+            <option value="">— Sem role (acesso negado ao portal) —</option>
+            {% for role in roles %}
+              <option value="{{ role.id }}"
+                {% if funcionario and funcionario.role_id == role.id %}selected{% endif %}>
+                {{ role.nome | e }}
+                {% if role.is_super_admin %} — Super Admin{% endif %}
+              </option>
+            {% endfor %}
+          </select>
+          <p class="text-xs text-slate-400 mt-1">
+            O role determina o que o funcionário pode visualizar e fazer no portal.
+          </p>
+        </div>
+      </div>
+
+      <!-- Botões -->
+      <div class="flex items-center justify-between gap-3">
+        <a href="{{ url_for('rh.listar_funcionarios') }}"
+           class="px-5 py-2.5 rounded-xl border border-slate-200 text-sm font-medium
+                  text-slate-600 bg-white hover:bg-slate-50 transition-colors">
+          Cancelar
+        </a>
+        <button type="submit"
+                class="px-6 py-2.5 rounded-xl bg-primary text-white text-sm font-semibold
+                       hover:bg-primary-dark transition-colors shadow-sm">
+          {% if funcionario %}Salvar alterações{% else %}Cadastrar funcionário{% endif %}
+        </button>
+      </div>
+
+    </form>
+  </main>
+</body>
+</html>

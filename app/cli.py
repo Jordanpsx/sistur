@@ -5,14 +5,16 @@ Flask CLI commands for one-time setup and maintenance tasks.
 
 Usage
 -----
-    flask setup          # interactive — prompts for nome and CPF
+    flask setup                      # interactive — prompts for nome and CPF
     flask setup --nome "Jordan Machado" --cpf "529.982.247-25"
+    flask seed-roles                 # cria os roles iniciais (super_admin, funcionario)
 """
 
 import click
 
 from app.extensions import db
 from app.models.funcionario import Funcionario, validar_cpf
+from app.models.role import Role, RolePermission
 
 
 def register_commands(app) -> None:
@@ -66,3 +68,89 @@ def register_commands(app) -> None:
 
         click.echo(f"[ok] Funcionario criado: {funcionario.nome} — CPF: {funcionario.cpf_formatado()}")
         click.echo(f"     Acesse /portal/login e informe o CPF: {funcionario.cpf_formatado()}")
+
+    @app.cli.command("seed-roles")
+    def seed_roles_command() -> None:
+        """Cria os roles iniciais (super_admin, funcionario) e suas permissões.
+
+        Idempotente: roles e permissões já existentes são ignorados.
+        Execute após 'flask setup' para configurar o sistema de permissões.
+
+        Roles criados:
+            super_admin — acesso irrestrito (is_super_admin=True)
+            funcionario — acesso básico ao dashboard do portal
+        """
+        db.create_all()
+
+        # -----------------------------------------------------------------
+        # Permissões disponíveis por módulo (apenas o que está implementado)
+        # Adicione novas entradas aqui à medida que novos módulos são criados
+        # -----------------------------------------------------------------
+        PERMISSOES_MODULOS = {
+            "dashboard":    ["view"],
+            "funcionarios": ["view", "create", "edit", "desativar"],
+        }
+
+        # -----------------------------------------------------------------
+        # Role: super_admin
+        # -----------------------------------------------------------------
+        super_admin = db.session.query(Role).filter_by(nome="super_admin").first()
+        if not super_admin:
+            super_admin = Role(
+                nome="super_admin",
+                descricao="Acesso irrestrito ao sistema. Bypassa todas as verificações de permissão.",
+                is_super_admin=True,
+                ativo=True,
+            )
+            db.session.add(super_admin)
+            db.session.flush()
+            click.echo("[ok] Role 'super_admin' criado.")
+        else:
+            click.echo("[aviso] Role 'super_admin' ja existe — ignorado.")
+
+        # -----------------------------------------------------------------
+        # Role: funcionario
+        # -----------------------------------------------------------------
+        funcionario_role = db.session.query(Role).filter_by(nome="funcionario").first()
+        if not funcionario_role:
+            funcionario_role = Role(
+                nome="funcionario",
+                descricao="Acesso básico ao portal do colaborador (somente dashboard).",
+                is_super_admin=False,
+                ativo=True,
+            )
+            db.session.add(funcionario_role)
+            db.session.flush()
+            click.echo("[ok] Role 'funcionario' criado.")
+        else:
+            click.echo("[aviso] Role 'funcionario' ja existe — ignorado.")
+
+        # -----------------------------------------------------------------
+        # Permissões do role funcionario: apenas dashboard.view
+        # -----------------------------------------------------------------
+        _ensure_permission(funcionario_role, "dashboard", "view")
+
+        db.session.commit()
+
+        # -----------------------------------------------------------------
+        # Resumo de todas as permissões disponíveis (para referência)
+        # -----------------------------------------------------------------
+        click.echo("\nPermissoes registradas no sistema:")
+        for modulo, acoes in PERMISSOES_MODULOS.items():
+            for acao in acoes:
+                click.echo(f"  {modulo}.{acao}")
+
+        click.echo(
+            "\n[ok] Seed concluido. Use 'flask seed-roles' novamente para atualizar."
+        )
+
+
+def _ensure_permission(role: Role, modulo: str, acao: str) -> None:
+    """Adiciona a permissão ao role somente se ainda não existir."""
+    exists = (
+        db.session.query(RolePermission)
+        .filter_by(role_id=role.id, modulo=modulo, acao=acao)
+        .first()
+    )
+    if not exists:
+        db.session.add(RolePermission(role_id=role.id, modulo=modulo, acao=acao))
