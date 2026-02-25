@@ -47,6 +47,9 @@ def create_app(config_name: str = "default") -> Flask:
     from app.blueprints.portal.routes import bp as portal_bp
     app.register_blueprint(portal_bp, url_prefix="/portal")
 
+    from app.blueprints.rh.routes import bp as rh_bp
+    app.register_blueprint(rh_bp, url_prefix="/rh")
+
     # CLI commands
     from app.cli import register_commands
     register_commands(app)
