@@ -168,3 +168,46 @@ Registra uma nova batida de ponto para o colaborador autenticado.
 | Funcionário inativo | `erro` | "Funcionário X não encontrado ou inativo." |
 
 **Audit:** `AuditLog(action=create, module='ponto', entity_id=TimeEntry.id)`
+
+---
+
+## Module: Admin — Audit Log Viewer (`/admin`)
+
+### `GET /admin/audit-logs`
+
+Visualizador de logs de auditoria com filtros dinâmicos e paginação server-side.
+
+**Auth required:** Yes → `302` to `/portal/login` if unauthenticated  
+**Permission required:** `audit.view` OR `audit.view_all` (super_admin bypasses automatically)
+
+**Query params:**
+
+| Param | Type | Default | Description |
+|---|---|---|---|
+| `user_id` | int | — | Filtra pelo ID do ator (Funcionario) |
+| `module` | str | — | Filtra pelo módulo (e.g. `auth`, `ponto`, `funcionarios`) |
+| `page` | int | 1 | Número da página (50 registros por página) |
+
+**Access levels:**
+
+| Role | Permissão | Acesso |
+|---|---|---|
+| `super_admin` | `is_super_admin=True` | Todos os logs |
+| Gerente | `audit.view_all` | Todos os logs |
+| Supervisor | `audit.view` | Logs filtrados pelo `area_id` do Funcionario |
+| Sem permissão | — | HTTP 403 |
+
+**Response:** `200 text/html` — `admin/audit_logs.html`
+
+**Template variables:**
+
+| Variable | Type | Description |
+|---|---|---|
+| `pagination` | `Pagination` | Objeto Flask-SQLAlchemy com `.items`, `.total`, `.pages` |
+| `logs` | `list[AuditLog]` | Registros da página atual |
+| `modulos` | `list[str]` | Módulos distintos disponíveis para filtro |
+| `funcionarios_map` | `dict[int, str]` | Mapa id → nome dos atores |
+| `filtro_user_id` | int? | Filtro ativo de ator |
+| `filtro_module` | str? | Filtro ativo de módulo |
+| `acesso_total` | bool | True se gerente/super_admin |
+| `ator` | `Funcionario` | Funcionário autenticado |

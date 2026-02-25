@@ -81,7 +81,40 @@ sistur/
 | **Leads** | Customer prospect tracking |
 | **Aprovações** | Multi-step approval workflow |
 | **Permissões** | Role-based access control |
-| **Auditoria** | Full audit trail for all actions |
+| **Auditoria** | Full audit trail for all actions — viewer at `/admin/audit-logs` |
+
+---
+
+## Module: Admin — Audit Log Viewer
+
+**Route:** `GET /admin/audit-logs`  
+**Blueprint:** `app/blueprints/admin/routes.py` — registered at `/admin`  
+**Template:** `app/templates/admin/audit_logs.html`
+
+### Access Control (3 levels)
+
+| Level | Permission | Access |
+|---|---|---|
+| Super Admin | `Role.is_super_admin = True` | All logs, all modules |
+| Gerente | `audit.view_all` RolePermission | All logs, all modules |
+| Supervisor | `audit.view` RolePermission | Logs filtered by own `Funcionario.area_id` |
+| No permission | — | HTTP 403 |
+
+> The dropdown filter for "Ator" is only shown to users with `audit.view_all`/super_admin.
+> Supervisors only see the "Módulo" dropdown (scoped to their area's logs).
+
+### Query Parameters
+
+| Param | Type | Description |
+|---|---|---|
+| `user_id` | int | Filter by actor Funcionario ID |
+| `module` | str | Filter by system module name |
+| `page` | int | Page number (default: 1, 50 per page) |
+
+### Implementation notes
+- `AuditLog.user_id` is polymorphic (points to `sistur_funcionarios.id`); names resolved via in-memory dict
+- Logs without `area_id` are invisible to supervisors (only gerente/super_admin see them)
+- `.paginate(per_page=50, error_out=False)` prevents loading all records at once
 
 ---
 

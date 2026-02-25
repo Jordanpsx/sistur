@@ -61,6 +61,9 @@ def create_app(config_name: str = "default") -> Flask:
     from app.blueprints.restaurante.routes import bp as restaurante_bp
     app.register_blueprint(restaurante_bp, url_prefix="/restaurante")
 
+    from app.blueprints.admin.routes import bp as admin_bp
+    app.register_blueprint(admin_bp, url_prefix="/admin")
+
     # CLI commands
     from app.cli import register_commands
     register_commands(app)
