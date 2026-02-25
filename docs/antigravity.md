@@ -129,6 +129,34 @@ Module-specific business rules go in `docs/<module>/README.md`.
 
 ---
 
+## Rule #9 — Mobile-First UI (Non-Negotiable)
+
+The primary users of the Portal do Colaborador are **employees accessing from their phones**.
+Every Jinja2 template must work on a 375px-wide screen before being considered done.
+
+**Required before any template is pushed to `develop`:**
+
+1. **Single-column by default** — layout stacks vertically at mobile; CSS Grid/Flexbox expands at `sm:` (640px) and `lg:` (1024px)
+2. **Touch targets ≥ 44px** — every button and link must be at least 44×44 px high on mobile
+3. **No horizontal scroll** — no element may cause the viewport to scroll sideways at 375px
+4. **Hero sections collapse** — side-by-side panels (e.g., employee card + Banco de Horas) must stack vertically on mobile with `grid-template-columns: 1fr` override
+5. **Tables become cards or scroll** — wide tables must wrap in `overflow-x: auto` on mobile, or be redesigned as stacked card rows
+6. **Font sizes** — body text ≥ 14px; helper labels ≥ 12px; monospace (CPF, balance) ≥ 13px
+7. **Forms full-width** — no two form inputs side-by-side below `sm:` breakpoint
+
+**CSS Variables + white-label** (separate concern but applies universally):
+All primary colors in templates must use `var(--primary)` / `var(--primary-dark)` etc.
+Hardcoded hex values for brand colors are forbidden — this enables client white-labeling.
+
+**Verification for every template:**
+```bash
+# Open in browser, DevTools → device toolbar → iPhone SE (375×667)
+# Check: no overflow, touch targets visible, text readable
+# Check: iPad (768×1024) — 2-col grids look right
+```
+
+---
+
 ## Rule #8 — Mandatory Docstrings on Every Function
 
 Every function and method in the codebase **must** have a Google-style docstring written in **Portuguese (pt-BR)**.

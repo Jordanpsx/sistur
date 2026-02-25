@@ -244,6 +244,41 @@ docs/
 - **Naming:** Use Portuguese names for business entities (`funcionario`, `banco_horas`, `ponto`, `estoque`)
 - **Security:** Validate all input at the boundary, use parameterized queries, sanitize output
 - **Docstrings:** Every function and method must have a Google-style docstring in **Portuguese (pt-BR)**
+- **Templates:** Always mobile-first — see UI standards below
+
+### Templates & UI — Mobile-First Standards
+
+The primary users of the Portal do Colaborador are **employees on their phones** (Android, iOS).
+Every Jinja2 template must be designed mobile-first before scaling up to desktop.
+
+**Non-negotiable rules for every template:**
+
+| Rule | Requirement |
+|------|-------------|
+| **Default layout is single-column** | Stack everything vertically on mobile; expand to 2-3 cols at `sm`/`lg` |
+| **Touch targets ≥ 44px** | Buttons, links, and interactive elements must be at least 44×44 px |
+| **Readable font sizes** | Body text ≥ 14px; labels ≥ 12px; never smaller |
+| **No horizontal scroll** | Content must fit viewport at 375px width with no overflow |
+| **Hero/banner sections** | Must collapse gracefully — side-by-side panels become stacked on mobile |
+| **Tables on mobile** | Replace wide tables with cards or add horizontal scroll (`overflow-x: auto`) |
+| **Forms** | Full-width inputs on mobile; never place two inputs side-by-side below `sm` |
+| **Navbar/top bar** | Employee name and secondary labels can hide on mobile (`hidden sm:block`) |
+
+**CSS breakpoint convention (Tailwind):**
+
+```
+Mobile first (default) → no prefix   → 0px+
+Small tablet           → sm:          → 640px+
+Tablet / small laptop  → md:          → 768px+
+Desktop                → lg:          → 1024px+
+```
+
+**Checklist before any template commit:**
+- [ ] Viewed at 375px width (iPhone SE) in browser DevTools
+- [ ] Viewed at 768px width (iPad portrait)
+- [ ] All buttons/links are easily tappable
+- [ ] No content is cut off or requires horizontal scroll
+- [ ] Forms are usable with an on-screen keyboard (inputs not hidden behind it)
 
 ### Docstring Standard (Google-style, pt-BR)
 
