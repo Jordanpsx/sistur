@@ -38,6 +38,8 @@
       --mod-estoque-bg: #ffedd5;
       --mod-restaurante: #059669;
       --mod-restaurante-bg: #d1fae5;
+      --mod-audit: #7c3aed;
+      --mod-audit-bg: #ede9fe;
     }
 
     * {
@@ -917,6 +919,28 @@
           </div>
         </div>
         <p class="mod-card-desc">Gerencie fichas técnicas e análise de custos (CMV).</p>
+      </a>
+      {% endif %}
+
+      <!-- Auditoria -->
+      {% if perms.audit.view or perms.audit.view_all %}
+      <a href="{{ url_for('admin.audit_logs') }}" class="mod-card mod-active mod-audit">
+        <div class="mod-card-header">
+          <div class="mod-icon" style="background:var(--mod-audit-bg);color:var(--mod-audit);">
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="none">
+              <path d="M9 5H7a2 2 0 0 0-2 2v12a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2V7a2 2 0 0 0-2-2h-2
+                       M9 5a2 2 0 0 0 2 2h2a2 2 0 0 0 2-2M9 5a2 2 0 0 1 2-2h2a2 2 0 0 1 2 2" stroke="currentColor"
+                stroke-width="2" stroke-linecap="round" stroke-linejoin="round" />
+              <path d="M9 12h6M9 16h4" stroke="currentColor" stroke-width="2" stroke-linecap="round" />
+            </svg>
+          </div>
+          <div class="mod-card-titles">
+            <h2 class="mod-card-title">Auditoria</h2>
+            <span class="mod-badge" style="background:var(--mod-audit-bg);color:var(--mod-audit);">{% if
+              perms.audit.view_all %}Admin{% else %}Supervisor{% endif %}</span>
+          </div>
+        </div>
+        <p class="mod-card-desc">Rastreamento imutável de todas as ações do sistema.</p>
       </a>
       {% endif %}
 

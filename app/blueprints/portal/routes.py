@@ -147,6 +147,10 @@ def dashboard():
         "restaurante": {
             "view": has_permission(fid, "restaurante", "view"),
         },
+        "audit": {
+            "view":     has_permission(fid, "audit", "view"),
+            "view_all": has_permission(fid, "audit", "view_all"),
+        },
     }
 
     return render_template("portal/dashboard.html", funcionario=funcionario, perms=perms)
