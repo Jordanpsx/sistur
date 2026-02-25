@@ -264,43 +264,138 @@
       </div>
 
       <!-- ------------------------------------------------------------------ -->
-      <!-- Seção 4 — Jornada                                                  -->
+      <!-- Seção 4 — Jornada semanal                                         -->
       <!-- ------------------------------------------------------------------ -->
+      {% set dias = [
+        ('segunda', 'Segunda-feira'),
+        ('terca',   'Terça-feira'),
+        ('quarta',  'Quarta-feira'),
+        ('quinta',  'Quinta-feira'),
+        ('sexta',   'Sexta-feira'),
+        ('sabado',  'Sábado'),
+        ('domingo', 'Domingo'),
+      ] %}
+      {% set jornada = funcionario.jornada_semanal if funcionario and funcionario.jornada_semanal else {} %}
+      {% set dias_uteis = ('segunda','terca','quarta','quinta','sexta') %}
+
       <div class="bg-white rounded-2xl shadow-sm border border-slate-100 p-6 mb-4">
-        <h2 class="text-sm font-semibold text-slate-500 uppercase tracking-widest mb-4">Jornada de Trabalho</h2>
+        <h2 class="text-sm font-semibold text-slate-500 uppercase tracking-widest mb-1">Jornada de Trabalho</h2>
+        <p class="text-xs text-slate-400 mb-4">Marque os dias trabalhados e informe a carga horária em minutos.</p>
 
-        <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
-
-          <!-- Minutos esperados por dia -->
-          <div>
-            <label for="minutos_esperados_dia" class="block text-sm font-medium text-slate-700 mb-1">
-              Minutos esperados / dia
-            </label>
-            <input type="number" id="minutos_esperados_dia" name="minutos_esperados_dia"
-                   min="0" max="1440"
-                   value="{{ funcionario.minutos_esperados_dia if funcionario else 480 }}"
-                   class="w-full px-4 py-2.5 rounded-xl border border-slate-200 bg-white
-                          text-sm text-slate-700
-                          focus:outline-none focus:ring-2 focus:ring-primary/30 focus:border-primary" />
-            <p class="text-xs text-slate-400 mt-1">480 min = 8 horas</p>
-          </div>
-
-          <!-- Minutos de almoço -->
-          <div>
-            <label for="minutos_almoco" class="block text-sm font-medium text-slate-700 mb-1">
-              Minutos de almoço
-            </label>
-            <input type="number" id="minutos_almoco" name="minutos_almoco"
-                   min="0" max="480"
-                   value="{{ funcionario.minutos_almoco if funcionario else 60 }}"
-                   class="w-full px-4 py-2.5 rounded-xl border border-slate-200 bg-white
-                          text-sm text-slate-700
-                          focus:outline-none focus:ring-2 focus:ring-primary/30 focus:border-primary" />
-            <p class="text-xs text-slate-400 mt-1">60 min = 1 hora</p>
-          </div>
-
+        <div class="overflow-x-auto">
+          <table class="w-full text-sm">
+            <thead>
+              <tr class="border-b border-slate-100">
+                <th class="text-left py-2 pr-4 text-xs font-semibold text-slate-400 uppercase tracking-widest w-36">Dia</th>
+                <th class="text-center py-2 px-3 text-xs font-semibold text-slate-400 uppercase tracking-widest w-24">Trabalha</th>
+                <th class="text-left py-2 px-3 text-xs font-semibold text-slate-400 uppercase tracking-widest">Min / dia</th>
+                <th class="text-left py-2 px-3 text-xs font-semibold text-slate-400 uppercase tracking-widest">Almoço (min)</th>
+              </tr>
+            </thead>
+            <tbody class="divide-y divide-slate-50" id="jornada-tbody">
+              {% for slug, label in dias %}
+                {% set d = jornada.get(slug, {}) %}
+                {% set ativo = d.get('ativo', slug in dias_uteis) if funcionario else (slug in dias_uteis) %}
+                {% set minutos = d.get('minutos', 480) if ativo else 0 %}
+                {% set almoco  = d.get('almoco', 60)   if ativo else 0 %}
+                <tr class="jornada-row">
+                  <td class="py-2.5 pr-4 font-medium text-slate-700">{{ label }}</td>
+                  <td class="py-2.5 px-3 text-center">
+                    <input type="checkbox"
+                           name="jornada_{{ slug }}_ativo"
+                           id="jornada_{{ slug }}_ativo"
+                           {% if ativo %}checked{% endif %}
+                           class="w-4 h-4 rounded border-slate-300 text-primary
+                                  focus:ring-primary/30 day-checkbox"
+                           data-day="{{ slug }}" />
+                  </td>
+                  <td class="py-2.5 px-3">
+                    <input type="number"
+                           name="jornada_{{ slug }}_minutos"
+                           id="jornada_{{ slug }}_minutos"
+                           value="{{ minutos }}"
+                           min="0" max="1440"
+                           {% if not ativo %}disabled{% endif %}
+                           class="w-24 px-3 py-1.5 rounded-lg border border-slate-200 bg-white
+                                  text-sm text-slate-700 text-right
+                                  focus:outline-none focus:ring-2 focus:ring-primary/30 focus:border-primary
+                                  disabled:bg-slate-50 disabled:text-slate-300" />
+                  </td>
+                  <td class="py-2.5 px-3">
+                    <input type="number"
+                           name="jornada_{{ slug }}_almoco"
+                           id="jornada_{{ slug }}_almoco"
+                           value="{{ almoco }}"
+                           min="0" max="480"
+                           {% if not ativo %}disabled{% endif %}
+                           class="w-24 px-3 py-1.5 rounded-lg border border-slate-200 bg-white
+                                  text-sm text-slate-700 text-right
+                                  focus:outline-none focus:ring-2 focus:ring-primary/30 focus:border-primary
+                                  disabled:bg-slate-50 disabled:text-slate-300" />
+                  </td>
+                </tr>
+              {% endfor %}
+            </tbody>
+          </table>
         </div>
       </div>
+
+      <!-- ------------------------------------------------------------------ -->
+      <!-- Seção 4b — Senha de acesso                                         -->
+      <!-- ------------------------------------------------------------------ -->
+      <div class="bg-white rounded-2xl shadow-sm border border-slate-100 p-6 mb-4">
+        <h2 class="text-sm font-semibold text-slate-500 uppercase tracking-widest mb-1">Senha de Acesso</h2>
+        <p class="text-xs text-slate-400 mb-4">
+          {% if funcionario %}
+            Deixe em branco para manter a senha atual.
+          {% else %}
+            Opcional. Se não definida, o funcionário poderá acessar somente via CPF.
+          {% endif %}
+        </p>
+
+        <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+          <div>
+            <label for="nova_senha" class="block text-sm font-medium text-slate-700 mb-1">Nova senha</label>
+            <input type="password" id="nova_senha" name="nova_senha"
+                   autocomplete="new-password"
+                   placeholder="Mínimo 6 caracteres"
+                   class="w-full px-4 py-2.5 rounded-xl border border-slate-200 bg-white
+                          text-sm text-slate-700 placeholder-slate-400
+                          focus:outline-none focus:ring-2 focus:ring-primary/30 focus:border-primary" />
+          </div>
+          <div>
+            <label for="confirmar_senha" class="block text-sm font-medium text-slate-700 mb-1">Confirmar senha</label>
+            <input type="password" id="confirmar_senha" name="confirmar_senha"
+                   autocomplete="new-password"
+                   placeholder="Repita a nova senha"
+                   class="w-full px-4 py-2.5 rounded-xl border border-slate-200 bg-white
+                          text-sm text-slate-700 placeholder-slate-400
+                          focus:outline-none focus:ring-2 focus:ring-primary/30 focus:border-primary" />
+          </div>
+        </div>
+      </div>
+
+      <script>
+        // Habilita/desabilita os inputs de minutos ao marcar/desmarcar o dia
+        document.querySelectorAll('.day-checkbox').forEach(function(cb) {
+          cb.addEventListener('change', function() {
+            var day = this.dataset.day;
+            var minInput = document.getElementById('jornada_' + day + '_minutos');
+            var almInput = document.getElementById('jornada_' + day + '_almoco');
+            if (this.checked) {
+              minInput.disabled = false;
+              almInput.disabled = false;
+              if (!minInput.value || minInput.value === '0') minInput.value = '480';
+              if (!almInput.value || almInput.value === '0') almInput.value = '60';
+            } else {
+              minInput.disabled = true;
+              almInput.disabled = true;
+              minInput.value = '0';
+              almInput.value = '0';
+            }
+          });
+        });
+      </script>
 
       <!-- ------------------------------------------------------------------ -->
       <!-- Seção 5 — Permissões                                               -->

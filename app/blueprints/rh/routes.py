@@ -52,6 +52,59 @@ def _popular_selects() -> tuple[list[Area], list]:
     return areas, roles
 
 
+_DIAS_SEMANA = ("segunda", "terca", "quarta", "quinta", "sexta", "sabado", "domingo")
+
+
+def _parse_jornada(form) -> dict:
+    """
+    Constrói o dicionário jornada_semanal a partir dos campos do formulário.
+
+    Para cada dia da semana lê três inputs:
+        jornada_<dia>_ativo    (checkbox — presente se marcado)
+        jornada_<dia>_minutos  (number)
+        jornada_<dia>_almoco   (number)
+
+    Returns:
+        Dict com estrutura {"segunda": {"ativo": bool, "minutos": int, "almoco": int}, ...}
+    """
+    jornada = {}
+    for dia in _DIAS_SEMANA:
+        ativo = form.get(f"jornada_{dia}_ativo") is not None
+        minutos = int(form.get(f"jornada_{dia}_minutos") or 0) if ativo else 0
+        almoco = int(form.get(f"jornada_{dia}_almoco") or 0) if ativo else 0
+        jornada[dia] = {"ativo": ativo, "minutos": minutos, "almoco": almoco}
+    return jornada
+
+
+def _aplicar_senha(funcionario: Funcionario, form, ator_id: int) -> None:
+    """
+    Aplica nova senha ao funcionário se o campo 'nova_senha' estiver preenchido.
+
+    Valida se nova_senha == confirmar_senha antes de persistir.
+    Levanta ValueError se as senhas não coincidem ou são muito curtas.
+
+    Args:
+        funcionario: Instância já persistida do Funcionario.
+        form:        ImmutableMultiDict do request.form.
+        ator_id:     ID do ator que realiza a ação.
+
+    Raises:
+        ValueError: Se as senhas não coincidem ou têm menos de 6 caracteres.
+    """
+    nova = (form.get("nova_senha") or "").strip()
+    confirmar = (form.get("confirmar_senha") or "").strip()
+
+    if not nova:
+        return  # Campo vazio → mantém senha atual
+
+    if len(nova) < 6:
+        raise ValueError("A senha deve ter pelo menos 6 caracteres.")
+    if nova != confirmar:
+        raise ValueError("As senhas não coincidem.")
+
+    FuncionarioService.definir_senha(funcionario.id, nova, ator_id)
+
+
 def _aplicar_role(funcionario: Funcionario, role_id_str: str | None, ator_id: int) -> None:
     """
     Aplica ou remove o role de um funcionário conforme o valor recebido do formulário.
@@ -172,14 +225,26 @@ def novo_funcionario():
             roles=roles,
         ), 400
 
-    # Campos adicionais não cobertos pelo criar() padrão
+    # Campos adicionais + jornada semanal
     dados_extras: dict = {}
     for campo in ("email", "telefone", "data_admissao", "ctps", "ctps_uf", "cbo"):
         valor = request.form.get(campo) or None
         if valor:
             dados_extras[campo] = valor
-    if dados_extras:
-        FuncionarioService.atualizar(f.id, dados_extras, ator_id)
+    dados_extras["jornada_semanal"] = _parse_jornada(request.form)
+    FuncionarioService.atualizar(f.id, dados_extras, ator_id)
+
+    # Senha (opcional)
+    try:
+        _aplicar_senha(f, request.form, ator_id)
+    except ValueError as exc:
+        flash(str(exc), "erro")
+        return render_template(
+            "rh/funcionarios/form.html",
+            funcionario=f,
+            areas=areas,
+            roles=roles,
+        ), 400
 
     # Aplicar role separadamente (auditado como permission_change)
     _aplicar_role(f, request.form.get("role_id"), ator_id)
@@ -243,8 +308,22 @@ def editar_funcionario(funcionario_id: int):
         if request.form.get(campo):
             dados[campo] = int(request.form[campo])
 
+    dados["jornada_semanal"] = _parse_jornada(request.form)
+
     try:
         f = FuncionarioService.atualizar(funcionario_id, dados, ator_id)
+    except ValueError as exc:
+        flash(str(exc), "erro")
+        return render_template(
+            "rh/funcionarios/form.html",
+            funcionario=f,
+            areas=areas,
+            roles=roles,
+        ), 400
+
+    # Senha (opcional)
+    try:
+        _aplicar_senha(f, request.form, ator_id)
     except ValueError as exc:
         flash(str(exc), "erro")
         return render_template(
