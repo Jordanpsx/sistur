@@ -85,6 +85,31 @@ sistur/
 
 ---
 
+## Module: Ponto Eletrônico — Strict Business Rules
+
+These rules are non-negotiable. Any implementation must satisfy all six.
+
+| # | Rule | Detail |
+|---|------|--------|
+| 1 | **Dual input** | Portal touch/click AND QR code camera scan (`ponto.py`) are equally valid; both write to the same `time_entries` table |
+| 2 | **GPS geofencing only** | Use Haversine formula over lat/lon from `sistur_authorized_locations`; IP blocking is **forbidden** (browser privacy causes false positives) |
+| 3 | **Admin CRUD fully audited** | Every admin insert/update/delete requires a non-empty `admin_change_reason` and must call `AuditService` — no exceptions |
+| 4 | **10-minute tolerance** | Applies to delays (negative balance) only: if `abs(saldo) ≤ 10` → forgive to 0; if `abs(saldo) > 10` → penalize only the excess (`saldo + 10`); overtime is never affected |
+| 5 | **Even/Odd pairing** | A day with an odd number of punches gets `needs_review=True` and the balance is frozen at 0 until corrected |
+| 6 | **Review → Approvals** | Days with `needs_review=True` or unjustified absences must generate a pending item in the Aprovações module |
+
+### Key legacy references for this module
+- `legacy/includes/class-sistur-time-tracking.php` — Even/Odd pairing, duplicate-punch prevention (5-second window)
+- `legacy/includes/class-sistur-timebank-manager.php` — Tolerance calculation, daily balance, `expected_minutes_snapshot`
+- `legacy/mu-plugins/externo/ponto.py` — QR scanner: OpenCV + pyzbar, SHA256 auth, thermal printer receipt
+
+### DB tables (to be created as SQLAlchemy models)
+- `sistur_time_entries` — `employee_id`, `punch_time` (datetime), `shift_date` (date), `punch_type` (clock_in/lunch_start/lunch_end/clock_out/extra), `source` (employee/admin/KIOSK/QR), `processing_status` (PENDENTE/PROCESSADO), `admin_change_reason`, `changed_by_user_id`
+- `sistur_time_days` — `employee_id`, `shift_date`, `minutos_trabalhados`, `saldo_calculado_minutos`, `saldo_final_minutos`, `needs_review` (bool), `expected_minutes_snapshot`, `schedule_id_snapshot`
+- `sistur_authorized_locations` — `latitude`, `longitude`, `radius_meters`, `name`
+
+---
+
 ## Database Tables (WordPress prefix `wp_`)
 
 - `wp_sistur_employees`, `wp_sistur_departments`
