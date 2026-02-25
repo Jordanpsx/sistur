@@ -1,7 +1,7 @@
 <!DOCTYPE html>
 <!--
   Copyright (c) 2026 Jordan Barbosa Machado — All Rights Reserved
-  Portal do Colaborador — Dashboard
+  Portal do Colaborador — Dashboard (redesign v2)
 -->
 <html lang="pt-BR">
 
@@ -11,373 +11,680 @@
   <title>{{ company_name }} | Minha Área</title>
 
   <script src="https://cdn.tailwindcss.com"></script>
-  <script>
-    tailwind.config = {
-      theme: {
-        extend: {
-          colors: {
-            primary: {
-              DEFAULT: '#0d9488',
-              light: '#ccfbf1',
-              dark: '#0f766e',
-            }
-          },
-          keyframes: {
-            fadeIn: {
-              '0%': { opacity: '0', transform: 'translateY(12px)' },
-              '100%': { opacity: '1', transform: 'translateY(0)' },
-            },
-          },
-          animation: {
-            'fade-in': 'fadeIn 0.4s ease-out forwards',
-          },
-        },
-      },
-    }
-  </script>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&family=DM+Mono:wght@400;500&display=swap" rel="stylesheet" />
 
   <style>
-    @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap');
+    /* ─── White-label CSS Variables ─────────────────────────────────────────── */
+    :root {
+      --primary:         #0d9488;
+      --primary-light:   #ccfbf1;
+      --primary-dark:    #0f766e;
+      --primary-hero:    #134e4a;
+      --primary-hero-2:  #0f766e;
+      --bg-page:         #f0fdfa;
+
+      /* Module accent colors */
+      --mod-rh:            #6366f1;
+      --mod-rh-bg:         #eef2ff;
+      --mod-ponto:         #0d9488;
+      --mod-ponto-bg:      #ccfbf1;
+      --mod-holerite:      #d97706;
+      --mod-holerite-bg:   #fef3c7;
+      --mod-estoque:       #ea580c;
+      --mod-estoque-bg:    #ffedd5;
+      --mod-restaurante:   #059669;
+      --mod-restaurante-bg:#d1fae5;
+    }
+
+    * { box-sizing: border-box; }
 
     body {
       font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+      background-color: var(--bg-page);
+      margin: 0;
     }
 
-    .card:nth-child(1) {
-      animation: fadeIn 0.4s 0.05s ease-out both;
+    /* ─── Top bar ───────────────────────────────────────────────────────────── */
+    .topbar {
+      position: sticky;
+      top: 0;
+      z-index: 50;
+      background: rgba(255, 255, 255, 0.85);
+      backdrop-filter: blur(16px);
+      -webkit-backdrop-filter: blur(16px);
+      border-bottom: 1px solid rgba(0, 0, 0, 0.06);
     }
 
-    .card:nth-child(2) {
-      animation: fadeIn 0.4s 0.15s ease-out both;
+    .topbar-inner {
+      max-width: 1100px;
+      margin: 0 auto;
+      padding: 0 1.5rem;
+      height: 60px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 1rem;
     }
 
-    .card:nth-child(3) {
-      animation: fadeIn 0.4s 0.25s ease-out both;
+    .topbar-brand {
+      display: flex;
+      align-items: center;
+      gap: 0.75rem;
     }
 
-    .card:nth-child(4) {
-      animation: fadeIn 0.4s 0.35s ease-out both;
+    .topbar-logo {
+      height: 32px;
+      width: auto;
+      object-fit: contain;
     }
 
-    .card:nth-child(5) {
-      animation: fadeIn 0.4s 0.45s ease-out both;
+    .topbar-logo-fallback {
+      width: 34px;
+      height: 34px;
+      border-radius: 10px;
+      background: var(--primary-light);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      color: var(--primary);
+      flex-shrink: 0;
     }
 
-    .card:nth-child(6) {
-      animation: fadeIn 0.4s 0.55s ease-out both;
+    .topbar-name {
+      font-size: 0.875rem;
+      font-weight: 700;
+      color: #334155;
+      display: none;
     }
 
-    .card:nth-child(7) {
-      animation: fadeIn 0.4s 0.65s ease-out both;
+    @media (min-width: 640px) {
+      .topbar-name { display: block; }
     }
 
-    .card:nth-child(8) {
-      animation: fadeIn 0.4s 0.75s ease-out both;
+    .topbar-sub {
+      color: #94a3b8;
+      font-weight: 400;
+    }
+
+    .topbar-actions {
+      display: flex;
+      align-items: center;
+      gap: 0.75rem;
+    }
+
+    .topbar-employee {
+      font-size: 0.8rem;
+      font-weight: 600;
+      color: #475569;
+      display: none;
+    }
+
+    @media (min-width: 640px) {
+      .topbar-employee { display: block; }
+    }
+
+    .btn-logout {
+      display: flex;
+      align-items: center;
+      gap: 0.375rem;
+      padding: 0.375rem 0.875rem;
+      border-radius: 8px;
+      font-size: 0.8rem;
+      font-weight: 600;
+      color: #64748b;
+      background: transparent;
+      border: 1px solid #e2e8f0;
+      cursor: pointer;
+      transition: all 0.15s ease;
+    }
+
+    .btn-logout:hover {
+      background: #fef2f2;
+      color: #dc2626;
+      border-color: #fecaca;
+    }
+
+    /* ─── Hero Banner ───────────────────────────────────────────────────────── */
+    .hero {
+      background: linear-gradient(135deg, var(--primary-hero) 0%, var(--primary-hero-2) 100%);
+      padding: 2.5rem 1.5rem;
+      position: relative;
+      overflow: hidden;
+    }
+
+    .hero::before {
+      content: '';
+      position: absolute;
+      top: -60px; right: -60px;
+      width: 220px; height: 220px;
+      border-radius: 50%;
+      background: rgba(255,255,255,0.04);
+      pointer-events: none;
+    }
+
+    .hero::after {
+      content: '';
+      position: absolute;
+      bottom: -40px; left: 15%;
+      width: 160px; height: 160px;
+      border-radius: 50%;
+      background: rgba(255,255,255,0.03);
+      pointer-events: none;
+    }
+
+    .hero-inner {
+      max-width: 1100px;
+      margin: 0 auto;
+      display: grid;
+      grid-template-columns: 1fr auto;
+      gap: 1.5rem;
+      align-items: start;
+    }
+
+    @media (max-width: 640px) {
+      .hero-inner {
+        grid-template-columns: 1fr;
+      }
+    }
+
+    /* Glassmorphism employee card */
+    .hero-glass {
+      background: rgba(255, 255, 255, 0.10);
+      backdrop-filter: blur(12px);
+      -webkit-backdrop-filter: blur(12px);
+      border: 1px solid rgba(255,255,255,0.18);
+      border-radius: 18px;
+      padding: 1.75rem 2rem;
+      position: relative;
+      z-index: 1;
+    }
+
+    .hero-greeting {
+      font-size: 1.65rem;
+      font-weight: 800;
+      color: #fff;
+      letter-spacing: -0.02em;
+      margin: 0 0 0.25rem;
+    }
+
+    .hero-subtitle {
+      font-size: 0.78rem;
+      color: rgba(255,255,255,0.55);
+      margin: 0 0 1.25rem;
+    }
+
+    .hero-divider {
+      border: none;
+      border-top: 1px solid rgba(255,255,255,0.12);
+      margin: 0 0 1.25rem;
+    }
+
+    .hero-data-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 0.75rem 1.5rem;
+    }
+
+    .hero-data-item dt {
+      font-size: 0.65rem;
+      font-weight: 700;
+      letter-spacing: 0.08em;
+      text-transform: uppercase;
+      color: rgba(255,255,255,0.45);
+      margin: 0 0 0.15rem;
+    }
+
+    .hero-data-item dd {
+      font-size: 0.85rem;
+      font-weight: 600;
+      color: rgba(255,255,255,0.9);
+      margin: 0;
+      font-family: 'Inter', sans-serif;
+    }
+
+    .hero-data-item dd.mono {
+      font-family: 'DM Mono', monospace;
+      font-size: 0.8rem;
+      letter-spacing: 0.04em;
+    }
+
+    /* Banco de Horas widget */
+    .banco-horas-widget {
+      background: rgba(255, 255, 255, 0.10);
+      backdrop-filter: blur(12px);
+      -webkit-backdrop-filter: blur(12px);
+      border: 1px solid rgba(255,255,255,0.18);
+      border-radius: 18px;
+      padding: 1.5rem 1.75rem;
+      text-align: center;
+      min-width: 180px;
+      position: relative;
+      z-index: 1;
+    }
+
+    .banco-horas-label {
+      font-size: 0.65rem;
+      font-weight: 700;
+      letter-spacing: 0.1em;
+      text-transform: uppercase;
+      color: rgba(255,255,255,0.5);
+      margin: 0 0 0.75rem;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 0.4rem;
+    }
+
+    .banco-horas-value {
+      font-family: 'DM Mono', monospace;
+      font-size: 2.4rem;
+      font-weight: 500;
+      line-height: 1;
+      letter-spacing: -0.02em;
+      margin: 0 0 0.5rem;
+    }
+
+    .banco-horas-value.positive { color: #6ee7b7; }
+    .banco-horas-value.negative { color: #fca5a5; }
+    .banco-horas-value.zero     { color: rgba(255,255,255,0.45); }
+
+    .banco-horas-sublabel {
+      font-size: 0.7rem;
+      color: rgba(255,255,255,0.4);
+      margin: 0;
+    }
+
+    /* ─── Module Grid ───────────────────────────────────────────────────────── */
+    .modules-section {
+      max-width: 1100px;
+      margin: 0 auto;
+      padding: 2rem 1.5rem 3rem;
+    }
+
+    .modules-heading {
+      font-size: 0.7rem;
+      font-weight: 700;
+      letter-spacing: 0.1em;
+      text-transform: uppercase;
+      color: #94a3b8;
+      margin: 0 0 1rem;
+    }
+
+    .modules-grid {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 1rem;
+    }
+
+    @media (max-width: 900px) {
+      .modules-grid { grid-template-columns: repeat(2, 1fr); }
+    }
+
+    @media (max-width: 560px) {
+      .modules-grid { grid-template-columns: 1fr; }
+    }
+
+    /* ─── Module Card ───────────────────────────────────────────────────────── */
+    .mod-card {
+      background: #fff;
+      border-radius: 16px;
+      border: 1px solid #f1f5f9;
+      border-left: 4px solid transparent;
+      padding: 1.25rem 1.25rem 1.25rem 1.1rem;
+      text-decoration: none;
+      display: block;
+      transition: transform 0.2s ease, box-shadow 0.2s ease, border-color 0.2s ease;
+      cursor: pointer;
+
+      /* staggered fade-in */
+      opacity: 0;
+      animation: fadeUp 0.4s ease-out forwards;
+    }
+
+    .mod-card:nth-child(1) { animation-delay: 0.05s; }
+    .mod-card:nth-child(2) { animation-delay: 0.12s; }
+    .mod-card:nth-child(3) { animation-delay: 0.19s; }
+    .mod-card:nth-child(4) { animation-delay: 0.26s; }
+    .mod-card:nth-child(5) { animation-delay: 0.33s; }
+    .mod-card:nth-child(6) { animation-delay: 0.40s; }
+
+    @keyframes fadeUp {
+      from { opacity: 0; transform: translateY(10px); }
+      to   { opacity: 1; transform: translateY(0); }
+    }
+
+    /* Active card hover */
+    .mod-card.mod-active:hover {
+      transform: translateY(-4px);
+    }
+
+    .mod-card.mod-active.mod-rh:hover {
+      box-shadow: 0 12px 28px rgba(99, 102, 241, 0.18);
+      border-left-color: var(--mod-rh);
+    }
+
+    .mod-card.mod-active.mod-ponto:hover {
+      box-shadow: 0 12px 28px rgba(13, 148, 136, 0.18);
+      border-left-color: var(--mod-ponto);
+    }
+
+    .mod-card.mod-active.mod-holerite:hover {
+      box-shadow: 0 12px 28px rgba(217, 119, 6, 0.18);
+      border-left-color: var(--mod-holerite);
+    }
+
+    .mod-card.mod-active.mod-estoque:hover {
+      box-shadow: 0 12px 28px rgba(234, 88, 12, 0.18);
+      border-left-color: var(--mod-estoque);
+    }
+
+    .mod-card.mod-active.mod-restaurante:hover {
+      box-shadow: 0 12px 28px rgba(5, 150, 105, 0.18);
+      border-left-color: var(--mod-restaurante);
+    }
+
+    /* Disabled card */
+    .mod-card.mod-disabled {
+      opacity: 0.5;
+      cursor: not-allowed;
+      pointer-events: none;
+    }
+
+    /* Card header row */
+    .mod-card-header {
+      display: flex;
+      align-items: flex-start;
+      gap: 0.875rem;
+      margin-bottom: 0.875rem;
+    }
+
+    .mod-icon {
+      width: 40px;
+      height: 40px;
+      border-radius: 12px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      flex-shrink: 0;
+      transition: background 0.2s ease;
+    }
+
+    .mod-card.mod-rh     .mod-icon { background: var(--mod-rh-bg);          color: var(--mod-rh); }
+    .mod-card.mod-ponto  .mod-icon { background: var(--mod-ponto-bg);        color: var(--mod-ponto); }
+    .mod-card.mod-holerite .mod-icon { background: var(--mod-holerite-bg);   color: var(--mod-holerite); }
+    .mod-card.mod-estoque .mod-icon { background: var(--mod-estoque-bg);     color: var(--mod-estoque); }
+    .mod-card.mod-restaurante .mod-icon { background: var(--mod-restaurante-bg); color: var(--mod-restaurante); }
+    .mod-card.mod-disabled .mod-icon { background: #f1f5f9; color: #94a3b8; }
+
+    .mod-card.mod-active.mod-rh:hover .mod-icon         { background: var(--mod-rh);          color: #fff; }
+    .mod-card.mod-active.mod-ponto:hover .mod-icon      { background: var(--mod-ponto);        color: #fff; }
+    .mod-card.mod-active.mod-estoque:hover .mod-icon    { background: var(--mod-estoque);      color: #fff; }
+    .mod-card.mod-active.mod-restaurante:hover .mod-icon { background: var(--mod-restaurante); color: #fff; }
+
+    .mod-card-titles { flex: 1; min-width: 0; }
+
+    .mod-card-title {
+      font-size: 0.9rem;
+      font-weight: 700;
+      color: #1e293b;
+      margin: 0 0 0.25rem;
+      transition: color 0.2s ease;
+    }
+
+    .mod-card.mod-active.mod-rh:hover .mod-card-title         { color: var(--mod-rh); }
+    .mod-card.mod-active.mod-ponto:hover .mod-card-title      { color: var(--mod-ponto); }
+    .mod-card.mod-active.mod-estoque:hover .mod-card-title    { color: var(--mod-estoque); }
+    .mod-card.mod-active.mod-restaurante:hover .mod-card-title { color: var(--mod-restaurante); }
+
+    .mod-badge {
+      display: inline-block;
+      font-size: 0.6rem;
+      font-weight: 700;
+      letter-spacing: 0.08em;
+      text-transform: uppercase;
+      padding: 0.15rem 0.5rem;
+      border-radius: 99px;
+    }
+
+    .badge-rh          { background: var(--mod-rh-bg);          color: var(--mod-rh); }
+    .badge-ponto       { background: var(--mod-ponto-bg);        color: var(--mod-ponto); }
+    .badge-holerite    { background: var(--mod-holerite-bg);     color: var(--mod-holerite); }
+    .badge-estoque     { background: var(--mod-estoque-bg);      color: var(--mod-estoque); }
+    .badge-restaurante { background: var(--mod-restaurante-bg);  color: var(--mod-restaurante); }
+    .badge-em-breve    { background: #fef3c7; color: #d97706; }
+
+    .mod-card-desc {
+      font-size: 0.775rem;
+      color: #94a3b8;
+      line-height: 1.45;
+      margin: 0;
     }
   </style>
 </head>
 
-<body class="min-h-screen bg-gradient-to-br from-teal-50 via-sky-50 to-slate-100">
+<body>
 
-  <!-- Top bar -->
-  <header class="bg-white/80 backdrop-blur border-b border-slate-100 sticky top-0 z-10">
-    <div class="max-w-5xl mx-auto px-4 sm:px-6 h-16 flex items-center justify-between gap-4">
+  <!-- ── Top bar ─────────────────────────────────────────────────────────────── -->
+  <header class="topbar">
+    <div class="topbar-inner">
 
-      <!-- Brand -->
-      <div class="flex items-center gap-3">
+      <div class="topbar-brand">
         {% if company_logo %}
-        <img src="{{ company_logo | e }}" alt="{{ company_name | e }}" class="h-8 w-auto object-contain" />
+          <img src="{{ company_logo | e }}" alt="{{ company_name | e }}" class="topbar-logo" />
         {% else %}
-        <div class="w-8 h-8 rounded-full bg-primary-light flex items-center justify-center text-primary">
-          <svg width="16" height="16" viewBox="0 0 24 24" fill="none">
-            <circle cx="12" cy="12" r="10" stroke="currentColor" stroke-width="1.5" />
-            <path d="M12 8V12L15 15" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" />
-          </svg>
-        </div>
+          <div class="topbar-logo-fallback">
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none">
+              <circle cx="12" cy="12" r="10" stroke="currentColor" stroke-width="2"/>
+              <path d="M12 8V12L15 15" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
+            </svg>
+          </div>
         {% endif %}
-        <span class="font-bold text-slate-700 text-sm hidden sm:block">
+        <span class="topbar-name">
           {{ company_name | e }}
-          <span class="text-slate-400 font-normal">| Portal do Colaborador</span>
+          <span class="topbar-sub"> | Portal do Colaborador</span>
         </span>
       </div>
 
-      <!-- Employee + logout -->
-      <div class="flex items-center gap-3">
-        <span class="text-sm text-slate-600 font-medium hidden sm:block">
-          {{ funcionario.nome.split()[0] | e }}
-        </span>
+      <div class="topbar-actions">
+        <span class="topbar-employee">{{ funcionario.nome.split()[0] | e }}</span>
         <form method="POST" action="{{ url_for('portal.logout') }}">
-          <button type="submit" class="flex items-center gap-2 px-3 py-1.5 rounded-lg
-                         text-sm font-medium text-slate-500
-                         hover:bg-red-50 hover:text-red-600
-                         transition-colors duration-150">
-            <svg width="16" height="16" viewBox="0 0 24 24" fill="none">
+          <button type="submit" class="btn-logout">
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none">
               <path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4
-                       M16 17l5-5-5-5M21 12H9" stroke="currentColor" stroke-width="2" stroke-linecap="round"
-                stroke-linejoin="round" />
+                       M16 17l5-5-5-5M21 12H9"
+                stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
             </svg>
             Sair
           </button>
         </form>
       </div>
+
     </div>
   </header>
 
-  <!-- Page content -->
-  <main class="max-w-5xl mx-auto px-4 sm:px-6 py-8">
+  <!-- ── Hero Banner ─────────────────────────────────────────────────────────── -->
+  <section class="hero">
+    <div class="hero-inner">
 
-    <!-- Welcome heading -->
-    <div class="mb-8">
-      <h1 class="text-2xl font-extrabold text-slate-800">
-        Olá, {{ funcionario.nome.split()[0] | e }}
-      </h1>
-      <p class="text-slate-500 text-sm mt-1">
-        Bem-vindo ao seu painel. Aqui você acompanha seus dados e registros.
-      </p>
-    </div>
-
-    <!-- Cards grid -->
-    <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-5">
-
-      <!-- Card: Dados Pessoais -->
-      <div class="card bg-white rounded-2xl shadow-sm border border-slate-100 p-6
-                  col-span-1 sm:col-span-2 lg:col-span-2">
-        <div class="flex items-center gap-3 mb-5">
-          <div class="w-10 h-10 rounded-xl bg-primary-light
-                      flex items-center justify-center text-primary flex-shrink-0">
-            <svg width="20" height="20" viewBox="0 0 24 24" fill="none">
-              <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2
-                       M16 7a4 4 0 1 1-8 0 4 4 0 0 1 8 0z" stroke="currentColor" stroke-width="2"
-                stroke-linecap="round" stroke-linejoin="round" />
-            </svg>
+      <!-- Employee glass card -->
+      <div class="hero-glass">
+        <h1 class="hero-greeting">Olá, {{ funcionario.nome.split()[0] | e }} 👋</h1>
+        <p class="hero-subtitle">Bem-vindo ao seu painel. Aqui você acompanha seus dados e registros.</p>
+        <hr class="hero-divider" />
+        <dl class="hero-data-grid">
+          <div class="hero-data-item">
+            <dt>Nome completo</dt>
+            <dd>{{ funcionario.nome | e }}</dd>
           </div>
-          <h2 class="font-bold text-slate-700">Dados do Colaborador</h2>
-        </div>
-
-        <dl class="grid grid-cols-1 sm:grid-cols-2 gap-x-6 gap-y-4 text-sm">
-          <div>
-            <dt class="text-xs font-semibold uppercase tracking-widest text-slate-400 mb-0.5">Nome</dt>
-            <dd class="text-slate-700 font-medium">{{ funcionario.nome | e }}</dd>
+          <div class="hero-data-item">
+            <dt>CPF</dt>
+            <dd class="mono">{{ funcionario.cpf_formatado() }}</dd>
           </div>
-          <div>
-            <dt class="text-xs font-semibold uppercase tracking-widest text-slate-400 mb-0.5">CPF</dt>
-            <dd class="text-slate-700 font-medium font-mono">{{ funcionario.cpf_formatado() }}</dd>
+          <div class="hero-data-item">
+            <dt>Cargo</dt>
+            <dd>{{ funcionario.cargo or '—' | e }}</dd>
           </div>
-          <div>
-            <dt class="text-xs font-semibold uppercase tracking-widest text-slate-400 mb-0.5">Cargo</dt>
-            <dd class="text-slate-700 font-medium">
-              {{ funcionario.cargo or '—' | e }}
-            </dd>
-          </div>
-          <div>
-            <dt class="text-xs font-semibold uppercase tracking-widest text-slate-400 mb-0.5">Área</dt>
-            <dd class="text-slate-700 font-medium">
-              {{ funcionario.area.name if funcionario.area else '—' }}
-            </dd>
+          <div class="hero-data-item">
+            <dt>Área</dt>
+            <dd>{{ funcionario.area.name if funcionario.area else '—' }}</dd>
           </div>
           {% if funcionario.matricula %}
-          <div>
-            <dt class="text-xs font-semibold uppercase tracking-widest text-slate-400 mb-0.5">Matrícula</dt>
-            <dd class="text-slate-700 font-medium font-mono">{{ funcionario.matricula | e }}</dd>
+          <div class="hero-data-item">
+            <dt>Matrícula</dt>
+            <dd class="mono">{{ funcionario.matricula | e }}</dd>
           </div>
           {% endif %}
           {% if funcionario.data_admissao %}
-          <div>
-            <dt class="text-xs font-semibold uppercase tracking-widest text-slate-400 mb-0.5">Admissão</dt>
-            <dd class="text-slate-700 font-medium">
-              {{ funcionario.data_admissao.strftime('%d/%m/%Y') }}
-            </dd>
+          <div class="hero-data-item">
+            <dt>Admissão</dt>
+            <dd>{{ funcionario.data_admissao.strftime('%d/%m/%Y') }}</dd>
           </div>
           {% endif %}
         </dl>
       </div>
 
-      <!-- Card: Banco de Horas -->
-      <div class="card bg-white rounded-2xl shadow-sm border border-slate-100 p-6">
-        <div class="flex items-center gap-3 mb-5">
-          <div class="w-10 h-10 rounded-xl bg-primary-light
-                      flex items-center justify-center text-primary flex-shrink-0">
-            <svg width="20" height="20" viewBox="0 0 24 24" fill="none">
-              <circle cx="12" cy="12" r="10" stroke="currentColor" stroke-width="2" />
-              <path d="M12 8V12L15 15" stroke="currentColor" stroke-width="2" stroke-linecap="round" />
-            </svg>
-          </div>
-          <h2 class="font-bold text-slate-700">Banco de Horas</h2>
-        </div>
-
-        {% set saldo = funcionario.saldo_banco_horas() %}
-        <div class="text-center py-2">
-          <p class="text-4xl font-extrabold tracking-tight
-                    {% if saldo < 0 %}text-red-500{% elif saldo > 0 %}text-primary{% else %}text-slate-400{% endif %}">
-            {{ funcionario.saldo_banco_horas_formatado() }}
-          </p>
-          <p class="text-xs text-slate-400 mt-2">saldo atual</p>
-        </div>
-
-        <p class="text-xs text-slate-400 text-center mt-4 border-t border-slate-50 pt-4">
-          Detalhamento em breve
+      <!-- Banco de Horas widget -->
+      {% set saldo = funcionario.saldo_banco_horas() %}
+      <div class="banco-horas-widget">
+        <p class="banco-horas-label">
+          <svg width="13" height="13" viewBox="0 0 24 24" fill="none">
+            <circle cx="12" cy="12" r="10" stroke="currentColor" stroke-width="2"/>
+            <path d="M12 8V12L15 15" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
+          </svg>
+          Banco de Horas
         </p>
+        <p class="banco-horas-value {% if saldo > 0 %}positive{% elif saldo < 0 %}negative{% else %}zero{% endif %}">
+          {{ funcionario.saldo_banco_horas_formatado() }}
+        </p>
+        <p class="banco-horas-sublabel">saldo atual</p>
       </div>
 
-      <!-- Card: RH — Funcionários (visível para quem tem funcionarios.view) -->
+    </div>
+  </section>
+
+  <!-- ── Module Grid ──────────────────────────────────────────────────────────── -->
+  <main class="modules-section">
+    <p class="modules-heading">Módulos disponíveis</p>
+
+    <div class="modules-grid">
+
+      <!-- Funcionários -->
       {% if perms.funcionarios.view %}
-      <a href="{{ url_for('rh.listar_funcionarios') }}" class="card bg-white rounded-2xl shadow-sm border border-slate-100 p-6
-                hover:shadow-md hover:border-primary/20 transition-all duration-200 group">
-        <div class="flex items-center gap-3 mb-4">
-          <div class="w-10 h-10 rounded-xl bg-primary-light
-                      flex items-center justify-center text-primary flex-shrink-0
-                      group-hover:bg-primary group-hover:text-white transition-colors">
+      <a href="{{ url_for('rh.listar_funcionarios') }}" class="mod-card mod-active mod-rh">
+        <div class="mod-card-header">
+          <div class="mod-icon">
             <svg width="20" height="20" viewBox="0 0 24 24" fill="none">
               <path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2
                        M9 11a4 4 0 1 0 0-8 4 4 0 0 0 0 8z
                        M23 21v-2a4 4 0 0 0-3-3.87
-                       M16 3.13a4 4 0 0 1 0 7.75" stroke="currentColor" stroke-width="2" stroke-linecap="round"
-                stroke-linejoin="round" />
+                       M16 3.13a4 4 0 0 1 0 7.75"
+                stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
             </svg>
           </div>
-          <div>
-            <h2 class="font-bold text-slate-700 group-hover:text-primary transition-colors">
-              Funcionários
-            </h2>
-            <span class="text-xs font-medium text-teal-600 bg-teal-50 px-2 py-0.5 rounded-full">
-              RH
-            </span>
+          <div class="mod-card-titles">
+            <h2 class="mod-card-title">Funcionários</h2>
+            <span class="mod-badge badge-rh">RH</span>
           </div>
         </div>
-        <p class="text-xs text-slate-400">
-          Cadastre, edite e gerencie os colaboradores da empresa.
-        </p>
+        <p class="mod-card-desc">Cadastre, edite e gerencie os colaboradores da empresa.</p>
       </a>
       {% endif %}
 
-      <!-- Card: Ponto Eletrônico -->
+      <!-- Ponto Eletrônico -->
       {% if perms.ponto.view %}
-      <a href="{{ url_for('ponto.historico') }}" class="card bg-white rounded-2xl shadow-sm border border-slate-100 p-6
-                hover:shadow-md hover:border-primary/20 transition-all duration-200 group">
-        <div class="flex items-center gap-3 mb-4">
-          <div class="w-10 h-10 rounded-xl bg-primary-light
-                      flex items-center justify-center text-primary flex-shrink-0
-                      group-hover:bg-primary group-hover:text-white transition-colors">
+      <a href="{{ url_for('ponto.historico') }}" class="mod-card mod-active mod-ponto">
+        <div class="mod-card-header">
+          <div class="mod-icon">
             <svg width="20" height="20" viewBox="0 0 24 24" fill="none">
-              <rect x="5" y="2" width="14" height="20" rx="2" stroke="currentColor" stroke-width="2" />
-              <path d="M12 11v5M12 7v.01" stroke="currentColor" stroke-width="2" stroke-linecap="round" />
+              <rect x="5" y="2" width="14" height="20" rx="2" stroke="currentColor" stroke-width="2"/>
+              <path d="M12 11v5M12 7v.01" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
             </svg>
           </div>
-          <div>
-            <h2 class="font-bold text-slate-700 group-hover:text-primary transition-colors">
-              Ponto Eletrônico
-            </h2>
-            <span class="text-xs font-medium text-teal-600 bg-teal-50 px-2 py-0.5 rounded-full">
-              RH
-            </span>
+          <div class="mod-card-titles">
+            <h2 class="mod-card-title">Ponto Eletrônico</h2>
+            <span class="mod-badge badge-ponto">Ponto</span>
           </div>
         </div>
-        <p class="text-xs text-slate-400">
-          Visualize e confirme seus registros de entrada e saída.
-        </p>
+        <p class="mod-card-desc">Visualize e confirme seus registros de entrada e saída.</p>
       </a>
       {% else %}
-      <div class="card bg-white rounded-2xl shadow-sm border border-slate-100 p-6
-                  opacity-60 cursor-not-allowed">
-        <div class="flex items-center gap-3 mb-4">
-          <div class="w-10 h-10 rounded-xl bg-slate-100
-                      flex items-center justify-center text-slate-400 flex-shrink-0">
+      <div class="mod-card mod-disabled mod-ponto">
+        <div class="mod-card-header">
+          <div class="mod-icon">
             <svg width="20" height="20" viewBox="0 0 24 24" fill="none">
-              <rect x="5" y="2" width="14" height="20" rx="2" stroke="currentColor" stroke-width="2" />
-              <path d="M12 11v5M12 7v.01" stroke="currentColor" stroke-width="2" stroke-linecap="round" />
+              <rect x="5" y="2" width="14" height="20" rx="2" stroke="currentColor" stroke-width="2"/>
+              <path d="M12 11v5M12 7v.01" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
             </svg>
           </div>
-          <div>
-            <h2 class="font-bold text-slate-500">Ponto Eletrônico</h2>
-            <span class="text-xs font-medium text-amber-500 bg-amber-50
-                         px-2 py-0.5 rounded-full">Em breve</span>
+          <div class="mod-card-titles">
+            <h2 class="mod-card-title">Ponto Eletrônico</h2>
+            <span class="mod-badge badge-em-breve">Em breve</span>
           </div>
         </div>
-        <p class="text-xs text-slate-400">
-          Visualize e confirme seus registros de entrada e saída.
-        </p>
+        <p class="mod-card-desc">Visualize e confirme seus registros de entrada e saída.</p>
       </div>
       {% endif %}
 
-      <!-- Card: Holerite (em breve) -->
-      <div class="card bg-white rounded-2xl shadow-sm border border-slate-100 p-6
-                  opacity-60 cursor-not-allowed">
-        <div class="flex items-center gap-3 mb-4">
-          <div class="w-10 h-10 rounded-xl bg-slate-100
-                      flex items-center justify-center text-slate-400 flex-shrink-0">
+      <!-- Holerite (sempre desabilitado por ora) -->
+      <div class="mod-card mod-disabled mod-holerite">
+        <div class="mod-card-header">
+          <div class="mod-icon">
             <svg width="20" height="20" viewBox="0 0 24 24" fill="none">
-              <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z" stroke="currentColor"
-                stroke-width="2" stroke-linecap="round" stroke-linejoin="round" />
-              <path d="M14 2v6h6M16 13H8M16 17H8M10 9H8" stroke="currentColor" stroke-width="2" stroke-linecap="round"
-                stroke-linejoin="round" />
+              <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"
+                stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+              <path d="M14 2v6h6M16 13H8M16 17H8M10 9H8"
+                stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
             </svg>
           </div>
-          <div>
-            <h2 class="font-bold text-slate-500">Holerite</h2>
-            <span class="text-xs font-medium text-amber-500 bg-amber-50
-                         px-2 py-0.5 rounded-full">Em breve</span>
+          <div class="mod-card-titles">
+            <h2 class="mod-card-title">Holerite</h2>
+            <span class="mod-badge badge-em-breve">Em breve</span>
           </div>
         </div>
-        <p class="text-xs text-slate-400">
-          Acesse seus contracheques e comprovantes de pagamento.
-        </p>
+        <p class="mod-card-desc">Acesse seus contracheques e comprovantes de pagamento.</p>
       </div>
 
-      <!-- Card: Estoque -->
+      <!-- Estoque -->
       {% if perms.estoque.view %}
-      <a href="{{ url_for('estoque.dashboard') }}" class="card bg-white rounded-2xl shadow-sm border border-slate-100 p-6
-                hover:shadow-md hover:border-primary/20 transition-all duration-200 group">
-        <div class="flex items-center gap-3 mb-4">
-          <div class="w-10 h-10 rounded-xl bg-primary-light
-                      flex items-center justify-center text-primary flex-shrink-0
-                      group-hover:bg-primary group-hover:text-white transition-colors">
+      <a href="{{ url_for('estoque.dashboard') }}" class="mod-card mod-active mod-estoque">
+        <div class="mod-card-header">
+          <div class="mod-icon">
             <svg width="20" height="20" viewBox="0 0 24 24" fill="none">
-              <path d="M9 2L5.5 6.5C5.18 6.9 5 7.42 5 8V20C5 21.1 5.9 22 7 22H17C18.1 22 19 21.1 19 20V8C19 7.42 18.82 6.9 18.5 6.5L15 2
-                       M9 2H15M9 2L12 5L15 2M7 12H17M7 16H17" stroke="currentColor" stroke-width="2" stroke-linecap="round"
-                stroke-linejoin="round" />
+              <path d="M21 16V8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16z"
+                stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+              <path d="M3.27 6.96L12 12.01l8.73-5.05M12 22.08V12"
+                stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
             </svg>
           </div>
-          <div>
-            <h2 class="font-bold text-slate-700 group-hover:text-primary transition-colors">
-              Estoque
-            </h2>
-            <span class="text-xs font-medium text-teal-600 bg-teal-50 px-2 py-0.5 rounded-full">
-              OPERAÇÕES
-            </span>
+          <div class="mod-card-titles">
+            <h2 class="mod-card-title">Estoque</h2>
+            <span class="mod-badge badge-estoque">Operações</span>
           </div>
         </div>
-        <p class="text-xs text-slate-400">
-          Gerencie produtos, categorias e movimentações de estoque.
-        </p>
+        <p class="mod-card-desc">Gerencie produtos, categorias e movimentações de estoque.</p>
       </a>
       {% endif %}
 
-      <!-- Card: Restaurante -->
+      <!-- Restaurante -->
       {% if perms.restaurante.view %}
-      <a href="{{ url_for('restaurante.dashboard') }}" class="card bg-white rounded-2xl shadow-sm border border-slate-100 p-6
-                hover:shadow-md hover:border-primary/20 transition-all duration-200 group">
-        <div class="flex items-center gap-3 mb-4">
-          <div class="w-10 h-10 rounded-xl bg-primary-light
-                      flex items-center justify-center text-primary flex-shrink-0
-                      group-hover:bg-primary group-hover:text-white transition-colors">
+      <a href="{{ url_for('restaurante.dashboard') }}" class="mod-card mod-active mod-restaurante">
+        <div class="mod-card-header">
+          <div class="mod-icon">
             <svg width="20" height="20" viewBox="0 0 24 24" fill="none">
-              <path d="M6 9L12 3L18 9M3 9H21M4 9V20C4 21.1 4.9 22 6 22H18C19.1 22 20 21.1 20 20V9
-                       M9 13H9.01M15 13H15.01" stroke="currentColor" stroke-width="2" stroke-linecap="round"
-                stroke-linejoin="round" />
+              <path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2z"
+                stroke="currentColor" stroke-width="2"/>
+              <path d="M8 12h8M12 8v8"
+                stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
             </svg>
           </div>
-          <div>
-            <h2 class="font-bold text-slate-700 group-hover:text-primary transition-colors">
-              Restaurante
-            </h2>
-            <span class="text-xs font-medium text-teal-600 bg-teal-50 px-2 py-0.5 rounded-full">
-              OPERAÇÕES
-            </span>
+          <div class="mod-card-titles">
+            <h2 class="mod-card-title">Restaurante</h2>
+            <span class="mod-badge badge-restaurante">Operações</span>
           </div>
         </div>
-        <p class="text-xs text-slate-400">
-          Gerencie fichas técnicas e análise de custos (CMV).
-        </p>
+        <p class="mod-card-desc">Gerencie fichas técnicas e análise de custos (CMV).</p>
       </a>
       {% endif %}
 
@@ -385,5 +692,4 @@
   </main>
 
 </body>
-
 </html>
