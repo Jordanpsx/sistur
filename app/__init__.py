@@ -43,6 +43,7 @@ def create_app(config_name: str = "default") -> Flask:
         from app.models import funcionario  # noqa: F401
         from app.models import role  # noqa: F401
         from app.models import ponto  # noqa: F401
+        from app.models import estoque  # noqa: F401
 
     # Blueprints
     from app.blueprints.portal.routes import bp as portal_bp
@@ -53,6 +54,12 @@ def create_app(config_name: str = "default") -> Flask:
 
     from app.blueprints.ponto.routes import bp as ponto_bp
     app.register_blueprint(ponto_bp, url_prefix="/ponto")
+
+    from app.blueprints.estoque.routes import bp as estoque_bp
+    app.register_blueprint(estoque_bp, url_prefix="/estoque")
+
+    from app.blueprints.restaurante.routes import bp as restaurante_bp
+    app.register_blueprint(restaurante_bp, url_prefix="/restaurante")
 
     # CLI commands
     from app.cli import register_commands

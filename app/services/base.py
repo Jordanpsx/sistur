@@ -11,6 +11,7 @@ Design constraints (Antigravity Rule #2 + Cython compatibility):
 
 from __future__ import annotations
 
+from decimal import Decimal
 from typing import Any
 
 
@@ -50,6 +51,8 @@ class BaseService:
                 value = value.isoformat()
             elif hasattr(value, "value"):          # Enum
                 value = value.value
+            elif isinstance(value, Decimal):       # Decimal → float
+                value = float(value)
             result[field] = value
         return result
 

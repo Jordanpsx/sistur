@@ -1,0 +1,129 @@
+<!DOCTYPE html>
+<!--
+  Copyright (c) 2026 Jordan Barbosa Machado — All Rights Reserved
+  Estoque — Locais de Armazenamento
+-->
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>{{ company_name }} | Locais</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script>
+    tailwind.config = {
+      theme: { extend: { colors: { primary: { DEFAULT: '#0d9488', light: '#ccfbf1', dark: '#0f766e' } } } }
+    }
+  </script>
+  <style>
+    @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap');
+    body { font-family: 'Inter', sans-serif; }
+  </style>
+</head>
+<body class="min-h-screen bg-gradient-to-br from-teal-50 via-sky-50 to-slate-100">
+
+  <header class="bg-white/80 backdrop-blur border-b border-slate-100 sticky top-0 z-10">
+    <div class="max-w-5xl mx-auto px-4 sm:px-6 h-16 flex items-center justify-between gap-4">
+      <span class="font-bold text-slate-700 text-sm">{{ company_name | e }} <span class="text-slate-400 font-normal">| Locais de Armazenamento</span></span>
+      <a href="{{ url_for('estoque.dashboard') }}" class="text-sm text-slate-500 hover:text-primary transition-colors">← Estoque</a>
+    </div>
+  </header>
+
+  <main class="max-w-5xl mx-auto px-4 sm:px-6 py-8 space-y-6">
+
+    <h1 class="text-2xl font-bold text-slate-800">Locais de Armazenamento</h1>
+
+    {% with messages = get_flashed_messages(with_categories=true) %}
+      {% for category, message in messages %}
+        <div class="rounded-xl px-4 py-3 text-sm font-medium
+          {% if category == 'sucesso' %}bg-green-50 text-green-700 border border-green-200
+          {% elif category == 'erro' %}bg-red-50 text-red-700 border border-red-200
+          {% else %}bg-yellow-50 text-yellow-700 border border-yellow-200{% endif %}">
+          {{ message | e }}
+        </div>
+      {% endfor %}
+    {% endwith %}
+
+    <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
+
+      <!-- Lista -->
+      <div class="lg:col-span-2 bg-white rounded-2xl shadow-sm border border-slate-100 overflow-hidden">
+        {% if locais %}
+          <table class="w-full text-sm">
+            <thead class="bg-slate-50 border-b border-slate-100">
+              <tr>
+                <th class="text-left px-4 py-3 font-semibold text-slate-600">Nome</th>
+                <th class="text-left px-4 py-3 font-semibold text-slate-600">Código</th>
+                <th class="text-left px-4 py-3 font-semibold text-slate-600">Tipo</th>
+                <th class="text-left px-4 py-3 font-semibold text-slate-600">Status</th>
+              </tr>
+            </thead>
+            <tbody class="divide-y divide-slate-50">
+              {% for local in locais %}
+                <tr class="hover:bg-slate-50/50">
+                  <td class="px-4 py-3 font-medium text-slate-800">
+                    {% if local.parent_id %}<span class="text-slate-300 mr-1">└─</span>{% endif %}
+                    {{ local.nome | e }}
+                  </td>
+                  <td class="px-4 py-3 text-slate-500 font-mono text-xs">{{ local.codigo | e if local.codigo else '—' }}</td>
+                  <td class="px-4 py-3 text-slate-500 capitalize">{{ local.tipo.value | e }}</td>
+                  <td class="px-4 py-3">
+                    <span class="inline-flex px-2 py-0.5 rounded-full text-xs font-medium
+                      {% if local.ativo %}bg-green-50 text-green-700{% else %}bg-slate-100 text-slate-500{% endif %}">
+                      {{ 'Ativo' if local.ativo else 'Inativo' }}
+                    </span>
+                  </td>
+                </tr>
+              {% endfor %}
+            </tbody>
+          </table>
+        {% else %}
+          <div class="text-center py-12 text-slate-400">
+            <p>Nenhum local cadastrado.</p>
+          </div>
+        {% endif %}
+      </div>
+
+      <!-- Formulário inline -->
+      <div class="bg-white rounded-2xl shadow-sm border border-slate-100 p-5 h-fit">
+        <h3 class="font-semibold text-slate-700 mb-4">Novo Local</h3>
+        <form method="POST" action="{{ url_for('estoque.novo_local') }}" class="space-y-3">
+          <div>
+            <label class="block text-xs font-medium text-slate-500 mb-1">Nome <span class="text-red-400">*</span></label>
+            <input type="text" name="nome" required
+                   class="w-full border border-slate-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-primary/30"
+                   placeholder="Ex.: Câmara Fria" />
+          </div>
+          <div>
+            <label class="block text-xs font-medium text-slate-500 mb-1">Tipo <span class="text-red-400">*</span></label>
+            <select name="tipo" required class="w-full border border-slate-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-primary/30">
+              {% for tipo in tipos %}
+                <option value="{{ tipo.value }}">{{ tipo.value | capitalize }}</option>
+              {% endfor %}
+            </select>
+          </div>
+          <div>
+            <label class="block text-xs font-medium text-slate-500 mb-1">Código</label>
+            <input type="text" name="codigo"
+                   class="w-full border border-slate-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-primary/30"
+                   placeholder="Ex.: CAM-01" />
+          </div>
+          <div>
+            <label class="block text-xs font-medium text-slate-500 mb-1">Local Pai (hierarquia)</label>
+            <select name="parent_id" class="w-full border border-slate-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-primary/30">
+              <option value="">— Nenhum (nível raiz) —</option>
+              {% for local in locais if local.ativo %}
+                <option value="{{ local.id }}">{{ local.nome | e }}</option>
+              {% endfor %}
+            </select>
+          </div>
+          <button type="submit"
+                  class="w-full bg-primary text-white py-2 rounded-lg text-sm font-semibold hover:bg-primary-dark transition-colors">
+            Criar Local
+          </button>
+        </form>
+      </div>
+
+    </div>
+  </main>
+</body>
+</html>

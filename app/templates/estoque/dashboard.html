@@ -1,0 +1,110 @@
+<!DOCTYPE html>
+<!--
+  Copyright (c) 2026 Jordan Barbosa Machado — All Rights Reserved
+  Estoque — Dashboard
+-->
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>{{ company_name }} | Estoque</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script>
+    tailwind.config = {
+      theme: { extend: { colors: { primary: { DEFAULT: '#0d9488', light: '#ccfbf1', dark: '#0f766e' } } } }
+    }
+  </script>
+  <style>
+    @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap');
+    body { font-family: 'Inter', sans-serif; }
+  </style>
+</head>
+<body class="min-h-screen bg-gradient-to-br from-teal-50 via-sky-50 to-slate-100">
+
+  <!-- Top bar -->
+  <header class="bg-white/80 backdrop-blur border-b border-slate-100 sticky top-0 z-10">
+    <div class="max-w-6xl mx-auto px-4 sm:px-6 h-16 flex items-center justify-between gap-4">
+      <div class="flex items-center gap-3">
+        {% if company_logo %}
+          <img src="{{ company_logo | e }}" alt="{{ company_name | e }}" class="h-8 w-auto object-contain" />
+        {% endif %}
+        <span class="font-bold text-slate-700 text-sm hidden sm:block">
+          {{ company_name | e }} <span class="text-slate-400 font-normal">| Estoque</span>
+        </span>
+      </div>
+      <nav class="flex items-center gap-3">
+        <a href="{{ url_for('portal.dashboard') }}" class="text-sm text-slate-500 hover:text-primary transition-colors">← Dashboard</a>
+        <form method="POST" action="{{ url_for('portal.logout') }}">
+          <button type="submit" class="px-3 py-1.5 rounded-lg text-sm font-medium text-slate-500 hover:bg-red-50 hover:text-red-600 transition-colors">Sair</button>
+        </form>
+      </nav>
+    </div>
+  </header>
+
+  <main class="max-w-6xl mx-auto px-4 sm:px-6 py-8 space-y-8">
+
+    <!-- Título -->
+    <div>
+      <h1 class="text-2xl font-bold text-slate-800">Estoque</h1>
+      <p class="text-slate-500 text-sm mt-1">Gestão de inventário, produtos e movimentações</p>
+    </div>
+
+    <!-- Flash messages -->
+    {% with messages = get_flashed_messages(with_categories=true) %}
+      {% for category, message in messages %}
+        <div class="rounded-xl px-4 py-3 text-sm font-medium
+          {% if category == 'sucesso' %}bg-green-50 text-green-700 border border-green-200
+          {% elif category == 'erro' %}bg-red-50 text-red-700 border border-red-200
+          {% else %}bg-yellow-50 text-yellow-700 border border-yellow-200{% endif %}">
+          {{ message | e }}
+        </div>
+      {% endfor %}
+    {% endwith %}
+
+    <!-- Counters -->
+    <div class="grid grid-cols-1 sm:grid-cols-3 gap-4">
+      <div class="bg-white rounded-2xl p-6 shadow-sm border border-slate-100">
+        <p class="text-sm text-slate-500 font-medium">Produtos Ativos</p>
+        <p class="text-3xl font-bold text-slate-800 mt-1">{{ total_produtos }}</p>
+      </div>
+      <div class="bg-white rounded-2xl p-6 shadow-sm border border-slate-100">
+        <p class="text-sm text-slate-500 font-medium">Categorias</p>
+        <p class="text-3xl font-bold text-slate-800 mt-1">{{ total_categorias }}</p>
+      </div>
+      <div class="bg-white rounded-2xl p-6 shadow-sm border border-slate-100">
+        <p class="text-sm text-slate-500 font-medium">Locais de Armazenamento</p>
+        <p class="text-3xl font-bold text-slate-800 mt-1">{{ total_locais }}</p>
+      </div>
+    </div>
+
+    <!-- Quick actions -->
+    <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+      <a href="{{ url_for('estoque.listar_produtos') }}"
+         class="bg-white hover:bg-primary-light rounded-2xl p-5 shadow-sm border border-slate-100 hover:border-primary transition-all group">
+        <div class="text-primary text-2xl mb-2">📦</div>
+        <p class="font-semibold text-slate-700 group-hover:text-primary">Produtos</p>
+        <p class="text-xs text-slate-400 mt-0.5">Cadastro e edição</p>
+      </a>
+      <a href="{{ url_for('estoque.view_estoque') }}"
+         class="bg-white hover:bg-primary-light rounded-2xl p-5 shadow-sm border border-slate-100 hover:border-primary transition-all group">
+        <div class="text-primary text-2xl mb-2">🏪</div>
+        <p class="font-semibold text-slate-700 group-hover:text-primary">Ver Estoque</p>
+        <p class="text-xs text-slate-400 mt-0.5">Lotes por local</p>
+      </a>
+      <a href="{{ url_for('estoque.registrar_entrada') }}"
+         class="bg-white hover:bg-primary-light rounded-2xl p-5 shadow-sm border border-slate-100 hover:border-primary transition-all group">
+        <div class="text-primary text-2xl mb-2">📥</div>
+        <p class="font-semibold text-slate-700 group-hover:text-primary">Entrada</p>
+        <p class="text-xs text-slate-400 mt-0.5">Registrar lote</p>
+      </a>
+      <a href="{{ url_for('estoque.listar_categorias') }}"
+         class="bg-white hover:bg-primary-light rounded-2xl p-5 shadow-sm border border-slate-100 hover:border-primary transition-all group">
+        <div class="text-primary text-2xl mb-2">🗂️</div>
+        <p class="font-semibold text-slate-700 group-hover:text-primary">Categorias</p>
+        <p class="text-xs text-slate-400 mt-0.5">Organizar produtos</p>
+      </a>
+    </div>
+
+  </main>
+</body>
+</html>

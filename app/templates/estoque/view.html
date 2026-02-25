@@ -1,0 +1,120 @@
+<!DOCTYPE html>
+<!--
+  Copyright (c) 2026 Jordan Barbosa Machado — All Rights Reserved
+  Estoque — Visão de Estoque por Local
+-->
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>{{ company_name }} | Ver Estoque</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script>
+    tailwind.config = {
+      theme: { extend: { colors: { primary: { DEFAULT: '#0d9488', light: '#ccfbf1', dark: '#0f766e' } } } }
+    }
+  </script>
+  <style>
+    @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap');
+    body { font-family: 'Inter', sans-serif; }
+  </style>
+</head>
+<body class="min-h-screen bg-gradient-to-br from-teal-50 via-sky-50 to-slate-100">
+
+  <header class="bg-white/80 backdrop-blur border-b border-slate-100 sticky top-0 z-10">
+    <div class="max-w-6xl mx-auto px-4 sm:px-6 h-16 flex items-center justify-between gap-4">
+      <span class="font-bold text-slate-700 text-sm">{{ company_name | e }} <span class="text-slate-400 font-normal">| Estoque</span></span>
+      <nav class="flex items-center gap-3">
+        <a href="{{ url_for('estoque.registrar_entrada') }}" class="text-sm font-medium text-primary hover:underline">+ Entrada</a>
+        <a href="{{ url_for('estoque.dashboard') }}" class="text-sm text-slate-500 hover:text-primary transition-colors">← Estoque</a>
+      </nav>
+    </div>
+  </header>
+
+  <main class="max-w-6xl mx-auto px-4 sm:px-6 py-8 space-y-6">
+
+    <h1 class="text-2xl font-bold text-slate-800">Estoque por Local</h1>
+
+    {% with messages = get_flashed_messages(with_categories=true) %}
+      {% for category, message in messages %}
+        <div class="rounded-xl px-4 py-3 text-sm font-medium
+          {% if category == 'sucesso' %}bg-green-50 text-green-700 border border-green-200
+          {% elif category == 'erro' %}bg-red-50 text-red-700 border border-red-200
+          {% else %}bg-yellow-50 text-yellow-700 border border-yellow-200{% endif %}">
+          {{ message | e }}
+        </div>
+      {% endfor %}
+    {% endwith %}
+
+    <!-- Filtro -->
+    <form method="GET" class="bg-white rounded-2xl p-4 shadow-sm border border-slate-100 flex flex-wrap gap-3 items-end">
+      <div>
+        <label class="block text-xs font-medium text-slate-500 mb-1">Local</label>
+        <select name="local_id" class="border border-slate-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-primary/30">
+          <option value="">— Selecione um local —</option>
+          {% for local in locais %}
+            <option value="{{ local.id }}" {% if local_id_selecionado == local.id %}selected{% endif %}>
+              {{ local.nome | e }}
+            </option>
+          {% endfor %}
+        </select>
+      </div>
+      <button type="submit" class="bg-primary text-white px-4 py-2 rounded-lg text-sm font-semibold hover:bg-primary-dark transition-colors">
+        Ver Estoque
+      </button>
+    </form>
+
+    <!-- Lotes -->
+    {% if lotes %}
+      <div class="bg-white rounded-2xl shadow-sm border border-slate-100 overflow-hidden">
+        <table class="w-full text-sm">
+          <thead class="bg-slate-50 border-b border-slate-100">
+            <tr>
+              <th class="text-left px-4 py-3 font-semibold text-slate-600">Produto</th>
+              <th class="text-left px-4 py-3 font-semibold text-slate-600">Lote</th>
+              <th class="text-right px-4 py-3 font-semibold text-slate-600">Qtd.</th>
+              <th class="text-left px-4 py-3 font-semibold text-slate-600">Unidade</th>
+              <th class="text-right px-4 py-3 font-semibold text-slate-600">Custo Unit.</th>
+              <th class="text-left px-4 py-3 font-semibold text-slate-600">Validade</th>
+              <th class="text-left px-4 py-3 font-semibold text-slate-600">Entrada</th>
+            </tr>
+          </thead>
+          <tbody class="divide-y divide-slate-50">
+            {% for lote in lotes %}
+              <tr class="hover:bg-slate-50/50 transition-colors">
+                <td class="px-4 py-3 font-medium text-slate-800">{{ lote.produto.nome | e }}</td>
+                <td class="px-4 py-3 text-slate-500 font-mono text-xs">{{ lote.codigo_lote | e if lote.codigo_lote else '—' }}</td>
+                <td class="px-4 py-3 text-right font-semibold text-slate-700">{{ '%.3f' | format(lote.quantidade | float) }}</td>
+                <td class="px-4 py-3 text-slate-500">{{ lote.unidade.simbolo | e if lote.unidade else '—' }}</td>
+                <td class="px-4 py-3 text-right text-slate-600">R$ {{ '%.4f' | format(lote.custo_unitario | float) }}</td>
+                <td class="px-4 py-3">
+                  {% if lote.data_validade %}
+                    <span class="text-xs {% if lote.data_validade.strftime('%Y-%m-%d') <= '2026-03-01' %}text-red-600 font-medium{% else %}text-slate-500{% endif %}">
+                      {{ lote.data_validade.strftime('%d/%m/%Y') }}
+                    </span>
+                  {% else %}
+                    <span class="text-slate-300">—</span>
+                  {% endif %}
+                </td>
+                <td class="px-4 py-3 text-slate-400 text-xs">{{ lote.data_entrada.strftime('%d/%m/%Y') }}</td>
+              </tr>
+            {% endfor %}
+          </tbody>
+        </table>
+      </div>
+    {% elif local_id_selecionado %}
+      <div class="bg-white rounded-2xl p-12 text-center text-slate-400 shadow-sm border border-slate-100">
+        <div class="text-4xl mb-3">📭</div>
+        <p class="font-medium">Nenhum lote ativo neste local.</p>
+        <a href="{{ url_for('estoque.registrar_entrada') }}" class="text-primary text-sm mt-2 inline-block hover:underline">Registrar primeira entrada →</a>
+      </div>
+    {% else %}
+      <div class="bg-white rounded-2xl p-12 text-center text-slate-400 shadow-sm border border-slate-100">
+        <div class="text-4xl mb-3">🏪</div>
+        <p class="font-medium">Selecione um local para ver o estoque.</p>
+      </div>
+    {% endif %}
+
+  </main>
+</body>
+</html>
