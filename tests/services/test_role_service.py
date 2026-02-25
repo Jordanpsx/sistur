@@ -273,8 +273,17 @@ def test_has_permission_role_regular_falso(app, db, funcionario):
 
 
 def test_has_permission_sem_role_retorna_false(app, db, funcionario):
-    """Funcionário sem role atribuído deve sempre retornar False."""
+    """
+    Funcionário sem role atribuído deve retornar False (quando já existe super_admin).
+
+    Nota: Se nenhum super_admin existir, o bootstrap mode ativa e retorna True.
+    Este teste primeiro cria um super_admin para desativar o bootstrap.
+    """
     with app.app_context():
+        # Criar um super_admin para desativar bootstrap mode
+        role = RoleService.criar(nome="sa_para_teste", is_super_admin=True)
+
+        # Agora funcionário sem role deve retornar False
         assert has_permission(funcionario, "dashboard", "view") is False
 
 
@@ -294,3 +303,57 @@ def test_has_permission_role_inativo_retorna_false(app, db, funcionario):
         _db.session.commit()
 
         assert has_permission(funcionario, "dashboard", "view") is False
+
+
+# ---------------------------------------------------------------------------
+# Bootstrap mode (primeiro super_admin do sistema)
+# ---------------------------------------------------------------------------
+
+def test_bootstrap_mode_sem_role_primeiro_usuario(app):
+    """
+    Bootstrap mode: sem nenhum super_admin no banco, funcionário sem role
+    tem acesso total a qualquer módulo/ação.
+
+    Caso de uso: permitir que o primeiro usuário do sistema se autopromocionalize
+    temporariamente para configurar roles e permissões.
+    """
+    with app.app_context():
+        # Criar um funcionário SEM role
+        f = Funcionario(nome="Primeiro Usuário", cpf="11144477735", ativo=True)
+        _db.session.add(f)
+        _db.session.commit()
+        fid = f.id
+
+        # Nenhum super_admin existe → bootstrap mode ativado
+        assert has_permission(fid, "dashboard", "view") is True
+        assert has_permission(fid, "funcionarios", "create") is True
+        assert has_permission(fid, "qualquer_modulo", "qualquer_acao") is True
+
+
+def test_bootstrap_mode_desativa_apos_primeiro_super_admin(app, db):
+    """
+    Após criar o primeiro super_admin, o bootstrap mode desativa.
+    Funcionários sem role voltam a ter acesso negado.
+    """
+    with app.app_context():
+        # Criar funcionário 1 (sem role) — será super_admin implícito
+        f1 = Funcionario(nome="Usuário 1", cpf="11144477735", ativo=True)
+        _db.session.add(f1)
+        _db.session.commit()
+        f1_id = f1.id
+
+        # Verificar que tem acesso (bootstrap mode)
+        assert has_permission(f1_id, "dashboard", "view") is True
+
+        # Agora criar um super_admin explícito
+        role_sa = RoleService.criar(nome="super_admin_real", is_super_admin=True)
+        RoleService.atribuir_ao_funcionario(f1_id, role_sa.id)
+
+        # Criar funcionário 2 (sem role) após super_admin existir
+        f2 = Funcionario(nome="Usuário 2", cpf="64110585900", ativo=True)
+        _db.session.add(f2)
+        _db.session.commit()
+        f2_id = f2.id
+
+        # Funcionário 2 SEM role não tem acesso (bootstrap desativado)
+        assert has_permission(f2_id, "dashboard", "view") is False

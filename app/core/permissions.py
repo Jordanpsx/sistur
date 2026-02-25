@@ -133,10 +133,17 @@ def has_permission(funcionario_id: int, modulo: str, acao: str) -> bool:
     Verifica se o funcionário tem permissão para executar a ação no módulo.
 
     Regras:
-    - Se o funcionário não tiver role atribuído, retorna False.
+    - Se o funcionário não tiver role atribuído:
+      * Se nenhum super_admin existir no sistema, retorna True (bootstrap mode).
+      * Caso contrário, retorna False.
     - Se o role estiver inativo, retorna False.
     - Se o role tiver is_super_admin=True, retorna True sem consultar permissões.
     - Caso contrário, verifica a tabela sistur_role_permissions.
+
+    Bootstrap mode:
+    Quando nenhum super_admin existe, o primeiro funcionário a acessar o sistema
+    recebe acesso total. Isso permite inicializar roles e permissões sem
+    intervenção direta do banco.
 
     Args:
         funcionario_id: PK do funcionário a verificar.
@@ -152,7 +159,21 @@ def has_permission(funcionario_id: int, modulo: str, acao: str) -> bool:
     from app.models.role import Role, RolePermission
 
     funcionario = db.session.get(Funcionario, funcionario_id)
-    if not funcionario or not funcionario.ativo or not funcionario.role_id:
+    if not funcionario or not funcionario.ativo:
+        return False
+
+    # Bootstrap mode: se não houver nenhum super_admin e o usuário não tiver role,
+    # ele vira super_admin implicitamente
+    if not funcionario.role_id:
+        super_admin_exists = (
+            db.session.query(Role)
+            .filter_by(is_super_admin=True, ativo=True)
+            .first()
+        ) is not None
+
+        if not super_admin_exists:
+            # Primeiro super_admin do sistema — acesso total
+            return True
         return False
 
     role = db.session.get(Role, funcionario.role_id)
