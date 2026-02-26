@@ -636,13 +636,13 @@ class PontoService(BaseService):
 
         old_banco = funcionario.banco_horas_acumulado
 
-        soma_dias = db.session.query(func.sum(TimeDay.saldo_final_minutos)).filter(
+        soma_dias = int(db.session.query(func.sum(TimeDay.saldo_final_minutos)).filter(
             TimeDay.funcionario_id == funcionario_id
-        ).scalar() or 0
+        ).scalar() or 0)
 
-        soma_abatimentos = db.session.query(func.sum(TimeBankDeduction.minutos_abatidos)).filter(
+        soma_abatimentos = int(db.session.query(func.sum(TimeBankDeduction.minutos_abatidos)).filter(
             TimeBankDeduction.funcionario_id == funcionario_id
-        ).scalar() or 0
+        ).scalar() or 0)
 
         novo_banco = int(soma_dias) - int(soma_abatimentos)
 
