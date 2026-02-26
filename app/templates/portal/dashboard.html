@@ -202,18 +202,13 @@
       flex: 1 1 280px;
     }
 
-    .banco-horas-widget {
-      flex: 0 0 auto;
-    }
-
     @media (max-width: 640px) {
       .hero-inner {
         flex-direction: column;
         gap: 0.875rem;
       }
 
-      .hero-glass,
-      .banco-horas-widget {
+      .hero-glass {
         flex: 1 1 100%;
       }
     }
@@ -280,58 +275,7 @@
       letter-spacing: 0.04em;
     }
 
-    /* Banco de Horas widget */
-    .banco-horas-widget {
-      background: rgba(255, 255, 255, 0.10);
-      backdrop-filter: blur(12px);
-      -webkit-backdrop-filter: blur(12px);
-      border: 1px solid rgba(255, 255, 255, 0.18);
-      border-radius: 18px;
-      padding: 1.5rem 1.75rem;
-      text-align: center;
-      position: relative;
-      z-index: 1;
-    }
 
-    .banco-horas-label {
-      font-size: 0.65rem;
-      font-weight: 700;
-      letter-spacing: 0.1em;
-      text-transform: uppercase;
-      color: rgba(255, 255, 255, 0.5);
-      margin: 0 0 0.75rem;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      gap: 0.4rem;
-    }
-
-    .banco-horas-value {
-      font-family: 'DM Mono', monospace;
-      font-size: 2.4rem;
-      font-weight: 500;
-      line-height: 1;
-      letter-spacing: -0.02em;
-      margin: 0 0 0.5rem;
-    }
-
-    .banco-horas-value.positive {
-      color: #6ee7b7;
-    }
-
-    .banco-horas-value.negative {
-      color: #fca5a5;
-    }
-
-    .banco-horas-value.zero {
-      color: rgba(255, 255, 255, 0.45);
-    }
-
-    .banco-horas-sublabel {
-      font-size: 0.7rem;
-      color: rgba(255, 255, 255, 0.4);
-      margin: 0;
-    }
 
     /* ─── Module Grid ───────────────────────────────────────────────────────── */
     .modules-section {
@@ -633,34 +577,6 @@
         gap: 0.6rem 1rem;
       }
 
-      /* Banco de Horas: linha horizontal compacta no mobile */
-      .banco-horas-widget {
-        width: 100%;
-        padding: 1rem 1.25rem;
-        display: flex;
-        flex-direction: row;
-        align-items: center;
-        justify-content: space-between;
-        text-align: left;
-        gap: 0.75rem;
-      }
-
-      .banco-horas-label {
-        margin-bottom: 0;
-        justify-content: flex-start;
-        font-size: 0.6rem;
-        gap: 0.25rem;
-      }
-
-      .banco-horas-value {
-        font-size: 2rem;
-        margin-bottom: 0;
-      }
-
-      .banco-horas-sublabel {
-        font-size: 0.65rem;
-      }
-
       .modules-section {
         padding: 1.25rem 1rem 2.5rem;
       }
@@ -779,21 +695,7 @@
         </dl>
       </div>
 
-      <!-- Banco de Horas widget -->
-      {% set saldo = funcionario.saldo_banco_horas() %}
-      <div class="banco-horas-widget">
-        <p class="banco-horas-label">
-          <svg width="13" height="13" viewBox="0 0 24 24" fill="none">
-            <circle cx="12" cy="12" r="10" stroke="currentColor" stroke-width="2" />
-            <path d="M12 8V12L15 15" stroke="currentColor" stroke-width="2" stroke-linecap="round" />
-          </svg>
-          Banco de Horas
-        </p>
-        <p class="banco-horas-value {% if saldo > 0 %}positive{% elif saldo < 0 %}negative{% else %}zero{% endif %}">
-          {{ funcionario.saldo_banco_horas_formatado() }}
-        </p>
-        <p class="banco-horas-sublabel">saldo atual</p>
-      </div>
+
 
     </div>
   </section>
