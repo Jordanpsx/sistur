@@ -797,7 +797,7 @@
                 },
                 scales: {
                     x: { grid: { display: false }, ticks: { font: { size: 10 }, maxRotation: 45, minRotation: 30 } },
-                    y: { beginAtZero: true, ticks: { stepSize: 1, callback: v => v + 'h' }, grid: { color: '#f1f5f9' } }
+                    y: { beginAtZero: true, ticks: { stepSize: 1, callback: v => +Number(v).toFixed(2) + 'h' }, grid: { color: '#f1f5f9' } }
                 }
             }
         });
@@ -840,7 +840,7 @@
                 scales: {
                     x: { grid: { display: false }, ticks: { font: { size: 10 }, maxRotation: 45, minRotation: 30 } },
                     y: {
-                        ticks: { callback: v => (v >= 0 ? '+' : '') + v + 'h' },
+                        ticks: { callback: v => (v >= 0 ? '+' : '') + Number(v).toFixed(2).replace(/\.00$/, '') + 'h' },
                         grid: { color: ctx => ctx.tick.value === 0 ? '#cbd5e1' : '#f1f5f9' }
                     }
                 }
