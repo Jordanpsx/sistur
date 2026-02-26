@@ -211,11 +211,6 @@ class PontoService(BaseService):
             # Para evitar bagunçar quem ja fez o banco, mantemos o saldo final == calculado,
             # exceto se houver feature futura de ajuste manual de 'saldo_final_minutos'.
             dia.saldo_final_minutos = calc["saldo_calculado_minutos"]
-            
-            # Cache do banco de horas global incrementado com o delta desta recalcularização
-            delta = dia.saldo_final_minutos - old_saldo_final
-            if delta != 0:
-                funcionario.banco_horas_acumulado += delta
 
             mudancas_audit[dia.shift_date.isoformat()] = {
                 "old": {
@@ -252,6 +247,11 @@ class PontoService(BaseService):
             actor_id=ator_id,
         )
 
+        db.session.commit()
+
+        # Recalcula do zero absoluto ao final para assegurar total integridade
+        PontoService.recalcular_banco_global(funcionario_id, ator_id)
+        
         return resultado
 
     # ------------------------------------------------------------------
