@@ -5,9 +5,11 @@ Flask CLI commands for one-time setup and maintenance tasks.
 
 Usage
 -----
-    flask setup                      # interactive — prompts for nome and CPF
+    flask setup                      # interactive — prompts for nome and CPF; creates super_admin role and assigns it
     flask setup --nome "Jordan Machado" --cpf "529.982.247-25"
     flask seed-roles                 # cria os roles iniciais (super_admin, funcionario)
+    flask assign-role                # atribui um role a um funcionário existente
+    flask assign-role --cpf "52998224725" --role "super_admin"
 """
 
 import click
@@ -56,17 +58,32 @@ def register_commands(app) -> None:
             click.echo(f"[erro] CPF invalido: {exc}", err=True)
             raise SystemExit(1)
 
-        # 4. Create the first employee
+        # 4. Create or get the super_admin role
+        super_admin = db.session.query(Role).filter_by(nome="super_admin").first()
+        if not super_admin:
+            super_admin = Role(
+                nome="super_admin",
+                descricao="Acesso irrestrito ao sistema. Bypassa todas as verificações de permissão.",
+                is_super_admin=True,
+                ativo=True,
+            )
+            db.session.add(super_admin)
+            db.session.flush()
+            click.echo("[ok] Role 'super_admin' criado automaticamente.")
+
+        # 5. Create the first employee with super_admin role
         funcionario = Funcionario(
             nome=nome.strip(),
             cpf=cpf_limpo,
             cargo=cargo,
             ativo=True,
+            role_id=super_admin.id,
         )
         db.session.add(funcionario)
         db.session.commit()
 
         click.echo(f"[ok] Funcionario criado: {funcionario.nome} — CPF: {funcionario.cpf_formatado()}")
+        click.echo(f"     Role: super_admin (acesso irrestrito)")
         click.echo(f"     Acesse /portal/login e informe o CPF: {funcionario.cpf_formatado()}")
 
     @app.cli.command("seed-roles")
@@ -143,6 +160,50 @@ def register_commands(app) -> None:
         click.echo(
             "\n[ok] Seed concluido. Use 'flask seed-roles' novamente para atualizar."
         )
+
+
+    @app.cli.command("assign-role")
+    @click.option(
+        "--cpf",
+        prompt="CPF do funcionário (somente números ou formatado)",
+        help="CPF do funcionário que receberá o role.",
+    )
+    @click.option(
+        "--role",
+        type=click.Choice(["super_admin", "funcionario"], case_sensitive=False),
+        prompt="Role a atribuir",
+        help="Nome do role a atribuir.",
+    )
+    def assign_role_command(cpf: str, role: str) -> None:
+        """Atribui um role a um funcionário existente."""
+        db.create_all()
+
+        # Validate CPF
+        try:
+            cpf_limpo = validar_cpf(cpf)
+        except ValueError as exc:
+            click.echo(f"[erro] CPF invalido: {exc}", err=True)
+            raise SystemExit(1)
+
+        # Find employee
+        funcionario = db.session.query(Funcionario).filter_by(cpf=cpf_limpo).first()
+        if not funcionario:
+            click.echo(f"[erro] Funcionario com CPF {cpf} nao encontrado.", err=True)
+            raise SystemExit(1)
+
+        # Find or create the role
+        role_lower = role.lower()
+        role_obj = db.session.query(Role).filter_by(nome=role_lower).first()
+        if not role_obj:
+            click.echo(f"[erro] Role '{role}' nao existe. Execute 'flask seed-roles' primeiro.", err=True)
+            raise SystemExit(1)
+
+        # Update employee
+        funcionario.role_id = role_obj.id
+        db.session.commit()
+
+        click.echo(f"[ok] Funcionario '{funcionario.nome}' agora possui o role '{role_obj.nome}'.")
+        click.echo(f"     Super Admin: {role_obj.is_super_admin}")
 
 
 def _ensure_permission(role: Role, modulo: str, acao: str) -> None:
