@@ -93,6 +93,161 @@ class PontoService(BaseService):
     TOLERANCE_MINUTES: int = 10
     DUPLICATE_WINDOW_SECONDS: int = 5
 
+    @staticmethod
+    def reprocess_interval(
+        funcionario_id: int,
+        start_date: date,
+        end_date: date,
+        ator_id: int,
+        override_snapshots: bool = False,
+        tolerance: int = 10,
+    ) -> dict:
+        """
+        Reprocessa o saldo diário de ponto para um determinado funcionário em 
+        um intervalo de datas fechado [start_date, end_date].
+
+        Regra de Snapshot:
+            Se `override_snapshots` = False (padrão), o sistema irá recalcular o
+            saldo de cada dia usando o `expected_minutes_snapshot` e 
+            `tolerance_snapshot` salvos na própria tabela `TimeDay` (preservando
+            o contrato da época).
+            Se `override_snapshots` = True, o sistema usará o `minutos_esperados_dia`
+            atual do cadastro do funcionário e a `tolerance` informada no parâmetro,
+            atualizando os snapshots com esses novos valores.
+
+        Regra de Auditoria (Rule #1):
+            Gera apenas 1 log coletivo 'mass_reprocess'.
+
+        Args:
+            funcionario_id: ID do funcionário.
+            start_date:     Data de início (inclusiva).
+            end_date:       Data de fim (inclusiva).
+            ator_id:        ID do admin executando a ação.
+            override_snapshots: Sobrescrever a jornada/tolerância antiga 
+                               pelas opções atuais?
+            tolerance:      Tolerância em minutos (usada se override_snapshots=True).
+
+        Returns:
+            Um dicionário com o número de 'dias_processados' e os detalhes
+            'logs_detalhados'.
+        """
+        from app.models.funcionario import Funcionario
+        from app.models.ponto import ProcessingStatus, TimeDay, TimeEntry
+
+        funcionario = db.session.get(Funcionario, funcionario_id)
+        if not funcionario:
+            raise ValueError("Funcionário não encontrado.")
+
+        if end_date < start_date:
+            raise ValueError("Data de fim não pode ser menor que data inicial.")
+
+        # Buscar dias já existentes no banco que caiam nesse intervalo
+        query_days = db.session.query(TimeDay).filter(
+            TimeDay.funcionario_id == funcionario_id,
+            TimeDay.shift_date >= start_date,
+            TimeDay.shift_date <= end_date,
+        ).order_by(TimeDay.shift_date)
+        
+        dias_afetados = query_days.all()
+        
+        resultado = {
+            "dias_processados": len(dias_afetados),
+            "logs_detalhados": [],
+        }
+
+        if not dias_afetados:
+            return resultado
+
+        # Minutos atuais no cadastro, caso opte por sobrescrever
+        minutos_esperados_atuais = funcionario.minutos_esperados_dia
+
+        mudancas_audit = {}
+
+        for dia in dias_afetados:
+            # Fetch all entries for the current day to ensure we have them
+            entries_for_day = (
+                db.session.query(TimeEntry)
+                .filter(
+                    TimeEntry.funcionario_id == funcionario_id,
+                    TimeEntry.shift_date == dia.shift_date,
+                )
+                .order_by(TimeEntry.punch_time)
+                .all()
+            )
+            batidas = [
+                {"time": e.punch_time} # "type" is not used in calculate_daily_balance
+                for e in entries_for_day
+                if e.processing_status == ProcessingStatus.PROCESSADO
+            ]
+
+            # Snapshot tracking
+            expected_minutes = dia.expected_minutes_snapshot
+            tol = dia.tolerance_snapshot
+
+            if override_snapshots:
+                expected_minutes = minutos_esperados_atuais
+                tol = tolerance
+                # Atualiza o snapshot no DB com os novos valores
+                dia.expected_minutes_snapshot = expected_minutes
+                dia.tolerance_snapshot = tol
+
+            old_saldo_bruto = dia.minutos_trabalhados
+            old_saldo_liquido = dia.saldo_calculado_minutos
+            old_needs_review = dia.needs_review
+
+            calc = PontoService.calculate_daily_balance(
+                batidas,
+                expected_minutes=expected_minutes,
+                tolerance=tol
+            )
+
+            # Atualizar obj do ORM (apenas recalculados do math)
+            dia.minutos_trabalhados = calc["minutos_trabalhados"]
+            dia.saldo_calculado_minutos = calc["saldo_calculado_minutos"]
+            dia.needs_review = calc["needs_review"]
+
+            # Saldo final (se houve edicao manual de adm sobrepõe, senao é o default)
+            # Para evitar bagunçar quem ja fez o banco, mantemos o saldo final == calculado,
+            # exceto se houver feature futura de ajuste manual de 'saldo_final_minutos'.
+            dia.saldo_final_minutos = calc["saldo_calculado_minutos"]
+
+            mudancas_audit[dia.shift_date.isoformat()] = {
+                "old": {
+                    "trabalhados": old_saldo_bruto,
+                    "calculado": old_saldo_liquido,
+                    "needs_review": old_needs_review,
+                    "expected_minutes": dia.expected_minutes_snapshot if not override_snapshots else None
+                },
+                "new": {
+                    "trabalhados": dia.minutos_trabalhados,
+                    "calculado": dia.saldo_calculado_minutos,
+                    "needs_review": dia.needs_review,
+                    "expected_minutes": dia.expected_minutes_snapshot
+                }
+            }
+            
+            resultado["logs_detalhados"].append({
+                "data": dia.shift_date.isoformat(),
+                "novo_saldo": dia.saldo_calculado_minutos
+            })
+
+        db.session.commit()
+
+        # Audit rule #1 - Lote Massivo
+        AuditService.log_update(
+            "ponto",
+            funcionario_id,
+            previous_state={"action": "mass_reprocess_before", "interval": [start_date.isoformat(), end_date.isoformat()]},
+            new_state={
+                "action": "mass_reprocess_after", 
+                "override_snapshots": override_snapshots,
+                "changes": mudancas_audit
+            },
+            actor_id=ator_id,
+        )
+
+        return resultado
+
     # ------------------------------------------------------------------
     # Cálculos puros (sem acesso ao banco)
     # ------------------------------------------------------------------
@@ -102,6 +257,7 @@ class PontoService(BaseService):
         punch_list: list[dict[str, Any]],
         expected_minutes: int,
         almoco_minutes: int = 60,
+        tolerance: int = 10,
     ) -> dict[str, Any]:
         """
         Calcula o saldo diário do banco de horas a partir de uma lista ordenada de batidas.
@@ -127,6 +283,7 @@ class PontoService(BaseService):
             almoco_minutes:   Parâmetro mantido por compatibilidade de assinatura;
                               não é utilizado no cálculo (o almoço é excluído implicitamente
                               pela estrutura de pares).
+            tolerance:        Limite de tolerância em minutos (padrão 10).
 
         Returns:
             Dicionário com as chaves:
@@ -154,7 +311,7 @@ class PontoService(BaseService):
         saldo_bruto: int = worked - expected_minutes
 
         # Rule #4: aplica tolerância
-        saldo_final: int = _apply_tolerance(saldo_bruto, PontoService.TOLERANCE_MINUTES)
+        saldo_final: int = _apply_tolerance(saldo_bruto, tolerance)
 
         return {
             "minutos_trabalhados": worked,
@@ -194,7 +351,7 @@ class PontoService(BaseService):
             ValueError: Se já existir uma batida nos últimos 5 segundos (anti-duplicata).
         """
         from app.models.funcionario import Funcionario
-        from app.models.ponto import ProcessingStatus, PunchSource, PunchType, TimeEntry
+        from app.models.ponto import ProcessingStatus, PunchSource, PunchType, TimeDay, TimeEntry
 
         funcionario = db.session.get(Funcionario, funcionario_id)
         if not funcionario or not funcionario.ativo:
@@ -338,27 +495,30 @@ class PontoService(BaseService):
         # Determina a jornada esperada para o dia
         expected = _get_expected_minutes(funcionario)
 
-        result = PontoService.calculate_daily_balance(
-            punch_list,
-            expected_minutes=expected,
-            almoco_minutes=funcionario.minutos_almoco,
-        )
-
-        # Upsert em TimeDay
+        # Pega ou cria o TimeDay para este dia
         time_day = (
             db.session.query(TimeDay)
             .filter_by(funcionario_id=funcionario_id, shift_date=shift_date)
             .first()
         )
-        if time_day is None:
+
+        if not time_day:
             time_day = TimeDay(
                 funcionario_id=funcionario_id,
                 shift_date=shift_date,
                 expected_minutes_snapshot=expected,
+                tolerance_snapshot=10, # default 10min CLT
             )
             db.session.add(time_day)
+            
+        # O cálculo usa sempre o snapshot do dia (preserva regra passada)
+        result = PontoService.calculate_daily_balance(
+            punch_list,
+            expected_minutes=time_day.expected_minutes_snapshot,
+            tolerance=time_day.tolerance_snapshot,
+        )
 
-        time_day.minutos_trabalhados    = result["minutos_trabalhados"]
+        time_day.minutos_trabalhados = result["minutos_trabalhados"]
         time_day.saldo_calculado_minutos = result["saldo_calculado_minutos"]
         time_day.saldo_final_minutos    = result["saldo_calculado_minutos"]  # sem deduções manuais ainda
         time_day.needs_review           = result["needs_review"]

@@ -182,6 +182,9 @@ class TimeDay(db.Model):
     # Snapshot da jornada esperada no dia (imutável após criação)
     expected_minutes_snapshot = db.Column(db.Integer, nullable=False, default=480)
 
+    # Snapshot da tolerância (regra 4) aplicável no dia
+    tolerance_snapshot = db.Column(db.Integer, nullable=False, default=10)
+
     criado_em = db.Column(
         db.DateTime,
         default=lambda: datetime.now(timezone.utc),

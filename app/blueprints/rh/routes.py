@@ -370,3 +370,65 @@ def desativar_funcionario(funcionario_id: int):
 
     flash(f"Funcionário {f.nome} desativado.", "aviso")
     return redirect(url_for("rh.listar_funcionarios"))
+
+
+# ---------------------------------------------------------------------------
+# Reprocessamento em Lote (Ponto Eletrônico)
+# ---------------------------------------------------------------------------
+
+@bp.route("/funcionarios/<int:funcionario_id>/reprocessar_ponto", methods=["POST"])
+@login_required
+@require_permission("funcionarios", "edit")
+def reprocessar_ponto(funcionario_id: int):
+    """
+    Aciona o reprocessamento em lote do saldo de horas para o funcionário dado.
+
+    Form fields:
+        data_inicio (str): ISO Format (YYYY-MM-DD).
+        data_fim (str): ISO Format (YYYY-MM-DD).
+        sobrescrever_jornada (bool opcional): Se presente, atualiza o snapshot do
+                                              passado com os dados do contrato atual.
+
+    Returns:
+        Redirect para a listagem ou perfil com flash message.
+    """
+    from datetime import datetime
+    from app.services.ponto_service import PontoService
+
+    ator_id = _get_ator_id()
+    
+    data_inicio_str = request.form.get("data_inicio")
+    data_fim_str = request.form.get("data_fim")
+    sobrescrever = request.form.get("sobrescrever_jornada") is not None
+
+    if not data_inicio_str or not data_fim_str:
+        flash("Ambas as datas de início e fim são obrigatórias.", "erro")
+        return redirect(url_for("rh.listar_funcionarios"))
+
+    try:
+        data_inicio = datetime.strptime(data_inicio_str, "%Y-%m-%d").date()
+        data_fim = datetime.strptime(data_fim_str, "%Y-%m-%d").date()
+    except ValueError:
+        flash("Formato de data inválido.", "erro")
+        return redirect(url_for("rh.listar_funcionarios"))
+
+    try:
+        resultado = PontoService.reprocess_interval(
+            funcionario_id=funcionario_id,
+            start_date=data_inicio,
+            end_date=data_fim,
+            ator_id=ator_id,
+            override_snapshots=sobrescrever
+        )
+        
+        dias = resultado["dias_processados"]
+        if dias > 0:
+            flash(f"Reprocessamento concluído! {dias} dia(s) atualizado(s) com sucesso.", "sucesso")
+        else:
+            flash(f"Nenhum registro de ponto encontrado para reprocessar neste período.", "aviso")
+            
+    except Exception as exc:
+        flash(f"Erro ao reprocessar ponto: {str(exc)}", "erro")
+
+    # Idealmente poderia redirecionar para a página de edição do funcionário, mantemos na listagem por padrão
+    return redirect(url_for("rh.editar_funcionario", funcionario_id=funcionario_id))

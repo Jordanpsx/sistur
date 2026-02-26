@@ -234,6 +234,88 @@ class TestRegistrarBatida:
 
 
 # ---------------------------------------------------------------------------
+# reprocess_interval (com DB)
+# ---------------------------------------------------------------------------
+
+class TestReprocessarPonto:
+
+    def test_reprocess_success(self, app, db):
+        """Reprocessar atualiza os saldos mantendo os snapshots antigos."""
+        with app.app_context():
+            f = _criar_funcionario(db)
+            data_str = datetime(2026, 1, 15, tzinfo=timezone.utc)
+            
+            # 2 batidas
+            PontoService.registrar_batida(f.id, data_str.replace(hour=8), ator_id=f.id)
+            PontoService.registrar_batida(f.id, data_str.replace(hour=17), ator_id=f.id)
+            
+            # Adulterando o snapshot pra estragar o saldo simulando bug velho
+            day = db.session.query(TimeDay).filter_by(funcionario_id=f.id).first()
+            day.saldo_calculado_minutos = 15 # Valor arbitrário e errado
+            db.session.commit()
+            
+            res = PontoService.reprocess_interval(
+                funcionario_id=f.id,
+                start_date=data_str.date(),
+                end_date=data_str.date(),
+                ator_id=f.id,
+                override_snapshots=False
+            )
+            
+            # Verificando se arrumou para +60 (ja que a jornada snapshot tava certa)
+            db.session.refresh(day)
+            assert res["dias_processados"] == 1
+            assert day.saldo_calculado_minutos == 60
+            
+    def test_reprocess_com_override(self, app, db):
+        """Reprocessar ignorando snapshot antigo, adotando jornada atual."""
+        with app.app_context():
+            f = _criar_funcionario(db)
+            data_str = datetime(2026, 1, 15, tzinfo=timezone.utc)
+            
+            # 2 batidas (9 hrs trabalhadas - 8h as 17h = 540 min)
+            PontoService.registrar_batida(f.id, data_str.replace(hour=8), ator_id=f.id)
+            PontoService.registrar_batida(f.id, data_str.replace(hour=17), ator_id=f.id)
+            
+            # Mudando a carga horária atual do funcionário no cadastro para 6h (360m)
+            f.minutos_esperados_dia = 360
+            db.session.commit()
+            
+            # Override!
+            PontoService.reprocess_interval(
+                funcionario_id=f.id,
+                start_date=data_str.date(),
+                end_date=data_str.date(),
+                ator_id=f.id,
+                override_snapshots=True,
+                tolerance=15
+            )
+            
+            # Antes o saldo era de +60 (480 min esperado). Agora a pessoa deve 360 e trabalhou 540.
+            # Saldo esperado: 540 - 360 = +180 min
+            day = db.session.query(TimeDay).filter_by(funcionario_id=f.id).first()
+            
+            assert day.expected_minutes_snapshot == 360
+            assert day.tolerance_snapshot == 15
+            assert day.saldo_calculado_minutos == 180
+
+    def test_reprocess_gera_log_massivo(self, app, db):
+        """A operação de reprocessamento deve gerar 1 único AuditLog com os deltas."""
+        with app.app_context():
+            f = _criar_funcionario(db)
+            start = datetime(2026, 1, 10, tzinfo=timezone.utc).date()
+            end = datetime(2026, 1, 15, tzinfo=timezone.utc).date()
+            
+            
+            PontoService.reprocess_interval(f.id, start, end, ator_id=f.id)
+            db.session.commit()
+            
+            logs = db.session.query(AuditLog).filter_by(action=AuditAction.update, module="ponto", entity_id=f.id).all()
+            # Procurar o log massivo pela key 'action' que injetamos manualmente no payload
+            mass_logs = [l for l in logs if l.previous_state and l.previous_state.get("action") == "mass_reprocess_before"]
+            assert len(mass_logs) == 1
+
+# ---------------------------------------------------------------------------
 # processar_dia (com DB)
 # ---------------------------------------------------------------------------
 
