@@ -194,6 +194,7 @@ class PontoService(BaseService):
             old_saldo_bruto = dia.minutos_trabalhados
             old_saldo_liquido = dia.saldo_calculado_minutos
             old_needs_review = dia.needs_review
+            old_saldo_final = dia.saldo_final_minutos
 
             calc = PontoService.calculate_daily_balance(
                 batidas,
@@ -210,6 +211,11 @@ class PontoService(BaseService):
             # Para evitar bagunçar quem ja fez o banco, mantemos o saldo final == calculado,
             # exceto se houver feature futura de ajuste manual de 'saldo_final_minutos'.
             dia.saldo_final_minutos = calc["saldo_calculado_minutos"]
+            
+            # Cache do banco de horas global incrementado com o delta desta recalcularização
+            delta = dia.saldo_final_minutos - old_saldo_final
+            if delta != 0:
+                funcionario.banco_horas_acumulado += delta
 
             mudancas_audit[dia.shift_date.isoformat()] = {
                 "old": {
@@ -502,6 +508,7 @@ class PontoService(BaseService):
             .first()
         )
 
+        old_saldo_final = 0
         if not time_day:
             time_day = TimeDay(
                 funcionario_id=funcionario_id,
@@ -510,6 +517,8 @@ class PontoService(BaseService):
                 tolerance_snapshot=10, # default 10min CLT
             )
             db.session.add(time_day)
+        else:
+            old_saldo_final = time_day.saldo_final_minutos
             
         # O cálculo usa sempre o snapshot do dia (preserva regra passada)
         result = PontoService.calculate_daily_balance(
@@ -522,6 +531,11 @@ class PontoService(BaseService):
         time_day.saldo_calculado_minutos = result["saldo_calculado_minutos"]
         time_day.saldo_final_minutos    = result["saldo_calculado_minutos"]  # sem deduções manuais ainda
         time_day.needs_review           = result["needs_review"]
+
+        # Cache do Banco de Horas
+        delta = time_day.saldo_final_minutos - old_saldo_final
+        if delta != 0:
+            funcionario.banco_horas_acumulado += delta
 
         # Marca todas as batidas do dia como processadas
         for entry in entries:
@@ -601,3 +615,105 @@ class PontoService(BaseService):
             "punch_time": entry.punch_time,
             "motivo": motivo,
         }
+
+    @staticmethod
+    def recalcular_banco_global(funcionario_id: int, ator_id: int | None = None) -> int:
+        """
+        Refaz a contagem total do banco de horas do zero para um funcionário.
+        Cenário de uso: reparo de inconsistência ou reprocessamento massivo.
+
+        Soma todos os saldos_finais_minutos de TimeDay MENOS 
+        as deduções de saldo em TimeBankDeduction.
+        Atualiza Funcionario.banco_horas_acumulado.
+        """
+        from app.models.funcionario import Funcionario
+        from app.models.ponto import TimeDay, TimeBankDeduction
+        from sqlalchemy import func
+
+        funcionario = db.session.get(Funcionario, funcionario_id)
+        if not funcionario:
+            raise ValueError("Funcionário não encontrado.")
+
+        old_banco = funcionario.banco_horas_acumulado
+
+        soma_dias = db.session.query(func.sum(TimeDay.saldo_final_minutos)).filter(
+            TimeDay.funcionario_id == funcionario_id
+        ).scalar() or 0
+
+        soma_abatimentos = db.session.query(func.sum(TimeBankDeduction.minutos_abatidos)).filter(
+            TimeBankDeduction.funcionario_id == funcionario_id
+        ).scalar() or 0
+
+        novo_banco = int(soma_dias) - int(soma_abatimentos)
+
+        funcionario.banco_horas_acumulado = novo_banco
+        db.session.flush()
+
+        AuditService.log_update(
+            "ponto",
+            funcionario_id,
+            previous_state={"action": "recalcular_banco_global", "saldo_anterior": old_banco},
+            new_state={"saldo_novo": novo_banco, "soma_dias": soma_dias, "soma_abatimentos": soma_abatimentos},
+            actor_id=ator_id,
+        )
+
+        db.session.commit()
+        return novo_banco
+
+    @staticmethod
+    def registrar_abatimento_horas(
+        funcionario_id: int,
+        deduction_type: str,
+        minutos: int,
+        data_registro,
+        observacao: str,
+        ator_id: int,
+        pagamento_valor=None,
+    ) -> "TimeBankDeduction": # type: ignore[name-defined]  # noqa: F821
+        """
+        Registra um pagamento de banco de horas ou desconto por folga.
+        Isso reduz o saldo da variável em cache no Funcionario e adiciona 
+        o registro em TimeBankDeduction.
+        """
+        from app.models.funcionario import Funcionario
+        from app.models.ponto import TimeBankDeduction, DeductionType
+
+        if minutos <= 0:
+            raise ValueError("Minutos de abatimento devem ser maiores que zero.")
+
+        funcionario = db.session.get(Funcionario, funcionario_id)
+        if not funcionario:
+            raise ValueError("Funcionário não encontrado.")
+
+        ded_type = DeductionType(deduction_type)
+
+        deduction = TimeBankDeduction(
+            funcionario_id=funcionario_id,
+            deduction_type=ded_type,
+            minutos_abatidos=minutos,
+            data_registro=data_registro,
+            pagamento_valor=pagamento_valor,
+            observacao=observacao
+        )
+
+        old_banco = funcionario.banco_horas_acumulado
+        funcionario.banco_horas_acumulado -= minutos
+
+        db.session.add(deduction)
+        db.session.flush()
+
+        AuditService.log_create(
+            "ponto_abatimento",
+            entity_id=deduction.id,
+            new_state={
+                "funcionario_id": funcionario_id,
+                "deduction_type": ded_type.value,
+                "minutos": minutos,
+                "saldo_anterior": old_banco,
+                "saldo_novo": funcionario.banco_horas_acumulado
+            },
+            actor_id=ator_id,
+        )
+
+        db.session.commit()
+        return deduction

@@ -306,6 +306,11 @@ class TestReprocessarPonto:
             start = datetime(2026, 1, 10, tzinfo=timezone.utc).date()
             end = datetime(2026, 1, 15, tzinfo=timezone.utc).date()
             
+            # Adiciona batidas de ponto no dia 12 para que haja de fato reprocessamento e log:
+            dt12 = datetime(2026, 1, 12, tzinfo=timezone.utc)
+            PontoService.registrar_batida(f.id, dt12.replace(hour=8), ator_id=f.id)
+            PontoService.registrar_batida(f.id, dt12.replace(hour=17), ator_id=f.id)
+            
             
             PontoService.reprocess_interval(f.id, start, end, ator_id=f.id)
             db.session.commit()
@@ -424,4 +429,80 @@ class TestEditarBatidaAdmin:
                     novo_horario=datetime(2026, 1, 15, 9, 0),
                     motivo="Motivo qualquer",
                     ator_id=1,
+                )
+
+# ---------------------------------------------------------------------------
+# recalcular_banco_global e registrar_abatimento_horas (com DB)
+# ---------------------------------------------------------------------------
+
+class TestRecalcularBancoGlobal:
+    
+    def test_recalcular_banco_soma_correta(self, app, db):
+        with app.app_context():
+            f = _criar_funcionario(db)
+            data_str = datetime(2026, 1, 15, tzinfo=timezone.utc)
+            
+            # 2 batidas no dia 15 (+60min saldo)
+            PontoService.registrar_batida(f.id, data_str.replace(hour=8), ator_id=f.id)
+            PontoService.registrar_batida(f.id, data_str.replace(hour=17), ator_id=f.id)
+            
+            # 2 batidas no dia 16 (+60min saldo)
+            data_16 = data_str + timedelta(days=1)
+            PontoService.registrar_batida(f.id, data_16.replace(hour=8), ator_id=f.id)
+            PontoService.registrar_batida(f.id, data_16.replace(hour=17), ator_id=f.id)
+            
+            # Adiciona abatimento de 30min
+            PontoService.registrar_abatimento_horas(
+                funcionario_id=f.id,
+                deduction_type="folga",
+                minutos=30,
+                data_registro=data_str.date(),
+                observacao="Desconto teste",
+                ator_id=f.id
+            )
+            
+            # Total esperado: 60 + 60 - 30 = 90
+            saldo = PontoService.recalcular_banco_global(f.id, ator_id=f.id)
+            
+            assert saldo == 90
+            db.session.refresh(f)
+            assert f.banco_horas_acumulado == 90
+
+
+class TestRegistrarAbatimentoHoras:
+
+    def test_registrar_abatimento_reduz_cache(self, app, db):
+        with app.app_context():
+            f = _criar_funcionario(db)
+            f.banco_horas_acumulado = 100
+            db.session.commit()
+            
+            deduction = PontoService.registrar_abatimento_horas(
+                funcionario_id=f.id,
+                deduction_type="pagamento",
+                minutos=40,
+                data_registro=datetime(2026, 1, 15).date(),
+                observacao="Pagamento em dinheiro",
+                ator_id=f.id,
+                pagamento_valor=150.00
+            )
+            
+            assert deduction.id is not None
+            assert deduction.deduction_type.value == "pagamento"
+            assert deduction.minutos_abatidos == 40
+            
+            db.session.refresh(f)
+            assert f.banco_horas_acumulado == 60
+
+    def test_minutos_negativos_levanta_value_error(self, app, db):
+        with app.app_context():
+            f = _criar_funcionario(db)
+            with pytest.raises(ValueError, match="maiores que zero"):
+                PontoService.registrar_abatimento_horas(
+                    funcionario_id=f.id,
+                    deduction_type="folga",
+                    minutos=-10,
+                    data_registro=datetime.now().date(),
+                    observacao="Invalido",
+                    ator_id=f.id
                 )

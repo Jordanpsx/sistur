@@ -373,7 +373,7 @@
     ============================================= */
     .summary-grid {
       display: grid;
-      grid-template-columns: repeat(3, 1fr);
+      grid-template-columns: repeat(4, 1fr);
       gap: 1rem;
       margin-bottom: 1.5rem;
     }
@@ -408,6 +408,10 @@
 
     .summary-card--month::before {
       background: var(--amber-500);
+    }
+
+    .summary-card--bank::before {
+      background: var(--slate-600);
     }
 
     .summary-card:hover {
@@ -841,10 +845,6 @@
         grid-template-columns: 1fr 1fr;
       }
 
-      .summary-card:last-child {
-        grid-column: 1 / -1;
-      }
-
       .clock-card {
         padding: 1.75rem 1.25rem 1.5rem;
       }
@@ -1007,6 +1007,22 @@
                 format(month_total.saldo%60) }}</span>
               {% elif month_total.saldo < 0 %} {% set as=-month_total.saldo %} <span
                 class="summary-card__sub summary-card__sub--neg">-{{ (as//60) }}h{{ "%02d" | format(as%60) }}</span>
+                {% else %}
+                <span class="summary-card__sub summary-card__sub--zero">Zerado</span>
+                {% endif %}
+            </div>
+
+            <!-- Banco de Horas Global -->
+            <div class="summary-card summary-card--bank">
+              <div class="summary-card__icon">🏦</div>
+              <div class="summary-card__label">Banco Total</div>
+
+              <div class="summary-card__value">{{ funcionario.saldo_banco_horas_formatado() }}</div>
+
+              {% set total_banco = funcionario.saldo_banco_horas() %}
+              {% if total_banco > 0 %}
+              <span class="summary-card__sub summary-card__sub--pos">Saldo Positivo</span>
+              {% elif total_banco < 0 %} <span class="summary-card__sub summary-card__sub--neg">Saldo Negativo</span>
                 {% else %}
                 <span class="summary-card__sub summary-card__sub--zero">Zerado</span>
                 {% endif %}

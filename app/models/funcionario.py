@@ -147,6 +147,10 @@ class Funcionario(db.Model):
     # State & timestamps
     # ------------------------------------------------------------------
     ativo = db.Column(db.Boolean, default=True, nullable=False)
+    
+    # Saldo em cache do banco de horas global (minutos)
+    banco_horas_acumulado = db.Column(db.Integer, nullable=False, default=0)
+
     criado_em = db.Column(
         db.DateTime,
         default=lambda: datetime.now(timezone.utc),
@@ -172,12 +176,8 @@ class Funcionario(db.Model):
     def saldo_banco_horas(self) -> int:
         """
         Return the employee's current hour-bank balance in minutes.
-
-        Stub — returns 0 until the BancoDeHoras module is ported.
-        Full implementation will query sistur_timebank_deductions for
-        the latest balance_after_minutes for this employee.
         """
-        return 0
+        return self.banco_horas_acumulado
 
     def saldo_banco_horas_formatado(self) -> str:
         """Return the hour-bank balance as a human-readable string (e.g. '2h 30min')."""

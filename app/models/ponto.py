@@ -51,6 +51,12 @@ class ProcessingStatus(str, enum.Enum):
     PROCESSADO  = "PROCESSADO"
 
 
+class DeductionType(str, enum.Enum):
+    """Tipo do abatimento do banco de horas."""
+    folga = "folga"
+    pagamento = "pagamento"
+
+
 # ---------------------------------------------------------------------------
 # TimeEntry — batida individual
 # ---------------------------------------------------------------------------
@@ -217,4 +223,56 @@ class TimeDay(db.Model):
         return (
             f"<TimeDay func={self.funcionario_id}"
             f" date={self.shift_date} saldo={self.saldo_calculado_minutos}>"
+        )
+
+
+# ---------------------------------------------------------------------------
+# TimeBankDeduction — Registro de Abatimentos
+# ---------------------------------------------------------------------------
+
+class TimeBankDeduction(db.Model):
+    """
+    Registro de abatimento do banco de horas global (folga ou pagamento em dinheiro).
+    """
+    __tablename__ = "sistur_timebank_deductions"
+
+    id = db.Column(db.Integer, primary_key=True)
+
+    funcionario_id = db.Column(
+        db.Integer,
+        db.ForeignKey("sistur_funcionarios.id", ondelete="CASCADE"),
+        nullable=False,
+        index=True,
+    )
+
+    deduction_type = db.Column(
+        db.Enum(DeductionType),
+        nullable=False,
+    )
+
+    minutos_abatidos = db.Column(db.Integer, nullable=False)
+    
+    data_registro = db.Column(db.Date, nullable=False, index=True)
+    
+    pagamento_valor = db.Column(db.Numeric(10, 2), nullable=True) # Opcional: R$ pago
+    
+    observacao = db.Column(db.String(500), nullable=True)
+
+    criado_em = db.Column(
+        db.DateTime,
+        default=lambda: datetime.now(timezone.utc),
+        nullable=False,
+    )
+
+    # Relationships
+    funcionario = db.relationship(
+        "Funcionario",
+        foreign_keys=[funcionario_id],
+        lazy="select",
+    )
+
+    def __repr__(self) -> str:
+        return (
+            f"<TimeBankDeduction id={self.id} func={self.funcionario_id} "
+            f"type={self.deduction_type} min={self.minutos_abatidos}>"
         )
