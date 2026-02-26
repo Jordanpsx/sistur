@@ -268,7 +268,7 @@ class TestReprocessarPonto:
             assert day.saldo_calculado_minutos == 60
             
     def test_reprocess_com_override(self, app, db):
-        """Reprocessar ignorando snapshot antigo, adotando jornada atual."""
+        """Reprocessar ignorando snapshot antigo, adotando jornada JSON atual."""
         with app.app_context():
             f = _criar_funcionario(db)
             data_str = datetime(2026, 1, 15, tzinfo=timezone.utc)
@@ -277,8 +277,11 @@ class TestReprocessarPonto:
             PontoService.registrar_batida(f.id, data_str.replace(hour=8), ator_id=f.id)
             PontoService.registrar_batida(f.id, data_str.replace(hour=17), ator_id=f.id)
             
-            # Mudando a carga horária atual do funcionário no cadastro para 6h (360m)
-            f.minutos_esperados_dia = 360
+            # Mudando a carga horária atual do funcionário na Quinta-feira do evento para 6h (360m)
+            f.minutos_esperados_dia = 480
+            f.jornada_semanal = {
+                "quinta": {"ativo": True, "minutos": 360, "almoco": 60}
+            }
             db.session.commit()
             
             # Override!
@@ -291,7 +294,7 @@ class TestReprocessarPonto:
                 tolerance=15
             )
             
-            # Antes o saldo era de +60 (480 min esperado). Agora a pessoa deve 360 e trabalhou 540.
+            # Antes o saldo era de +60 (480 min esperado). Agora a pessoa deve 360 (jornada semanal de quinta lida corretamente) e trabalhou 540.
             # Saldo esperado: 540 - 360 = +180 min
             day = db.session.query(TimeDay).filter_by(funcionario_id=f.id).first()
             

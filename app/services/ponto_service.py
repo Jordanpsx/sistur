@@ -53,22 +53,25 @@ def _apply_tolerance(saldo_bruto: int, tolerance: int) -> int:
     return saldo_bruto + tolerance
 
 
-def _get_expected_minutes(funcionario) -> int:
+def _get_expected_minutes(funcionario, date_val=None) -> int:
     """
-    Retorna os minutos esperados para hoje conforme a jornada do funcionário.
+    Retorna os minutos esperados para a data fornecida (ou hoje, se não informada) 
+    conforme a jornada do funcionário.
 
     Prioridade: jornada_semanal[dia_semana] > minutos_esperados_dia (fallback global).
 
     Args:
         funcionario: Instância de Funcionario com os campos de jornada.
+        date_val: Objeto date opcional para calcular pelo dia do retroativo em vez de hoje.
 
     Returns:
-        Minutos esperados para o dia atual.
+        Minutos esperados para o dia.
     """
-    hoje = datetime.now(timezone.utc).date()
+    if date_val is None:
+        date_val = datetime.now(timezone.utc).date()
     # Mapeia weekday() (0=Monday) para as chaves do JSON de jornada
     dias = ("segunda", "terca", "quarta", "quinta", "sexta", "sabado", "domingo")
-    dia_key = dias[hoje.weekday()]
+    dia_key = dias[date_val.weekday()]
 
     if funcionario.jornada_semanal:
         config_dia = funcionario.jornada_semanal.get(dia_key, {})
@@ -158,9 +161,6 @@ class PontoService(BaseService):
         if not dias_afetados:
             return resultado
 
-        # Minutos atuais no cadastro, caso opte por sobrescrever
-        minutos_esperados_atuais = funcionario.minutos_esperados_dia
-
         mudancas_audit = {}
 
         for dia in dias_afetados:
@@ -185,7 +185,7 @@ class PontoService(BaseService):
             tol = dia.tolerance_snapshot
 
             if override_snapshots:
-                expected_minutes = minutos_esperados_atuais
+                expected_minutes = _get_expected_minutes(funcionario, dia.shift_date)
                 tol = tolerance
                 # Atualiza o snapshot no DB com os novos valores
                 dia.expected_minutes_snapshot = expected_minutes
@@ -498,8 +498,8 @@ class PontoService(BaseService):
 
         punch_list = [{"time": e.punch_time} for e in entries]
 
-        # Determina a jornada esperada para o dia
-        expected = _get_expected_minutes(funcionario)
+        # Determina a jornada esperada para a data passada no processamento
+        expected = _get_expected_minutes(funcionario, shift_date)
 
         # Pega ou cria o TimeDay para este dia
         time_day = (
