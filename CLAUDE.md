@@ -9,6 +9,21 @@ It manages HR, electronic time tracking (Ponto Eletrônico), inventory, leads, a
 - **Active development stack:** Python 3 / Flask + SQLAlchemy + MySQL
 - **Deployment:** Docker Compose on VPS via GitHub Actions (triggered on `develop` branch push)
 
+> ### ⚠️ Read `docs/antigravity.md` First (if you haven't already)
+>
+> **`docs/antigravity.md` is a mandatory rules and best practices file.**
+> It contains non-negotiable architecture constraints that apply to every feature
+> implemented in the SISTUR Python rewrite, including audit logging, layered architecture,
+> mobile-first UI, mandatory docstrings, and testing requirements.
+>
+> This file (`CLAUDE.md`) and `docs/antigravity.md` are **complementary rule files**:
+> - `CLAUDE.md` — project-wide conventions, stack, module index, and guidelines
+> - `docs/antigravity.md` — non-negotiable architecture constraints
+>
+> Both must be read before implementing any feature.
+> If you have already read `docs/antigravity.md` in this session, you do not need to re-read it —
+> but do not skip it on the first interaction of any new session.
+
 ## Current Goal: Python Rewrite
 
 **We are rewriting SISTUR in Python/Flask from scratch**, using `legacy/` (the original PHP WordPress plugin) as the functional reference.

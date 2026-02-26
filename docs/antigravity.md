@@ -89,10 +89,21 @@ Do not modify the WordPress admin panel unless explicitly instructed.
 
 ---
 
-## Rule #5 — Read CLAUDE.md First
+## Rule #5 — Read CLAUDE.md First (if you haven't already)
 
-Before making any change, read `CLAUDE.md` for project conventions,
-naming rules, port priority, and the legacy reference index.
+> **`CLAUDE.md` is a mandatory rules and best practices file.**
+> It contains project conventions, naming rules, port priority, tech stack,
+> module descriptions, testing protocol, docstring standards, and the legacy reference index.
+
+Before making **any** change, read `CLAUDE.md` at the root of the repository.
+If you have already read it in this session, you do not need to re-read it —
+but do not skip it on the first interaction of any new session.
+
+Both `CLAUDE.md` and `docs/antigravity.md` are **complementary rule files**:
+- `CLAUDE.md` — project-wide conventions, stack, module index, and guidelines
+- `docs/antigravity.md` (this file) — non-negotiable architecture constraints
+
+Both must be read before implementing any feature.
 
 ---
 

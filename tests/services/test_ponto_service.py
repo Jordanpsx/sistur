@@ -77,10 +77,15 @@ class TestApplyTolerance:
 class TestCalculateDailyBalance:
 
     def test_saldo_par_normal_zero(self):
-        """4 batidas normais → saldo 0."""
+        """4 batidas CLT (8-12, 13-17): pares somam 8h=480 min, expected=480 → saldo 0.
+
+        O almoço NÃO é subtraído separadamente — o intervalo 12h-13h nunca
+        é somado, pois fica entre os pares. Sem desconto duplo.
+        """
         punches = [_punch(8, 0), _punch(12, 0), _punch(13, 0), _punch(17, 0)]
-        result = PontoService.calculate_daily_balance(punches, expected_minutes=420, almoco_minutes=60)
-        assert result["minutos_trabalhados"] == 420
+        result = PontoService.calculate_daily_balance(punches, expected_minutes=480)
+        # Par(0,1)=240 min + Par(2,3)=240 min = 480 min trabalhados
+        assert result["minutos_trabalhados"] == 480
         assert result["saldo_calculado_minutos"] == 0
         assert result["needs_review"] is False
 
@@ -123,14 +128,35 @@ class TestCalculateDailyBalance:
         assert result["minutos_trabalhados"] == 0
         assert result["saldo_calculado_minutos"] == _apply_tolerance(-480, 10)
 
-    def test_quatro_batidas_desconta_almoco(self):
-        """Com 4 batidas, o almoço deve ser descontado."""
-        punches = [_punch(8), _punch(12), _punch(13), _punch(17)]
-        result = PontoService.calculate_daily_balance(punches, expected_minutes=420, almoco_minutes=60)
-        assert result["minutos_trabalhados"] == 420
+    def test_caso_real_quatro_batidas_11h25_a_14h02(self):
+        """Reproduz o bug reportado: 11:25, 11:34, 12:56, 14:02 → 75 min (não 15).
 
-    def test_duas_batidas_nao_desconta_almoco(self):
-        """Com apenas 2 batidas, o almoço NÃO deve ser descontado."""
+        Bug anterior: o código subtraía 60 min fixos após somar os pares,
+        resultando em 75 - 60 = 15 min. O correto é 75 min, pois o almoço
+        (11:34 → 12:56 = 82 min) já fica excluído pela estrutura dos pares.
+        """
+        punches = [
+            {"time": datetime(2026, 2, 25, 11, 25, tzinfo=timezone.utc)},
+            {"time": datetime(2026, 2, 25, 11, 34, tzinfo=timezone.utc)},
+            {"time": datetime(2026, 2, 25, 12, 56, tzinfo=timezone.utc)},
+            {"time": datetime(2026, 2, 25, 14,  2, tzinfo=timezone.utc)},
+        ]
+        result = PontoService.calculate_daily_balance(punches, expected_minutes=480)
+        # Par(0,1): 11:25→11:34 =  9 min
+        # Par(2,3): 12:56→14:02 = 66 min  → total = 75 min
+        assert result["minutos_trabalhados"] == 75
+        assert result["needs_review"] is False
+
+    def test_quatro_batidas_nao_subtrai_almoco_adicional(self):
+        """Com 4 batidas, minutos_trabalhados é apenas a soma dos pares (almoço já excluído)."""
+        punches = [_punch(8), _punch(12), _punch(13), _punch(17)]
+        result = PontoService.calculate_daily_balance(punches, expected_minutes=480)
+        # Par(0,1): 08:00→12:00 = 240 min
+        # Par(2,3): 13:00→17:00 = 240 min  → total = 480 min (sem subtração extra)
+        assert result["minutos_trabalhados"] == 480
+
+    def test_duas_batidas_trabalho_continuo(self):
+        """Com 2 batidas (sem almoço registrado), soma o intervalo inteiro."""
         punches = [_punch(8), _punch(17)]
         result = PontoService.calculate_daily_balance(punches, expected_minutes=480)
         assert result["minutos_trabalhados"] == 540

@@ -108,13 +108,25 @@ class PontoService(BaseService):
 
         Implementa Rule #4 (tolerância) e Rule #5 (par/ímpar).
 
+        As batidas são processadas em pares adjacentes (0,1), (2,3), etc.
+        Com 4 batidas no padrão CLT (entrada, saída-almoço, retorno-almoço, saída),
+        o intervalo de almoço já fica implicitamente excluído — ele corresponde ao
+        tempo *entre* o par (0,1) e o par (2,3), que nunca é somado. Por isso,
+        **não há subtração adicional de almoço**.
+
+        Exemplo correto com batidas 11:25, 11:34, 12:56, 14:02:
+            Par (0,1): 11:25 → 11:34 = 9 min
+            Par (2,3): 12:56 → 14:02 = 66 min
+            Total trabalhado = 75 min (almoço de 82 min já excluído pelos pares)
+
         Args:
             punch_list:       Lista de dicts com ao menos {'time': datetime}.
                               Deve estar ordenada em ordem crescente por 'time'.
             expected_minutes: Minutos esperados de trabalho no dia.
                               Use o valor de jornada_semanal ou Funcionario.minutos_esperados_dia.
-            almoco_minutes:   Minutos de almoço esperados (padrão 60).
-                              Só é descontado quando há 4 ou mais batidas.
+            almoco_minutes:   Parâmetro mantido por compatibilidade de assinatura;
+                              não é utilizado no cálculo (o almoço é excluído implicitamente
+                              pela estrutura de pares).
 
         Returns:
             Dicionário com as chaves:
@@ -131,15 +143,13 @@ class PontoService(BaseService):
             }
 
         # Soma pares adjacentes: (0,1), (2,3), ...
+        # O almoço (intervalo entre o par 1 e o par 2) nunca é somado,
+        # portanto não há necessidade de subtração adicional.
         worked: int = 0
         for i in range(0, len(punch_list), 2):
             entrada: datetime = punch_list[i]["time"]
             saida:   datetime = punch_list[i + 1]["time"]
             worked += int((saida - entrada).total_seconds() / 60)
-
-        # Desconta almoço somente quando par de almoço registrado (≥ 4 batidas)
-        if len(punch_list) >= 4:
-            worked -= almoco_minutes
 
         saldo_bruto: int = worked - expected_minutes
 

@@ -55,7 +55,9 @@ Calcula o saldo diário a partir de uma lista ordenada de batidas.
 
 - **Rule #5**: número ímpar de batidas → retorna `needs_review=True`, saldo congelado em `0`.
 - **Rule #4**: aplica tolerância de 10 min via `_apply_tolerance()`.
-- Desconta almoço somente quando há ≥ 4 batidas.
+- **Almoço excluído implicitamente pelos pares**: com 4 batidas CLT (entrada, saída-almoço, retorno-almoço, saída), o intervalo de almoço fica entre os pares (0,1) e (2,3) e **nunca** é somado. Não há subtração adicional de `almoco_minutes`.
+
+> ⚠️ **Bug histórico (corrigido em 2026-02-26):** versões anteriores subtraíam `almoco_minutes` fixos após somarem os pares, causando duplo desconto. Ex: 11:25→11:34 + 12:56→14:02 = 75 min, mas o código retornava 15 min.
 
 #### `_apply_tolerance(saldo_bruto, tolerance) → int`
 
