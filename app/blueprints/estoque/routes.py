@@ -25,7 +25,7 @@ correspondente (@require_permission).
 
 from __future__ import annotations
 
-from flask import Blueprint, flash, redirect, render_template, request, session, url_for
+from flask import Blueprint, abort, flash, redirect, render_template, request, session, url_for
 
 from app.blueprints.portal.routes import login_required
 from app.core.permissions import require_permission
@@ -37,6 +37,8 @@ from app.models.estoque import (
     TipoProduto,
     Unidade,
 )
+from app.models.funcionario import Funcionario
+from app.services.configuracao_service import ConfiguracaoService
 from app.services.estoque_service import (
     CategoriaProdutoService,
     EstoqueService,
@@ -45,6 +47,26 @@ from app.services.estoque_service import (
 )
 
 bp = Blueprint("estoque", __name__)
+
+
+# ---------------------------------------------------------------------------
+# Master Switch — bloqueia o módulo se desabilitado nas configurações globais
+# ---------------------------------------------------------------------------
+
+@bp.before_request
+def verificar_modulo_ativo():
+    """Retorna 403 se o módulo Estoque estiver desabilitado nas configurações globais.
+
+    Super admins (role.is_super_admin=True) sempre têm acesso, independentemente
+    do estado do master switch, para evitar lockout acidental.
+    """
+    if not ConfiguracaoService.is_module_enabled("estoque"):
+        fid = session.get("funcionario_id")
+        if fid:
+            f = db.session.get(Funcionario, fid)
+            if f and f.role and f.role.is_super_admin:
+                return  # Super admin sempre tem acesso
+        abort(403)
 
 
 # ---------------------------------------------------------------------------

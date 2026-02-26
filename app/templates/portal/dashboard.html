@@ -409,6 +409,52 @@
       pointer-events: none;
     }
 
+    /* Master switch OFF — visível apenas para super_admin com aviso */
+    .mod-card.mod-master-off {
+      border-left-color: #f59e0b;
+      opacity: 0.75;
+    }
+
+    .mod-card.mod-master-off:hover {
+      border-left-color: #d97706 !important;
+      box-shadow: 0 8px 20px rgba(217, 119, 6, 0.15) !important;
+    }
+
+    .badge-master-off {
+      font-size: 0.67rem;
+      font-weight: 700;
+      background: #fef3c7;
+      color: #d97706;
+      padding: 2px 7px;
+      border-radius: 999px;
+      text-transform: uppercase;
+      letter-spacing: 0.04em;
+    }
+
+    /* Configurações card — super admin only */
+    .mod-card.mod-config {
+      border-left-color: #7c3aed;
+    }
+
+    .mod-card.mod-config:hover {
+      box-shadow: 0 12px 28px rgba(124, 58, 237, 0.18);
+      border-left-color: #7c3aed;
+    }
+
+    .mod-card.mod-config .mod-icon {
+      background: #ede9fe;
+      color: #7c3aed;
+    }
+
+    .mod-card.mod-active.mod-config:hover .mod-icon {
+      background: #7c3aed;
+      color: #fff;
+    }
+
+    .mod-card.mod-active.mod-config:hover .mod-card-title {
+      color: #7c3aed;
+    }
+
     /* Card header row */
     .mod-card-header {
       display: flex;
@@ -729,8 +775,9 @@
       {% endif %}
 
       <!-- Ponto Eletrônico -->
-      {% if perms.ponto.view %}
-      <a href="{{ url_for('ponto.historico') }}" class="mod-card mod-active mod-ponto">
+      {% if perms.ponto.view and (modulos_ativos.ponto or is_super_admin) %}
+      <a href="{{ url_for('ponto.historico') }}"
+         class="mod-card mod-active mod-ponto{% if not modulos_ativos.ponto %} mod-master-off{% endif %}">
         <div class="mod-card-header">
           <div class="mod-icon">
             <svg width="20" height="20" viewBox="0 0 24 24" fill="none">
@@ -740,12 +787,16 @@
           </div>
           <div class="mod-card-titles">
             <h2 class="mod-card-title">Ponto Eletrônico</h2>
-            <span class="mod-badge badge-ponto">Ponto</span>
+            {% if not modulos_ativos.ponto %}
+              <span class="badge-master-off">Desativado</span>
+            {% else %}
+              <span class="mod-badge badge-ponto">Ponto</span>
+            {% endif %}
           </div>
         </div>
         <p class="mod-card-desc">Visualize e confirme seus registros de entrada e saída.</p>
       </a>
-      {% else %}
+      {% elif not perms.ponto.view %}
       <div class="mod-card mod-disabled mod-ponto">
         <div class="mod-card-header">
           <div class="mod-icon">
@@ -783,8 +834,9 @@
       </div>
 
       <!-- Estoque -->
-      {% if perms.estoque.view %}
-      <a href="{{ url_for('estoque.dashboard') }}" class="mod-card mod-active mod-estoque">
+      {% if perms.estoque.view and (modulos_ativos.estoque or is_super_admin) %}
+      <a href="{{ url_for('estoque.dashboard') }}"
+         class="mod-card mod-active mod-estoque{% if not modulos_ativos.estoque %} mod-master-off{% endif %}">
         <div class="mod-card-header">
           <div class="mod-icon">
             <svg width="20" height="20" viewBox="0 0 24 24" fill="none">
@@ -797,7 +849,11 @@
           </div>
           <div class="mod-card-titles">
             <h2 class="mod-card-title">Estoque</h2>
-            <span class="mod-badge badge-estoque">Operações</span>
+            {% if not modulos_ativos.estoque %}
+              <span class="badge-master-off">Desativado</span>
+            {% else %}
+              <span class="mod-badge badge-estoque">Operações</span>
+            {% endif %}
           </div>
         </div>
         <p class="mod-card-desc">Gerencie produtos, categorias e movimentações de estoque.</p>
@@ -805,8 +861,9 @@
       {% endif %}
 
       <!-- Restaurante -->
-      {% if perms.restaurante.view %}
-      <a href="{{ url_for('restaurante.dashboard') }}" class="mod-card mod-active mod-restaurante">
+      {% if perms.restaurante.view and (modulos_ativos.restaurante or is_super_admin) %}
+      <a href="{{ url_for('restaurante.dashboard') }}"
+         class="mod-card mod-active mod-restaurante{% if not modulos_ativos.restaurante %} mod-master-off{% endif %}">
         <div class="mod-card-header">
           <div class="mod-icon">
             <svg width="20" height="20" viewBox="0 0 24 24" fill="none">
@@ -817,7 +874,11 @@
           </div>
           <div class="mod-card-titles">
             <h2 class="mod-card-title">Restaurante</h2>
-            <span class="mod-badge badge-restaurante">Operações</span>
+            {% if not modulos_ativos.restaurante %}
+              <span class="badge-master-off">Desativado</span>
+            {% else %}
+              <span class="mod-badge badge-restaurante">Operações</span>
+            {% endif %}
           </div>
         </div>
         <p class="mod-card-desc">Gerencie fichas técnicas e análise de custos (CMV).</p>
@@ -843,6 +904,32 @@
           </div>
         </div>
         <p class="mod-card-desc">Rastreamento imutável de todas as ações do sistema.</p>
+      </a>
+      {% endif %}
+
+      <!-- Configurações — visível apenas para super_admin -->
+      {% if is_super_admin %}
+      <a href="{{ url_for('configuracoes.index') }}" class="mod-card mod-active mod-config">
+        <div class="mod-card-header">
+          <div class="mod-icon">
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="none">
+              <circle cx="12" cy="12" r="3" stroke="currentColor" stroke-width="2"/>
+              <path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33
+                       1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33
+                       l-.06.06a2 2 0 0 1-2.83-2.83l.06-.06A1.65 1.65 0 0 0 4.68 15a1.65 1.65 0 0 0-1.51-1H3a2 2 0
+                       0 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 2.83-2.83l.06.06
+                       A1.65 1.65 0 0 0 9 4.68a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51
+                       1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 2.83l-.06.06A1.65 1.65 0 0 0 19.4 9a1.65 1.65
+                       0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z" stroke="currentColor" stroke-width="2"
+                stroke-linecap="round" stroke-linejoin="round"/>
+            </svg>
+          </div>
+          <div class="mod-card-titles">
+            <h2 class="mod-card-title">Configurações</h2>
+            <span class="mod-badge" style="background:#ede9fe;color:#7c3aed;">Super Admin</span>
+          </div>
+        </div>
+        <p class="mod-card-desc">Módulos, permissões e identidade visual do sistema.</p>
       </a>
       {% endif %}
 

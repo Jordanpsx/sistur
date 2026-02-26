@@ -1,0 +1,679 @@
+<!DOCTYPE html>
+<!--
+  Copyright (c) 2026 Jordan Barbosa Machado — All Rights Reserved
+  Admin — Configurações Globais (Control Panel)
+-->
+<html lang="pt-BR">
+
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>{{ company_name }} | Configurações do Sistema</title>
+
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link
+    href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=DM+Mono:wght@400;500&display=swap"
+    rel="stylesheet" />
+
+  <style>
+    /* ─── Variáveis ──────────────────────────────────────────────────────── */
+    :root {
+      --primary: #0d9488;
+      --primary-dark: #0f766e;
+      --primary-hero: #134e4a;
+      --bg-page: #f8fafc;
+
+      --purple: #7c3aed;
+      --purple-dark: #6d28d9;
+      --purple-bg: #ede9fe;
+
+      --green: #059669;
+      --green-bg: #d1fae5;
+      --red: #dc2626;
+      --red-bg: #fee2e2;
+      --amber: #d97706;
+      --amber-bg: #fef3c7;
+      --slate: #475569;
+    }
+
+    * { box-sizing: border-box; }
+
+    body {
+      font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+      background-color: var(--bg-page);
+      margin: 0;
+      color: #1e293b;
+    }
+
+    /* ─── Topbar ─────────────────────────────────────────────────────────── */
+    .topbar {
+      position: sticky;
+      top: 0;
+      z-index: 50;
+      background: rgba(255, 255, 255, 0.88);
+      backdrop-filter: blur(16px);
+      -webkit-backdrop-filter: blur(16px);
+      border-bottom: 1px solid rgba(0,0,0,0.06);
+    }
+
+    .topbar-inner {
+      max-width: 1100px;
+      margin: 0 auto;
+      padding: 0 1.5rem;
+      height: 60px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 1rem;
+    }
+
+    .topbar-back {
+      display: flex;
+      align-items: center;
+      gap: 0.5rem;
+      color: var(--primary);
+      font-weight: 600;
+      font-size: 0.9rem;
+      text-decoration: none;
+    }
+
+    .topbar-back:hover { color: var(--primary-dark); }
+
+    .topbar-title {
+      font-size: 0.95rem;
+      font-weight: 700;
+      color: #1e293b;
+      display: flex;
+      align-items: center;
+      gap: 0.5rem;
+    }
+
+    .badge-super {
+      font-size: 0.7rem;
+      font-weight: 600;
+      background: var(--purple-bg);
+      color: var(--purple);
+      padding: 2px 8px;
+      border-radius: 999px;
+    }
+
+    /* ─── Hero ───────────────────────────────────────────────────────────── */
+    .hero {
+      background: linear-gradient(135deg, #1e1b4b 0%, #4c1d95 50%, #6d28d9 100%);
+      padding: 2rem 1.5rem 1.75rem;
+    }
+
+    .hero-inner {
+      max-width: 1100px;
+      margin: 0 auto;
+    }
+
+    .hero-title {
+      color: #fff;
+      font-size: 1.4rem;
+      font-weight: 800;
+      margin: 0 0 0.25rem;
+      letter-spacing: -0.02em;
+    }
+
+    .hero-sub {
+      color: rgba(255,255,255,0.7);
+      font-size: 0.875rem;
+      margin: 0 0 1.25rem;
+    }
+
+    /* ─── Tabs ───────────────────────────────────────────────────────────── */
+    .tabs {
+      display: flex;
+      gap: 0.25rem;
+      border-bottom: 2px solid rgba(255,255,255,0.15);
+    }
+
+    .tab-btn {
+      padding: 0.5rem 1rem;
+      border: none;
+      background: transparent;
+      color: rgba(255,255,255,0.65);
+      font-size: 0.875rem;
+      font-weight: 600;
+      cursor: pointer;
+      border-bottom: 2px solid transparent;
+      margin-bottom: -2px;
+      transition: color 0.15s, border-color 0.15s;
+      font-family: 'Inter', sans-serif;
+    }
+
+    .tab-btn:hover { color: rgba(255,255,255,0.9); }
+    .tab-btn.active { color: #fff; border-bottom-color: #fff; }
+
+    /* ─── Content ────────────────────────────────────────────────────────── */
+    .content {
+      max-width: 1100px;
+      margin: 0 auto;
+      padding: 2rem 1.5rem;
+    }
+
+    .tab-panel { display: none; }
+    .tab-panel.active { display: block; }
+
+    /* ─── Section cards ──────────────────────────────────────────────────── */
+    .section-card {
+      background: #fff;
+      border-radius: 16px;
+      border: 1px solid #e2e8f0;
+      padding: 1.5rem;
+      margin-bottom: 1.25rem;
+    }
+
+    .section-header {
+      display: flex;
+      align-items: flex-start;
+      justify-content: space-between;
+      gap: 1rem;
+      margin-bottom: 1.25rem;
+    }
+
+    .section-title {
+      font-size: 1rem;
+      font-weight: 700;
+      color: #0f172a;
+      margin: 0 0 0.2rem;
+    }
+
+    .section-desc {
+      font-size: 0.8rem;
+      color: #64748b;
+      margin: 0;
+    }
+
+    /* ─── Module toggle rows ─────────────────────────────────────────────── */
+    .module-row {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 1rem 0;
+      border-bottom: 1px solid #f1f5f9;
+    }
+
+    .module-row:last-child { border-bottom: none; }
+
+    .module-info { display: flex; align-items: center; gap: 0.75rem; }
+
+    .module-icon {
+      width: 40px;
+      height: 40px;
+      border-radius: 10px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 1.1rem;
+      flex-shrink: 0;
+    }
+
+    .module-name {
+      font-weight: 600;
+      font-size: 0.9rem;
+      color: #1e293b;
+      margin: 0 0 0.15rem;
+    }
+
+    .module-status {
+      font-size: 0.75rem;
+      font-weight: 500;
+    }
+
+    .status-on  { color: var(--green); }
+    .status-off { color: #94a3b8; }
+
+    /* ─── Toggle switch ──────────────────────────────────────────────────── */
+    .switch {
+      position: relative;
+      display: inline-block;
+      width: 52px;
+      height: 28px;
+      flex-shrink: 0;
+    }
+
+    .switch input { opacity: 0; width: 0; height: 0; }
+
+    .slider {
+      position: absolute;
+      cursor: pointer;
+      inset: 0;
+      background: #cbd5e1;
+      border-radius: 28px;
+      transition: background 0.25s;
+    }
+
+    .slider:before {
+      content: "";
+      position: absolute;
+      height: 20px;
+      width: 20px;
+      left: 4px;
+      bottom: 4px;
+      background: #fff;
+      border-radius: 50%;
+      box-shadow: 0 1px 3px rgba(0,0,0,0.2);
+      transition: transform 0.25s;
+    }
+
+    .switch input:checked + .slider { background: #0d9488; }
+    .switch input:checked + .slider:before { transform: translateX(24px); }
+
+    .switch input:disabled + .slider { opacity: 0.5; cursor: not-allowed; }
+
+    /* Loading state */
+    .switch.loading .slider { opacity: 0.6; pointer-events: none; }
+
+    /* ─── Branding form ──────────────────────────────────────────────────── */
+    .form-group { margin-bottom: 1.25rem; }
+
+    .form-label {
+      display: block;
+      font-size: 0.8rem;
+      font-weight: 600;
+      color: #374151;
+      margin-bottom: 0.4rem;
+    }
+
+    .form-input {
+      width: 100%;
+      padding: 0.6rem 0.875rem;
+      border: 1.5px solid #e2e8f0;
+      border-radius: 8px;
+      font-size: 0.875rem;
+      font-family: 'Inter', sans-serif;
+      color: #1e293b;
+      background: #fff;
+      transition: border-color 0.15s;
+      outline: none;
+    }
+
+    .form-input:focus { border-color: var(--primary); }
+
+    .form-hint {
+      font-size: 0.75rem;
+      color: #94a3b8;
+      margin-top: 0.3rem;
+    }
+
+    .btn-primary {
+      padding: 0.65rem 1.5rem;
+      background: var(--primary);
+      color: #fff;
+      border: none;
+      border-radius: 8px;
+      font-size: 0.875rem;
+      font-weight: 600;
+      cursor: pointer;
+      font-family: 'Inter', sans-serif;
+      transition: background 0.15s;
+      min-height: 44px;
+    }
+
+    .btn-primary:hover { background: var(--primary-dark); }
+
+    /* ─── RBAC link card ─────────────────────────────────────────────────── */
+    .rbac-card {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      background: #f8fafc;
+      border: 1.5px solid #e2e8f0;
+      border-radius: 12px;
+      padding: 1rem 1.25rem;
+      text-decoration: none;
+      color: #1e293b;
+      transition: border-color 0.15s, background 0.15s;
+    }
+
+    .rbac-card:hover {
+      border-color: var(--purple);
+      background: var(--purple-bg);
+    }
+
+    .rbac-card-info { display: flex; align-items: center; gap: 0.75rem; }
+
+    .rbac-icon {
+      width: 44px;
+      height: 44px;
+      background: var(--purple-bg);
+      color: var(--purple);
+      border-radius: 10px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 1.2rem;
+      flex-shrink: 0;
+    }
+
+    .rbac-title {
+      font-weight: 700;
+      font-size: 0.9rem;
+      margin: 0 0 0.15rem;
+    }
+
+    .rbac-desc {
+      font-size: 0.775rem;
+      color: #64748b;
+      margin: 0;
+    }
+
+    .rbac-arrow { color: #94a3b8; font-size: 1.1rem; }
+
+    /* ─── Placeholder cards (Regras Globais) ─────────────────────────────── */
+    .placeholder-card {
+      display: flex;
+      align-items: center;
+      gap: 1rem;
+      padding: 1rem;
+      background: #f8fafc;
+      border: 1.5px dashed #e2e8f0;
+      border-radius: 12px;
+      margin-bottom: 0.75rem;
+    }
+
+    .placeholder-icon {
+      width: 40px;
+      height: 40px;
+      background: #e2e8f0;
+      border-radius: 10px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      color: #94a3b8;
+      font-size: 1.1rem;
+      flex-shrink: 0;
+    }
+
+    .placeholder-name {
+      font-size: 0.875rem;
+      font-weight: 600;
+      color: #94a3b8;
+      margin: 0 0 0.15rem;
+    }
+
+    .badge-soon {
+      font-size: 0.68rem;
+      font-weight: 700;
+      background: #f1f5f9;
+      color: #94a3b8;
+      padding: 1px 8px;
+      border-radius: 999px;
+      text-transform: uppercase;
+      letter-spacing: 0.05em;
+    }
+
+    /* ─── Flash messages ─────────────────────────────────────────────────── */
+    .flash-list { list-style: none; padding: 0; margin: 0 0 1.25rem; }
+
+    .flash-msg {
+      padding: 0.75rem 1rem;
+      border-radius: 10px;
+      font-size: 0.875rem;
+      font-weight: 500;
+      margin-bottom: 0.5rem;
+    }
+
+    .flash-sucesso { background: var(--green-bg); color: var(--green); }
+    .flash-erro    { background: var(--red-bg);   color: var(--red);   }
+    .flash-aviso   { background: var(--amber-bg); color: var(--amber); }
+
+    /* ─── Module icon colors ─────────────────────────────────────────────── */
+    .icon-ponto      { background: #ccfbf1; color: #0d9488; }
+    .icon-estoque    { background: #ffedd5; color: #ea580c; }
+    .icon-restaurante{ background: #d1fae5; color: #059669; }
+    .icon-financeiro { background: #e0f2fe; color: #0284c7; }
+
+    /* ─── Responsive ─────────────────────────────────────────────────────── */
+    @media (max-width: 640px) {
+      .content { padding: 1.25rem 1rem; }
+      .hero { padding: 1.5rem 1rem 1.25rem; }
+      .hero-title { font-size: 1.2rem; }
+      .tabs { gap: 0; overflow-x: auto; }
+      .tab-btn { padding: 0.5rem 0.75rem; font-size: 0.8rem; white-space: nowrap; }
+    }
+  </style>
+</head>
+
+<body>
+
+  <!-- ── Topbar ───────────────────────────────────────────────────────────── -->
+  <nav class="topbar">
+    <div class="topbar-inner">
+      <a href="{{ url_for('portal.dashboard') }}" class="topbar-back">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round">
+          <path d="M19 12H5M5 12l7-7M5 12l7 7"/>
+        </svg>
+        Dashboard
+      </a>
+      <div class="topbar-title">
+        ⚙ Configurações
+        <span class="badge-super">Super Admin</span>
+      </div>
+    </div>
+  </nav>
+
+  <!-- ── Hero ─────────────────────────────────────────────────────────────── -->
+  <div class="hero">
+    <div class="hero-inner">
+      <h1 class="hero-title">Painel de Controle do Sistema</h1>
+      <p class="hero-sub">Gerencie módulos, permissões e identidade visual da aplicação.</p>
+
+      <div class="tabs" role="tablist">
+        <button class="tab-btn active" role="tab" data-tab="modulos" aria-selected="true">
+          Módulos Ativos
+        </button>
+        <button class="tab-btn" role="tab" data-tab="regras" aria-selected="false">
+          Regras Globais
+        </button>
+        <button class="tab-btn" role="tab" data-tab="branding" aria-selected="false">
+          Identidade Visual
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <!-- ── Content ──────────────────────────────────────────────────────────── -->
+  <main class="content">
+
+    <!-- Flash messages -->
+    {% with messages = get_flashed_messages(with_categories=true) %}
+      {% if messages %}
+        <ul class="flash-list">
+          {% for category, message in messages %}
+            <li class="flash-msg flash-{{ category }}">{{ message }}</li>
+          {% endfor %}
+        </ul>
+      {% endif %}
+    {% endwith %}
+
+    <!-- ── Tab: Módulos Ativos ─────────────────────────────────────────────── -->
+    <div id="tab-modulos" class="tab-panel active" role="tabpanel">
+
+      <div class="section-card">
+        <div class="section-header">
+          <div>
+            <p class="section-title">Master Switch — Módulos</p>
+            <p class="section-desc">
+              Desligar um módulo oculta sua entrada do dashboard para todos os colaboradores
+              e retorna HTTP 403 em qualquer acesso direto à URL.
+              Super admins sempre têm acesso, mesmo com o módulo desligado.
+            </p>
+          </div>
+        </div>
+
+        {% set icons = {
+          'ponto': '⏱',
+          'estoque': '📦',
+          'restaurante': '🍽',
+          'financeiro': '💰'
+        } %}
+
+        {% for mod in modulos_info %}
+        <div class="module-row">
+          <div class="module-info">
+            <div class="module-icon icon-{{ mod.nome }}">{{ icons[mod.nome] }}</div>
+            <div>
+              <p class="module-name">{{ mod.label }}</p>
+              <p class="module-status {% if mod.ativo %}status-on{% else %}status-off{% endif %}"
+                 id="status-{{ mod.nome }}">
+                {% if mod.ativo %}Ativo{% else %}Desativado{% endif %}
+              </p>
+            </div>
+          </div>
+
+          <label class="switch" id="switch-{{ mod.nome }}" title="Ligar/desligar {{ mod.label }}">
+            <input
+              type="checkbox"
+              {% if mod.ativo %}checked{% endif %}
+              onchange="toggleModulo('{{ mod.chave }}', '{{ mod.nome }}', this)"
+              aria-label="Módulo {{ mod.label }}"
+            />
+            <span class="slider"></span>
+          </label>
+        </div>
+        {% endfor %}
+      </div>
+
+      <!-- Link para gestão de Roles (RBAC) -->
+      <a href="{{ url_for('configuracoes.listar_roles') }}" class="rbac-card">
+        <div class="rbac-card-info">
+          <div class="rbac-icon">🔐</div>
+          <div>
+            <p class="rbac-title">Controle de Acesso (Roles)</p>
+            <p class="rbac-desc">Gerencie roles e suas permissões no portal do colaborador.</p>
+          </div>
+        </div>
+        <span class="rbac-arrow">›</span>
+      </a>
+    </div>
+
+    <!-- ── Tab: Regras Globais ─────────────────────────────────────────────── -->
+    <div id="tab-regras" class="tab-panel" role="tabpanel">
+      <div class="section-card">
+        <p class="section-title" style="margin:0 0 1rem">Regras Globais do Sistema</p>
+        <p class="section-desc" style="margin:0 0 1.5rem">
+          Configurações que afetam o comportamento de múltiplos módulos simultaneamente.
+        </p>
+
+        {% set placeholders = [
+          ('⏰', 'Tolerância de Ponto (min)', 'Tempo de tolerância para atrasos no ponto eletrônico.'),
+          ('📋', 'Aprovação Automática', 'Aprovar automaticamente registros sem inconsistências.'),
+          ('📧', 'Notificações por E-mail', 'Enviar alertas por e-mail para supervisores.'),
+          ('🌍', 'Geofencing Obrigatório', 'Exige que o colaborador esteja no local para registrar ponto.'),
+        ] %}
+
+        {% for icon, nome, desc in placeholders %}
+        <div class="placeholder-card">
+          <div class="placeholder-icon">{{ icon }}</div>
+          <div>
+            <p class="placeholder-name">{{ nome }}</p>
+            <span class="badge-soon">Em breve</span>
+          </div>
+        </div>
+        {% endfor %}
+      </div>
+    </div>
+
+    <!-- ── Tab: Identidade Visual ─────────────────────────────────────────── -->
+    <div id="tab-branding" class="tab-panel" role="tabpanel">
+      <div class="section-card">
+        <p class="section-title" style="margin:0 0 0.25rem">Identidade Visual</p>
+        <p class="section-desc" style="margin:0 0 1.5rem">
+          Os valores aqui substituem as variáveis de ambiente <code>COMPANY_NAME</code>
+          e <code>COMPANY_LOGO</code>. Deixe em branco para usar o valor padrão do servidor.
+        </p>
+
+        <form method="POST" action="{{ url_for('configuracoes.salvar_branding') }}">
+          <div class="form-group">
+            <label class="form-label" for="empresa_nome">Nome da Empresa</label>
+            <input
+              class="form-input"
+              type="text"
+              id="empresa_nome"
+              name="empresa_nome"
+              value="{{ empresa_nome }}"
+              placeholder="Ex: SISTUR Turismo"
+              maxlength="120"
+            />
+            <p class="form-hint">Exibido no topo do portal e na aba do navegador.</p>
+          </div>
+
+          <div class="form-group">
+            <label class="form-label" for="empresa_logo">URL do Logotipo</label>
+            <input
+              class="form-input"
+              type="url"
+              id="empresa_logo"
+              name="empresa_logo"
+              value="{{ empresa_logo }}"
+              placeholder="https://exemplo.com/logo.png"
+              maxlength="500"
+            />
+            <p class="form-hint">URL pública da imagem do logotipo (PNG ou SVG recomendado).</p>
+          </div>
+
+          <button type="submit" class="btn-primary">Salvar Identidade Visual</button>
+        </form>
+      </div>
+    </div>
+
+  </main>
+
+  <script>
+    // ── Tab switching ──────────────────────────────────────────────────────
+    document.querySelectorAll('.tab-btn').forEach(btn => {
+      btn.addEventListener('click', () => {
+        const tab = btn.dataset.tab;
+
+        document.querySelectorAll('.tab-btn').forEach(b => {
+          b.classList.remove('active');
+          b.setAttribute('aria-selected', 'false');
+        });
+        document.querySelectorAll('.tab-panel').forEach(p => p.classList.remove('active'));
+
+        btn.classList.add('active');
+        btn.setAttribute('aria-selected', 'true');
+        document.getElementById('tab-' + tab).classList.add('active');
+      });
+    });
+
+    // ── Module toggle (AJAX) ───────────────────────────────────────────────
+    async function toggleModulo(chave, nome, checkbox) {
+      const switchEl = document.getElementById('switch-' + nome);
+      const statusEl = document.getElementById('status-' + nome);
+
+      switchEl.classList.add('loading');
+      checkbox.disabled = true;
+
+      try {
+        const res = await fetch(
+          `/admin/configuracoes/modulos/${encodeURIComponent(chave)}/toggle`,
+          { method: 'POST', headers: { 'X-Requested-With': 'XMLHttpRequest' } }
+        );
+
+        if (!res.ok) throw new Error('Erro na requisição');
+
+        const data = await res.json();
+
+        // Update visual state
+        checkbox.checked = data.ativo;
+        statusEl.textContent = data.ativo ? 'Ativo' : 'Desativado';
+        statusEl.className = 'module-status ' + (data.ativo ? 'status-on' : 'status-off');
+
+      } catch (err) {
+        // Revert toggle on error
+        checkbox.checked = !checkbox.checked;
+        alert('Erro ao alterar configuração. Tente novamente.');
+      } finally {
+        switchEl.classList.remove('loading');
+        checkbox.disabled = false;
+      }
+    }
+  </script>
+
+</body>
+</html>

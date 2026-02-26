@@ -82,6 +82,58 @@ sistur/
 | **Aprovações** | Multi-step approval workflow |
 | **Permissões** | Role-based access control |
 | **Auditoria** | Full audit trail for all actions — viewer at `/admin/audit-logs` |
+| **Configurações** | Global settings & feature control — master switches, RBAC UI, branding |
+
+---
+
+## Module: Configurações — Global Settings & Feature Control
+
+**Route:** `GET /admin/configuracoes/` (and sub-routes)
+**Blueprint:** `app/blueprints/configuracoes/routes.py` — registered at `/admin/configuracoes`
+**Templates:** `app/templates/admin/configuracoes/`
+
+### Access Control
+
+Exclusive to `Role.is_super_admin = True`. HTTP 403 for any other profile.
+
+### Features
+
+| Feature | Route | Description |
+|---|---|---|
+| Module toggles | `POST /modulos/<chave>/toggle` | AJAX toggle to enable/disable modules |
+| Branding | `POST /branding` | Override COMPANY_NAME and COMPANY_LOGO via DB |
+| Roles list | `GET /roles` | List all roles with permission counts |
+| Create role | `POST /roles/criar` | Create new role (with optional super_admin flag) |
+| Edit permissions | `GET+POST /roles/<id>/permissoes` | Bulk toggle permissions per role |
+| Deactivate role | `POST /roles/<id>/desativar` | Soft-delete role (blocked for super_admin roles) |
+
+### Model
+
+`SystemSetting` — `app/models/configuracoes.py`, table `sistur_system_settings`
+Key-value store: `chave` (unique), `valor` (text), `tipo` (bool/string/int)
+
+### Known Setting Keys
+
+| Key | Type | Default | Description |
+|---|---|---|---|
+| `modulo.ponto` | bool | True | Enables/disables Ponto Eletrônico module |
+| `modulo.estoque` | bool | True | Enables/disables Estoque module |
+| `modulo.restaurante` | bool | True | Enables/disables Restaurante module |
+| `modulo.financeiro` | bool | True | Enables/disables Financeiro module (placeholder) |
+| `branding.empresa_nome` | string | None | Overrides COMPANY_NAME env var |
+| `branding.empresa_logo` | string | None | Overrides COMPANY_LOGO env var |
+
+### Master Switch Behavior
+
+- Module OFF → `before_request` hook on that blueprint calls `abort(403)`
+- Module OFF → card hidden from dashboard for non-super-admin users
+- Super admin always bypasses module checks (lockout prevention)
+- Dashboard shows "Desativado" badge on module cards visible to super admin
+
+### Service
+
+`ConfiguracaoService` — `app/services/configuracao_service.py`
+Methods: `get(chave, default)`, `set(chave, valor, ator_id)`, `is_module_enabled(modulo)`, `get_all()`
 
 ---
 

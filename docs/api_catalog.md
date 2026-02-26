@@ -211,3 +211,108 @@ Visualizador de logs de auditoria com filtros dinâmicos e paginação server-si
 | `filtro_module` | str? | Filtro ativo de módulo |
 | `acesso_total` | bool | True se gerente/super_admin |
 | `ator` | `Funcionario` | Funcionário autenticado |
+
+---
+
+## Module: Configurações (`/admin/configuracoes`)
+
+> **Access:** Exclusivo para `Role.is_super_admin = True`. HTTP 403 para qualquer outro perfil.
+
+### `GET /admin/configuracoes/`
+
+Exibe o painel de controle com três abas: Módulos Ativos, Regras Globais, Identidade Visual.
+
+**Auth required:** Yes (super_admin)
+**Response:** `200 text/html` — `admin/configuracoes/index.html`
+
+**Template variables:**
+
+| Variable | Type | Description |
+|---|---|---|
+| `modulos_info` | `list[dict]` | Lista de módulos com chave, nome, label, ativo |
+| `empresa_nome` | str | Nome da empresa (do banco ou "") |
+| `empresa_logo` | str | URL do logo (do banco ou "") |
+
+---
+
+### `POST /admin/configuracoes/modulos/<chave>/toggle`
+
+Inverte o estado ativo/inativo de um módulo via AJAX.
+
+**Auth required:** Yes (super_admin)
+**Path param:** `chave` — deve ser `modulo.ponto`, `modulo.estoque`, `modulo.restaurante` ou `modulo.financeiro`
+**Response:** `200 application/json` `{"ativo": bool, "chave": str}`
+**Error:** `400 application/json` `{"erro": "Chave inválida."}` se a chave não for válida
+
+---
+
+### `POST /admin/configuracoes/branding`
+
+Salva configurações de identidade visual.
+
+**Auth required:** Yes (super_admin)
+**Form fields:** `empresa_nome` (str), `empresa_logo` (str URL)
+**Response:** Redirect `GET /admin/configuracoes/` com flash de sucesso
+
+---
+
+### `GET /admin/configuracoes/roles`
+
+Lista todos os roles do sistema (ativos e inativos).
+
+**Auth required:** Yes (super_admin)
+**Response:** `200 text/html` — `admin/configuracoes/roles.html`
+
+---
+
+### `POST /admin/configuracoes/roles/criar`
+
+Cria um novo role.
+
+**Auth required:** Yes (super_admin)
+**Form fields:** `nome` (str, snake_case), `descricao` (str), `is_super_admin` (checkbox)
+**Response:** Redirect `GET /admin/configuracoes/roles` com flash de resultado
+**Error:** Flash `"erro"` se nome duplicado ou vazio
+
+---
+
+### `GET /admin/configuracoes/roles/<id>/permissoes`
+
+Exibe o editor de permissões de um role específico.
+
+**Auth required:** Yes (super_admin)
+**Path param:** `id` (int) — PK do role
+**Response:** `200 text/html` — `admin/configuracoes/role_permissoes.html`
+**Error:** HTTP 404 se role não encontrado
+
+**Template variables:**
+
+| Variable | Type | Description |
+|---|---|---|
+| `role` | `Role` | Instância do role a editar |
+| `permissoes_sistema` | `dict[str, list[str]]` | Mapa módulo → lista de ações |
+| `perms_atuais` | `set[tuple[str,str]]` | Pares (modulo, acao) atualmente concedidos |
+| `labels_modulo` | `dict[str,str]` | Nomes legíveis por módulo |
+| `labels_acao` | `dict[str,str]` | Nomes legíveis por ação |
+
+---
+
+### `POST /admin/configuracoes/roles/<id>/permissoes`
+
+Salva o conjunto completo de permissões de um role (bulk diff).
+
+**Auth required:** Yes (super_admin)
+**Path param:** `id` (int)
+**Form fields:** Checkboxes `perm_<modulo>_<acao>` = "on" para cada permissão habilitada
+**Response:** Redirect `GET /admin/configuracoes/roles/<id>/permissoes` com flash de sucesso
+
+---
+
+### `POST /admin/configuracoes/roles/<id>/desativar`
+
+Desativa um role (soft-delete).
+
+**Auth required:** Yes (super_admin)
+**Path param:** `id` (int)
+**Response:** Redirect `GET /admin/configuracoes/roles` com flash de resultado
+**Error:** Flash `"erro"` se o role for `is_super_admin=True` (proteção contra lockout)

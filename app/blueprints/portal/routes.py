@@ -21,6 +21,7 @@ from app.core.audit import AuditService
 from app.core.permissions import has_permission
 from app.extensions import db
 from app.models.funcionario import Funcionario, validar_cpf
+from app.services.configuracao_service import ConfiguracaoService
 
 bp = Blueprint("portal", __name__)
 
@@ -153,7 +154,22 @@ def dashboard():
         },
     }
 
-    return render_template("portal/dashboard.html", funcionario=funcionario, perms=perms)
+    modulos_ativos = {
+        "ponto":       ConfiguracaoService.is_module_enabled("ponto"),
+        "estoque":     ConfiguracaoService.is_module_enabled("estoque"),
+        "restaurante": ConfiguracaoService.is_module_enabled("restaurante"),
+        "financeiro":  ConfiguracaoService.is_module_enabled("financeiro"),
+    }
+
+    is_super_admin = bool(funcionario.role and funcionario.role.is_super_admin)
+
+    return render_template(
+        "portal/dashboard.html",
+        funcionario=funcionario,
+        perms=perms,
+        modulos_ativos=modulos_ativos,
+        is_super_admin=is_super_admin,
+    )
 
 
 # ---------------------------------------------------------------------------

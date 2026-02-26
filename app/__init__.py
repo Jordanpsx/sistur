@@ -25,12 +25,19 @@ def create_app(config_name: str = "default") -> Flask:
 
     # Branding context processor — makes {{ company_name }} and {{ company_logo }}
     # available in every Jinja2 template without manual passing.
+    # Os valores do banco de dados têm prioridade sobre as variáveis de ambiente.
     @app.context_processor
     def inject_branding():
-        return {
-            "company_name": app.config["COMPANY_NAME"],
-            "company_logo": app.config["COMPANY_LOGO"],
-        }
+        try:
+            from app.services.configuracao_service import ConfiguracaoService
+            nome = ConfiguracaoService.get("branding.empresa_nome") or app.config["COMPANY_NAME"]
+            logo = ConfiguracaoService.get("branding.empresa_logo") or app.config["COMPANY_LOGO"]
+        except Exception:
+            # Fallback para env vars se o banco ainda não estiver disponível
+            # (ex: durante execução de migrações ou testes sem tabelas criadas)
+            nome = app.config["COMPANY_NAME"]
+            logo = app.config["COMPANY_LOGO"]
+        return {"company_name": nome, "company_logo": logo}
 
     # Root route — serve the login page at /
     @app.route("/")
@@ -44,6 +51,7 @@ def create_app(config_name: str = "default") -> Flask:
         from app.models import role  # noqa: F401
         from app.models import ponto  # noqa: F401
         from app.models import estoque  # noqa: F401
+        from app.models import configuracoes  # noqa: F401
 
     # Blueprints
     from app.blueprints.portal.routes import bp as portal_bp
@@ -63,6 +71,9 @@ def create_app(config_name: str = "default") -> Flask:
 
     from app.blueprints.admin.routes import bp as admin_bp
     app.register_blueprint(admin_bp, url_prefix="/admin")
+
+    from app.blueprints.configuracoes.routes import bp as configuracoes_bp
+    app.register_blueprint(configuracoes_bp, url_prefix="/admin/configuracoes")
 
     # CLI commands
     from app.cli import register_commands
