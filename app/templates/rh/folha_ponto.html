@@ -1092,8 +1092,7 @@
 
         function openEditModal(entryId, currentDatetime, mes, ano) {
             var form = document.getElementById('form-editar');
-            var fid = {{ dados.funcionario.id }
-        };
+            var fid = {{ dados.funcionario.id }};
         form.action = '/rh/folha-ponto/' + fid + '/batida/' + entryId + '/editar';
         document.getElementById('novo_horario_edit').value = currentDatetime;
         document.querySelector('#form-editar [name="mes"]').value = mes;
@@ -1103,8 +1102,7 @@
 
         function openDeleteModal(entryId, label, mes, ano) {
             var form = document.getElementById('form-deletar');
-            var fid = {{ dados.funcionario.id }
-        };
+            var fid = {{ dados.funcionario.id }};
         form.action = '/rh/folha-ponto/' + fid + '/batida/' + entryId + '/deletar';
         document.getElementById('del-desc').textContent = 'Tem certeza que deseja remover a batida de ' + label + '?';
         document.querySelector('#form-deletar [name="mes"]').value = mes;
