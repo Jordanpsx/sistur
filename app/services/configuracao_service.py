@@ -69,7 +69,7 @@ _METADADOS: dict[str, dict] = {
         "padrao": None,
     },
     CHAVE_EMPRESA_RAZAO_SOCIAL: {
-        "tipo": SettingType.str,
+        "tipo": SettingType.string,
         "descricao": "Razão Social da empresa (para Folha de Ponto).",
         "padrao": None,
     },
