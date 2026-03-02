@@ -6,8 +6,9 @@ mysql-connector-python==8.2.0
 gunicorn==21.2.0
 python-dotenv==1.0.0
 
-WeasyPrint==62.3
-pydyf==0.8.0
+# PDF generation — do NOT manually pin pydyf; WeasyPrint manages it.
+# WeasyPrint 64+ requires pydyf>=0.10.0. Let pip resolve sub-dependencies.
+WeasyPrint>=64.0
 
 # Testing
 pytest==8.1.1

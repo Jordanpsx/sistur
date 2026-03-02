@@ -79,6 +79,17 @@ sistur/
 | Container | Docker + Docker Compose |
 | CI/CD | GitHub Actions → SSH deploy |
 
+### PDF Generation
+
+`WeasyPrint>=64.0` is used for Folha de Ponto PDF export.
+
+**Dependency policy:** Do **not** manually pin `pydyf` or other WeasyPrint sub-dependencies.
+WeasyPrint declares its own compatible range; pinning `pydyf` separately causes
+`ResolutionImpossible` conflicts in the pip resolver.
+If WeasyPrint must be pinned to a specific version, verify the matching `pydyf` range in its
+own `setup.cfg`/`pyproject.toml` and pin both together — or leave both unpinned within a
+major-version range (`WeasyPrint>=64.0,<65`).
+
 ### Python Tooling (to be ported)
 - `opencv-python` + `pyzbar` — QR code scanner via webcam (reference: `legacy/mu-plugins/externo/ponto.py`)
 - `win32print` — Thermal printer integration (Windows)
