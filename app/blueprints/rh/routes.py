@@ -970,6 +970,7 @@ def folha_ponto_pdf(funcionario_id: int):
         return redirect(url_for("rh.dashboard", aba="folha-ponto"))
 
     empresa_nome = ConfiguracaoService.get(CHAVE_BRANDING_EMPRESA_NOME) or ""
+    empresa_razao_social = ConfiguracaoService.get(CHAVE_EMPRESA_RAZAO_SOCIAL) or ""
     empresa_cnpj = ConfiguracaoService.get(CHAVE_EMPRESA_CNPJ) or ""
     empresa_endereco = ConfiguracaoService.get(CHAVE_EMPRESA_ENDERECO) or ""
 
@@ -979,6 +980,7 @@ def folha_ponto_pdf(funcionario_id: int):
         mes=mes,
         ano=ano,
         empresa_nome=empresa_nome,
+        empresa_razao_social=empresa_razao_social,
         empresa_cnpj=empresa_cnpj,
         empresa_endereco=empresa_endereco,
         gerado_em=datetime.now(timezone.utc),

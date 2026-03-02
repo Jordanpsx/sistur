@@ -32,6 +32,7 @@ CHAVE_MODULO_RESTAURANTE = "modulo.restaurante"
 CHAVE_MODULO_FINANCEIRO = "modulo.financeiro"
 CHAVE_BRANDING_EMPRESA_NOME = "branding.empresa_nome"
 CHAVE_BRANDING_EMPRESA_LOGO = "branding.empresa_logo"
+CHAVE_EMPRESA_RAZAO_SOCIAL  = "empresa.razao_social"
 CHAVE_EMPRESA_CNPJ          = "empresa.cnpj"
 CHAVE_EMPRESA_ENDERECO      = "empresa.endereco"
 
@@ -65,6 +66,11 @@ _METADADOS: dict[str, dict] = {
     CHAVE_BRANDING_EMPRESA_LOGO: {
         "tipo": SettingType.string,
         "descricao": "URL do logotipo da empresa. Deixe vazio para usar a variável de ambiente COMPANY_LOGO.",
+        "padrao": None,
+    },
+    CHAVE_EMPRESA_RAZAO_SOCIAL: {
+        "tipo": SettingType.str,
+        "descricao": "Razão Social da empresa (para Folha de Ponto).",
         "padrao": None,
     },
     CHAVE_EMPRESA_CNPJ: {

@@ -231,7 +231,7 @@
     <!-- ── CABEÇALHO DA EMPRESA ── -->
     <div class="company-header">
         <div>
-            <div class="company-name">{{ empresa_nome or 'Empresa' }}</div>
+            <div class="company-name">{{ empresa_razao_social or empresa_nome or 'Empresa' }}</div>
             <div class="company-meta">
                 {% if empresa_cnpj %}CNPJ: {{ empresa_cnpj }}{% endif %}
                 {% if empresa_cnpj and empresa_endereco %} · {% endif %}

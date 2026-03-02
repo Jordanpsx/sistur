@@ -177,6 +177,7 @@ def index():
         modulos_info=modulos_info,
         empresa_nome=todas.get(CHAVE_BRANDING_EMPRESA_NOME) or "",
         empresa_logo=todas.get(CHAVE_BRANDING_EMPRESA_LOGO) or "",
+        empresa_razao_social=todas.get(CHAVE_EMPRESA_RAZAO_SOCIAL) or "",
         empresa_cnpj=todas.get(CHAVE_EMPRESA_CNPJ) or "",
         empresa_endereco=todas.get(CHAVE_EMPRESA_ENDERECO) or "",
     )
@@ -259,6 +260,7 @@ def salvar_dados_empresa():
     Esses dados são exibidos no cabeçalho do PDF da Folha de Ponto.
 
     Form fields:
+        empresa_razao_social (str): Razão Social exibida no PDF da Folha.
         empresa_cnpj (str): CNPJ no formato XX.XXX.XXX/XXXX-XX. Pode ser vazio.
         empresa_endereco (str): Endereço completo. Pode ser vazio.
 
@@ -266,6 +268,11 @@ def salvar_dados_empresa():
         Redirect para o painel de configurações com flash de confirmação.
     """
     ator_id = _get_ator_id()
+    ConfiguracaoService.set(
+        CHAVE_EMPRESA_RAZAO_SOCIAL,
+        (request.form.get("empresa_razao_social") or "").strip() or None,
+        ator_id=ator_id,
+    )
     ConfiguracaoService.set(
         CHAVE_EMPRESA_CNPJ,
         (request.form.get("empresa_cnpj") or "").strip() or None,

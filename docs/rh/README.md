@@ -140,10 +140,11 @@ Configurados em `/admin/configuracoes/ → Dados da Empresa`:
 
 | Chave | System Settings | Descrição |
 |---|---|---|
+| `empresa.razao_social` | `sistur_system_settings` | Nome oficial exibido no cabeçalho do PDF |
 | `empresa.cnpj` | `sistur_system_settings` | CNPJ exibido no cabeçalho do PDF |
 | `empresa.endereco` | `sistur_system_settings` | Endereço completo |
 
-O nome da empresa reutiliza `branding.empresa_nome`.
+Se a razão social não estiver configurada, o template faz fallback para `branding.empresa_nome`.
 
 ---
 

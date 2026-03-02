@@ -230,8 +230,9 @@ Exibe o painel de controle com quatro abas: Módulos Ativos, Regras Globais, Ide
 | Variable | Type | Description |
 |---|---|---|
 | `modulos_info` | `list[dict]` | Lista de módulos com chave, nome, label, ativo |
-| `empresa_nome` | str | Nome da empresa (do banco ou "") |
+| `empresa_nome` | str | Nome principal do branding (do banco ou "") |
 | `empresa_logo` | str | URL do logo (do banco ou "") |
+| `empresa_razao_social` | str | Razão Social da empresa (do banco ou "") |
 | `empresa_cnpj` | str | CNPJ da empresa (do banco ou "") |
 | `empresa_endereco` | str | Endereço completo (do banco ou "") |
 
@@ -323,12 +324,12 @@ Desativa um role (soft-delete).
 
 ### `POST /admin/configuracoes/dados-empresa`
 
-Salva CNPJ e endereço da empresa para uso no cabeçalho do PDF da Folha de Ponto.
+Salva dados cadastrais da empresa para uso no cabeçalho do PDF da Folha de Ponto.
 
 **Auth required:** Yes (super_admin)
-**Form fields:** `empresa_cnpj` (str), `empresa_endereco` (str)
+**Form fields:** `empresa_razao_social` (str), `empresa_cnpj` (str), `empresa_endereco` (str)
 **Response:** Redirect `GET /admin/configuracoes/` com flash de sucesso
-**Storage:** `sistur_system_settings` — chaves `empresa.cnpj` e `empresa.endereco`
+**Storage:** `sistur_system_settings` — chaves `empresa.razao_social`, `empresa.cnpj` e `empresa.endereco`
 **Audit:** `AuditLog` via `ConfiguracaoService.set`
 
 ---

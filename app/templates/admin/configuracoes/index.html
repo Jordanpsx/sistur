@@ -719,6 +719,13 @@
 
         <form method="POST" action="{{ url_for('configuracoes.salvar_dados_empresa') }}">
           <div class="form-group">
+            <label class="form-label" for="empresa_razao_social">Razão Social da Empresa</label>
+            <input class="form-input" type="text" id="empresa_razao_social" name="empresa_razao_social"
+              value="{{ empresa_razao_social }}" placeholder="Ex: SISTUR Turismo LTDA" maxlength="120" />
+            <p class="form-hint">Nome oficial exibido no cabeçalho do PDF da Folha de Ponto.</p>
+          </div>
+
+          <div class="form-group">
             <label class="form-label" for="empresa_cnpj">CNPJ da Empresa</label>
             <input class="form-input" type="text" id="empresa_cnpj" name="empresa_cnpj" value="{{ empresa_cnpj }}"
               placeholder="00.000.000/0000-00" maxlength="18" />
