@@ -1171,10 +1171,6 @@
               👤 Colaboradores
               <span class="result-count">{{ resumo.total_funcionarios }}</span>
             </a>
-            <a href="{{ url_for('rh.dashboard') }}?aba=folha-ponto"
-              class="tab-link {{ 'tab-link--active' if aba == 'folha-ponto' else '' }}">
-              📄 Folha de Ponto
-            </a>
           </nav>
         </div>
 
@@ -1450,29 +1446,6 @@
         {% endif %}{# fim aba colaboradores #}
 
 
-        {# ═══════════════════════════════════════════════════════
-        ABA 3 — FOLHA DE PONTO
-        ═══════════════════════════════════════════════════════ #}
-        {% if aba == 'folha-ponto' %}
-
-        <div class="section-card">
-          <div class="section-card__header">
-            <span class="section-card__title">📄 Folha de Ponto Individual</span>
-          </div>
-          <div class="empty-state" style="padding:3rem 1.5rem;">
-            <span class="empty-state__icon">👤</span>
-            <span class="empty-state__text">
-              Selecione um colaborador na aba <strong>Colaboradores</strong>
-              e clique em <strong>Folha de Ponto</strong> para visualizar
-              o registro mensal individual.
-            </span>
-            <a href="{{ url_for('rh.dashboard') }}?aba=colaboradores" class="btn-new" style="margin-top:1rem;">
-              Ir para Colaboradores
-            </a>
-          </div>
-        </div>
-
-        {% endif %}{# fim aba folha-ponto #}
 
       </div><!-- .content-wrap -->
     </main>

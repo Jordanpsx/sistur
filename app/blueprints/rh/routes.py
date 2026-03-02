@@ -709,7 +709,7 @@ def folha_ponto(funcionario_id: int):
         dados = RHService.folha_ponto_mes(funcionario_id, ano, mes)
     except ValueError as exc:
         flash(str(exc), "erro")
-        return redirect(url_for("rh.dashboard", aba="folha-ponto"))
+        return redirect(url_for("rh.dashboard", aba="colaboradores"))
 
     primeiro_do_mes = date(ano, mes, 1)
     mes_ant = (primeiro_do_mes - timedelta(days=1)).replace(day=1)
@@ -967,7 +967,7 @@ def folha_ponto_pdf(funcionario_id: int):
         dados = RHService.folha_ponto_mes(funcionario_id, ano, mes)
     except ValueError as exc:
         flash(str(exc), "erro")
-        return redirect(url_for("rh.dashboard", aba="folha-ponto"))
+        return redirect(url_for("rh.dashboard", aba="colaboradores"))
 
     empresa_nome = ConfiguracaoService.get(CHAVE_BRANDING_EMPRESA_NOME) or ""
     empresa_razao_social = ConfiguracaoService.get(CHAVE_EMPRESA_RAZAO_SOCIAL) or ""
