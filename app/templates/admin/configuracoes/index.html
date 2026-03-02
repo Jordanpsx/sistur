@@ -840,6 +840,15 @@
               <input class="form-input" type="text" id="geo_name" name="name"
                 placeholder="Ex: Sede Central, Filial Norte" maxlength="100" required />
             </div>
+            <div style="margin-bottom:1rem;">
+              <button type="button" id="btn-obter-localizacao"
+                onclick="obterLocalizacaoAtual()"
+                style="display:inline-flex; align-items:center; gap:0.5rem; background:#f0fdf4; color:#15803d; border:1px solid #bbf7d0; padding:0.5rem 1rem; border-radius:8px; font-size:0.85rem; font-weight:600; cursor:pointer; min-height:40px;">
+                <span id="geo-btn-icon">📍</span>
+                <span id="geo-btn-label">Obter localização atual</span>
+              </button>
+              <p style="font-size:0.75rem; color:#94a3b8; margin:0.4rem 0 0;">Usa o GPS do seu dispositivo para preencher latitude e longitude automaticamente.</p>
+            </div>
             <div style="display:grid; grid-template-columns:1fr 1fr; gap:1rem;">
               <div class="form-group" style="margin-bottom:0;">
                 <label class="form-label" for="geo_lat">Latitude</label>
@@ -956,6 +965,51 @@
         switchEl.classList.remove('loading');
         checkbox.disabled = false;
       }
+    }
+
+    // ── Botão "Obter localização atual" no formulário de geofence ────────
+    function obterLocalizacaoAtual() {
+      const btn   = document.getElementById('btn-obter-localizacao');
+      const icon  = document.getElementById('geo-btn-icon');
+      const label = document.getElementById('geo-btn-label');
+
+      if (!navigator.geolocation) {
+        icon.textContent  = '⚠️';
+        label.textContent = 'GPS não suportado neste navegador';
+        btn.style.background = '#fef9c3';
+        btn.style.color = '#a16207';
+        btn.style.borderColor = '#fde68a';
+        return;
+      }
+
+      icon.textContent  = '⏳';
+      label.textContent = 'Obtendo localização…';
+      btn.disabled = true;
+      btn.style.opacity = '0.7';
+
+      navigator.geolocation.getCurrentPosition(
+        function (pos) {
+          document.getElementById('geo_lat').value = pos.coords.latitude.toFixed(6);
+          document.getElementById('geo_lng').value = pos.coords.longitude.toFixed(6);
+          icon.textContent  = '✅';
+          label.textContent = 'Localização obtida';
+          btn.style.background = '#dcfce7';
+          btn.style.color = '#15803d';
+          btn.style.borderColor = '#86efac';
+          btn.disabled = false;
+          btn.style.opacity = '1';
+        },
+        function () {
+          icon.textContent  = '⚠️';
+          label.textContent = 'Permissão negada ou erro de GPS';
+          btn.style.background = '#fee2e2';
+          btn.style.color = '#dc2626';
+          btn.style.borderColor = '#fca5a5';
+          btn.disabled = false;
+          btn.style.opacity = '1';
+        },
+        { timeout: 10000, maximumAge: 0, enableHighAccuracy: true }
+      );
     }
 
     // ── Sub-tabs dentro de "Configurações por Módulo" ────────────────────
