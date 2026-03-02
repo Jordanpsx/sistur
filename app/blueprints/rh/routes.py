@@ -5,7 +5,8 @@ RH Blueprint — Gestão de Funcionários.
 
 Rotas
 -----
-GET  /rh/funcionarios                   → lista de funcionários ativos (com filtro por nome/CPF)
+GET  /rh/                               → dashboard com abas (Visão Geral + Colaboradores)
+GET  /rh/funcionarios                   → lista de funcionários (com filtros avançados)
 GET  /rh/funcionarios/novo              → formulário de cadastro
 POST /rh/funcionarios/novo              → salva novo funcionário
 GET  /rh/funcionarios/<id>/editar       → formulário de edição pré-preenchido
@@ -18,6 +19,8 @@ correspondente no role do funcionário logado (@require_permission).
 
 from __future__ import annotations
 
+from datetime import date
+
 from flask import Blueprint, flash, redirect, render_template, request, session, url_for
 
 from app.blueprints.portal.routes import login_required
@@ -26,9 +29,65 @@ from app.core.permissions import require_permission
 from app.extensions import db
 from app.models.funcionario import Funcionario
 from app.services.funcionario_service import FuncionarioService
+from app.services.rh_service import RHService
 from app.services.role_service import RoleService
 
 bp = Blueprint("rh", __name__)
+
+
+# ---------------------------------------------------------------------------
+# Dashboard Principal (abas)
+# ---------------------------------------------------------------------------
+
+@bp.route("/", methods=["GET"])
+@login_required
+@require_permission("funcionarios", "view")
+def dashboard():
+    """Dashboard RH com duas abas: Visão Geral e Colaboradores.
+
+    Aba 1 (visao-geral): resumo mensal agregado via func.sum() e central de
+    alertas com dias marcados como needs_review nos últimos 7 dias.
+
+    Aba 2 (colaboradores): listagem filtrada por nome/CPF, área e status
+    (ativo/inativo/todos), com saldo do banco de horas em destaque.
+
+    Query params:
+        aba (str): "visao-geral" | "colaboradores". Padrão: "visao-geral".
+        q (str): Busca livre por nome ou CPF (Aba 2).
+        area_id (int): Filtro de área (Aba 2).
+        status (str): "ativo" | "inativo" | "todos" (Aba 2). Padrão: "ativo".
+
+    Returns:
+        Renderização de rh/index.html com todos os dados de ambas as abas.
+    """
+    hoje = date.today()
+
+    # --- Aba 1: Visão Geral ---
+    resumo = RHService.resumo_mensal(hoje.year, hoje.month)
+    alertas = RHService.alertas_revisao(7)
+
+    # --- Aba 2: Colaboradores ---
+    q = (request.args.get("q") or "").strip()
+    area_id = int(request.args["area_id"]) if request.args.get("area_id") else None
+    status = request.args.get("status", "ativo")
+    aba = request.args.get("aba", "visao-geral")
+
+    funcionarios = RHService.listar_com_filtros(q=q, area_id=area_id, status=status)
+    areas = db.session.query(Area).filter_by(is_active=True).order_by(Area.name).all()
+
+    return render_template(
+        "rh/index.html",
+        resumo=resumo,
+        alertas=alertas,
+        funcionarios=funcionarios,
+        areas=areas,
+        q=q,
+        area_id=area_id,
+        status=status,
+        aba=aba,
+        mes=hoje.month,
+        ano=hoje.year,
+    )
 
 
 # ---------------------------------------------------------------------------
@@ -134,34 +193,30 @@ def _aplicar_role(funcionario: Funcionario, role_id_str: str | None, ator_id: in
 @login_required
 @require_permission("funcionarios", "view")
 def listar_funcionarios():
-    """
-    Exibe a tabela de funcionários ativos com filtro por nome ou CPF.
+    """Exibe a tabela de funcionários com filtros por nome/CPF, área e status.
 
     Query params:
         q (str): Termo de busca livre filtrado em nome e CPF.
+        area_id (int): Filtra por área específica.
+        status (str): "ativo" | "inativo" | "todos". Padrão: "ativo".
 
     Returns:
         Renderização de rh/funcionarios/list.html com a lista filtrada.
     """
     q = (request.args.get("q") or "").strip()
+    area_id = int(request.args["area_id"]) if request.args.get("area_id") else None
+    status = request.args.get("status", "ativo")
 
-    query = db.session.query(Funcionario).filter_by(ativo=True)
-
-    if q:
-        termo = f"%{q}%"
-        query = query.filter(
-            db.or_(
-                Funcionario.nome.ilike(termo),
-                Funcionario.cpf.ilike(termo),
-            )
-        )
-
-    funcionarios = query.order_by(Funcionario.nome).all()
+    funcionarios = RHService.listar_com_filtros(q=q, area_id=area_id, status=status)
+    areas = db.session.query(Area).filter_by(is_active=True).order_by(Area.name).all()
 
     return render_template(
         "rh/funcionarios/list.html",
         funcionarios=funcionarios,
+        areas=areas,
         q=q,
+        area_id=area_id,
+        status=status,
     )
 
 

@@ -89,7 +89,7 @@ sistur/
 
 | Module (pt-BR) | Description |
 |---|---|
-| **Funcionários** | Employee data, departments, salaries |
+| **RH (Funcionários)** | Employee data, departments — dashboard at `/rh/` with tabs |
 | **Ponto Eletrônico** | Electronic punch clock via QR code |
 | **Banco de Horas** | Hour banking — most complex module, see `legacy/docs/BANCO_DE_HORAS/` |
 | **Estoque / CMV** | Inventory, stock movements, recipes |
@@ -149,6 +149,51 @@ Key-value store: `chave` (unique), `valor` (text), `tipo` (bool/string/int)
 
 `ConfiguracaoService` — `app/services/configuracao_service.py`
 Methods: `get(chave, default)`, `set(chave, valor, ator_id)`, `is_module_enabled(modulo)`, `get_all()`
+
+---
+
+## Module: RH — Dashboard de Recursos Humanos
+
+**Route:** `GET /rh/` (dashboard principal com abas)
+**Blueprint:** `app/blueprints/rh/routes.py` — registered at `/rh`
+**Templates:** `app/templates/rh/index.html` (dashboard), `app/templates/rh/funcionarios/` (CRUD forms)
+
+### Routes
+
+| Route | Description |
+|---|---|
+| `GET /rh/` | Dashboard com abas: Visão Geral + Colaboradores |
+| `GET /rh/funcionarios` | Listagem com filtros (q, area_id, status) — backward compat |
+| `GET+POST /rh/funcionarios/novo` | Cadastro de funcionário |
+| `GET+POST /rh/funcionarios/<id>/editar` | Edição (auditada) |
+| `POST /rh/funcionarios/<id>/desativar` | Soft-delete |
+| `POST /rh/funcionarios/<id>/reprocessar_ponto` | Reprocessamento em lote de ponto |
+
+### Dashboard Query Params
+
+| Param | Values | Default | Description |
+|---|---|---|---|
+| `aba` | `visao-geral` \| `colaboradores` | `visao-geral` | Selects active tab |
+| `q` | string | "" | Free text search on nome/CPF (Tab 2) |
+| `area_id` | int | None | Filter by Area.id (Tab 2) |
+| `status` | `ativo` \| `inativo` \| `todos` | `ativo` | Employee active status (Tab 2) |
+
+### Service: RHService
+
+`app/services/rh_service.py` — read-only aggregations, no mutations, no Flask imports.
+
+| Method | Description |
+|---|---|
+| `resumo_mensal(ano, mes)` | `func.sum()` on TimeDay: total employees, minutes, balance, days to review |
+| `alertas_revisao(janela_dias=7)` | JOIN TimeDay+Funcionario where `needs_review=True` in last N days |
+| `listar_com_filtros(q, area_id, status)` | Filtered Funcionario list (enforces Antigravity Rule #2 — no DB queries in blueprints) |
+
+### Alert Center Logic
+
+- Queries `TimeDay.needs_review = True` for past 7 days (configurable)
+- Joins to `Funcionario` for name; filters `ativo=True`
+- Displayed as cards in Tab 1 with direct link to edit form
+- Count appears on the "Para Revisar" summary card
 
 ---
 
