@@ -46,6 +46,7 @@ from app.services.configuracao_service import (
     CHAVE_EMPRESA_ENDERECO,
     ConfiguracaoService,
 )
+from app.models.geofence import GeofenceLocation
 from app.services.role_service import RoleService
 
 bp = Blueprint("configuracoes", __name__)
@@ -173,6 +174,12 @@ def index():
         for nome in ConfiguracaoService.MODULOS
     ]
 
+    geofence_locations = (
+        db.session.query(GeofenceLocation)
+        .order_by(GeofenceLocation.name)
+        .all()
+    )
+
     return render_template(
         "admin/configuracoes/index.html",
         modulos_info=modulos_info,
@@ -181,6 +188,7 @@ def index():
         empresa_razao_social=todas.get(CHAVE_EMPRESA_RAZAO_SOCIAL) or "",
         empresa_cnpj=todas.get(CHAVE_EMPRESA_CNPJ) or "",
         empresa_endereco=todas.get(CHAVE_EMPRESA_ENDERECO) or "",
+        geofence_locations=geofence_locations,
     )
 
 
@@ -460,3 +468,166 @@ def desativar_role(role_id: int):
         flash(str(exc), "erro")
 
     return redirect(url_for("configuracoes.listar_roles"))
+
+
+# ---------------------------------------------------------------------------
+# Geofencing CRUD
+# ---------------------------------------------------------------------------
+
+_GEO_FIELDS = ["id", "name", "latitude", "longitude", "radius_meters", "is_active"]
+
+
+@bp.route("/geofence/criar", methods=["POST"])
+@_login_required
+@_super_admin_required
+def geofence_criar():
+    """Cria uma nova zona de geofence e registra no log de auditoria.
+
+    Form fields:
+        name (str): Nome descritivo da zona.
+        latitude (float): Latitude do centro da zona em graus decimais.
+        longitude (float): Longitude do centro da zona em graus decimais.
+        radius_meters (int): Raio da zona em metros.
+
+    Returns:
+        Redirect para configuracoes.index.
+    """
+    from app.core.audit import AuditService
+    from app.services.base import BaseService
+
+    try:
+        name          = request.form["name"].strip()
+        latitude      = float(request.form["latitude"])
+        longitude     = float(request.form["longitude"])
+        radius_meters = int(request.form["radius_meters"])
+    except (KeyError, ValueError):
+        flash("Dados inválidos. Verifique latitude, longitude e raio.", "erro")
+        return redirect(url_for("configuracoes.index"))
+
+    if not name:
+        flash("O nome da zona é obrigatório.", "erro")
+        return redirect(url_for("configuracoes.index"))
+
+    zona = GeofenceLocation(
+        name=name,
+        latitude=latitude,
+        longitude=longitude,
+        radius_meters=radius_meters,
+        is_active=True,
+    )
+    db.session.add(zona)
+    db.session.flush()
+
+    snapshot = BaseService._snapshot(zona, _GEO_FIELDS)
+    db.session.commit()
+
+    AuditService.log_create(
+        module="geofence",
+        entity_id=zona.id,
+        new_state=snapshot,
+        actor_id=_get_ator_id(),
+    )
+
+    flash(f"Zona '{zona.name}' criada com sucesso.", "sucesso")
+    return redirect(url_for("configuracoes.index"))
+
+
+@bp.route("/geofence/<int:loc_id>/editar", methods=["POST"])
+@_login_required
+@_super_admin_required
+def geofence_editar(loc_id: int):
+    """Atualiza os dados de uma zona de geofence existente.
+
+    Args:
+        loc_id: PK da GeofenceLocation a editar.
+
+    Form fields:
+        name (str): Novo nome da zona.
+        latitude (float): Nova latitude.
+        longitude (float): Nova longitude.
+        radius_meters (int): Novo raio em metros.
+        is_active (str): '1' para ativa, ausente para inativa.
+
+    Returns:
+        Redirect para configuracoes.index.
+    """
+    from app.core.audit import AuditService
+    from app.services.base import BaseService
+
+    zona = db.session.get(GeofenceLocation, loc_id)
+    if not zona:
+        flash("Zona não encontrada.", "erro")
+        return redirect(url_for("configuracoes.index"))
+
+    try:
+        name          = request.form["name"].strip()
+        latitude      = float(request.form["latitude"])
+        longitude     = float(request.form["longitude"])
+        radius_meters = int(request.form["radius_meters"])
+        is_active     = request.form.get("is_active") == "1"
+    except (KeyError, ValueError):
+        flash("Dados inválidos. Verifique os campos do formulário.", "erro")
+        return redirect(url_for("configuracoes.index"))
+
+    if not name:
+        flash("O nome da zona é obrigatório.", "erro")
+        return redirect(url_for("configuracoes.index"))
+
+    antes = BaseService._snapshot(zona, _GEO_FIELDS)
+
+    zona.name          = name
+    zona.latitude      = latitude
+    zona.longitude     = longitude
+    zona.radius_meters = radius_meters
+    zona.is_active     = is_active
+    db.session.commit()
+
+    depois = BaseService._snapshot(zona, _GEO_FIELDS)
+
+    AuditService.log_update(
+        module="geofence",
+        entity_id=zona.id,
+        previous_state=antes,
+        new_state=depois,
+        actor_id=_get_ator_id(),
+    )
+
+    flash(f"Zona '{zona.name}' atualizada.", "sucesso")
+    return redirect(url_for("configuracoes.index"))
+
+
+@bp.route("/geofence/<int:loc_id>/deletar", methods=["POST"])
+@_login_required
+@_super_admin_required
+def geofence_deletar(loc_id: int):
+    """Remove permanentemente uma zona de geofence.
+
+    Args:
+        loc_id: PK da GeofenceLocation a remover.
+
+    Returns:
+        Redirect para configuracoes.index.
+    """
+    from app.core.audit import AuditService
+    from app.services.base import BaseService
+
+    zona = db.session.get(GeofenceLocation, loc_id)
+    if not zona:
+        flash("Zona não encontrada.", "erro")
+        return redirect(url_for("configuracoes.index"))
+
+    snapshot = BaseService._snapshot(zona, _GEO_FIELDS)
+    nome = zona.name
+
+    db.session.delete(zona)
+    db.session.commit()
+
+    AuditService.log_delete(
+        module="geofence",
+        entity_id=loc_id,
+        previous_state=snapshot,
+        actor_id=_get_ator_id(),
+    )
+
+    flash(f"Zona '{nome}' removida.", "aviso")
+    return redirect(url_for("configuracoes.index"))

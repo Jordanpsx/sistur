@@ -24,7 +24,7 @@ from app.extensions import db
 from app.models.funcionario import Funcionario
 from app.models.ponto import TimeDay, TimeEntry
 from app.services.configuracao_service import ConfiguracaoService
-from app.services.ponto_service import PontoService
+from app.services.ponto_service import GeofenceViolationError, PontoService
 
 bp = Blueprint("ponto", __name__)
 
@@ -164,8 +164,9 @@ def registrar():
     Registra uma nova batida de ponto para o colaborador logado.
 
     Form fields:
-        punch_time (str, opcional): ISO datetime da batida.
-                                    Se não enviado, usa o momento atual no servidor.
+        punch_time (str, opcional): ISO datetime da batida. Se não enviado, usa o servidor.
+        lat (str, opcional): Latitude GPS em graus decimais (enviada pelo JS via geolocation).
+        lng (str, opcional): Longitude GPS em graus decimais (enviada pelo JS via geolocation).
 
     Returns:
         Redirect para ponto.historico com flash de sucesso ou erro.
@@ -182,18 +183,29 @@ def registrar():
     else:
         punch_time = None
 
+    # Coordenadas GPS — None quando permissão negada ou navegador sem suporte
+    try:
+        current_lat = float(request.form["lat"]) if request.form.get("lat") else None
+        current_lng = float(request.form["lng"]) if request.form.get("lng") else None
+    except (ValueError, TypeError):
+        current_lat = current_lng = None
+
     try:
         entry = PontoService.registrar_batida(
             funcionario_id=ator_id,
             punch_time=punch_time,
             source="employee",
             ator_id=ator_id,
+            current_lat=current_lat,
+            current_lng=current_lng,
         )
         flash(
             f"Ponto registrado às {entry.punch_time.strftime('%H:%M')} — "
             f"{entry.punch_type.value.replace('_', ' ').title()}.",
             "sucesso",
         )
+    except GeofenceViolationError as exc:
+        flash(str(exc), "erro")
     except ValueError as exc:
         flash(str(exc), "erro")
 

@@ -577,6 +577,9 @@
         <button class="tab-btn" role="tab" data-tab="empresa" aria-selected="false">
           Dados da Empresa
         </button>
+        <button class="tab-btn" role="tab" data-tab="config-modulos" aria-selected="false">
+          ⚙️ Configurações por Módulo
+        </button>
       </div>
     </div>
   </div>
@@ -744,7 +747,151 @@
       </div>
     </div>
 
+    <!-- ── Tab: Configurações por Módulo ─────────────────────────────────── -->
+    <div id="tab-config-modulos" class="tab-panel" role="tabpanel">
+      <div class="section-card">
+        <p class="section-title" style="margin:0 0 0.25rem">📍 Ponto Eletrônico — Geofencing</p>
+        <p class="section-desc" style="margin:0 0 1.5rem">
+          Defina as zonas geográficas autorizadas para registro de ponto.
+          O colaborador deve estar dentro do raio de <strong>pelo menos uma zona ativa</strong> para poder registrar.
+          Quando nenhuma zona estiver cadastrada, o geofencing fica desabilitado (qualquer localização é aceita).
+        </p>
+
+        <!-- Tabela de zonas cadastradas -->
+        {% if geofence_locations %}
+        <div style="overflow-x:auto; margin-bottom:2rem;">
+          <table style="width:100%; border-collapse:collapse; font-size:0.875rem;">
+            <thead>
+              <tr style="background:#f1f5f9; text-align:left;">
+                <th style="padding:0.6rem 0.75rem; font-weight:600; color:#475569;">Nome</th>
+                <th style="padding:0.6rem 0.75rem; font-weight:600; color:#475569;">Latitude</th>
+                <th style="padding:0.6rem 0.75rem; font-weight:600; color:#475569;">Longitude</th>
+                <th style="padding:0.6rem 0.75rem; font-weight:600; color:#475569;">Raio (m)</th>
+                <th style="padding:0.6rem 0.75rem; font-weight:600; color:#475569;">Status</th>
+                <th style="padding:0.6rem 0.75rem; font-weight:600; color:#475569;">Ações</th>
+              </tr>
+            </thead>
+            <tbody>
+              {% for loc in geofence_locations %}
+              <tr style="border-top:1px solid #e2e8f0;">
+                <td style="padding:0.6rem 0.75rem; font-weight:500; color:#1e293b;">{{ loc.name }}</td>
+                <td style="padding:0.6rem 0.75rem; color:#475569; font-family:monospace;">{{ "%.6f"|format(loc.latitude) }}</td>
+                <td style="padding:0.6rem 0.75rem; color:#475569; font-family:monospace;">{{ "%.6f"|format(loc.longitude) }}</td>
+                <td style="padding:0.6rem 0.75rem; color:#475569;">{{ loc.radius_meters }}</td>
+                <td style="padding:0.6rem 0.75rem;">
+                  {% if loc.is_active %}
+                  <span style="background:#dcfce7; color:#15803d; padding:0.2rem 0.6rem; border-radius:9999px; font-size:0.75rem; font-weight:600;">Ativa</span>
+                  {% else %}
+                  <span style="background:#f1f5f9; color:#64748b; padding:0.2rem 0.6rem; border-radius:9999px; font-size:0.75rem; font-weight:600;">Inativa</span>
+                  {% endif %}
+                </td>
+                <td style="padding:0.6rem 0.75rem;">
+                  <div style="display:flex; gap:0.5rem; align-items:center;">
+                    <button type="button" class="btn-editar-geo"
+                      data-id="{{ loc.id }}"
+                      data-name="{{ loc.name }}"
+                      data-lat="{{ loc.latitude }}"
+                      data-lng="{{ loc.longitude }}"
+                      data-radius="{{ loc.radius_meters }}"
+                      data-active="{{ '1' if loc.is_active else '0' }}"
+                      style="background:#ede9fe; color:#6d28d9; border:none; padding:0.35rem 0.75rem; border-radius:6px; font-size:0.8rem; font-weight:600; cursor:pointer; min-height:36px;">
+                      Editar
+                    </button>
+                    <form method="POST" action="{{ url_for('configuracoes.geofence_deletar', loc_id=loc.id) }}"
+                      onsubmit="return confirm('Remover a zona \'{{ loc.name }}\'? Esta ação não pode ser desfeita.')">
+                      <button type="submit"
+                        style="background:#fee2e2; color:#dc2626; border:none; padding:0.35rem 0.75rem; border-radius:6px; font-size:0.8rem; font-weight:600; cursor:pointer; min-height:36px;">
+                        Remover
+                      </button>
+                    </form>
+                  </div>
+                </td>
+              </tr>
+              {% endfor %}
+            </tbody>
+          </table>
+        </div>
+        {% else %}
+        <div style="text-align:center; padding:2rem 1rem; color:#94a3b8; margin-bottom:1.5rem;">
+          <div style="font-size:2rem; margin-bottom:0.5rem;">📍</div>
+          <p style="font-size:0.9rem;">Nenhuma zona cadastrada. O geofencing está <strong>desabilitado</strong>.</p>
+        </div>
+        {% endif %}
+
+        <hr style="border:none; border-top:1px solid #e2e8f0; margin:1.5rem 0;" />
+
+        <!-- Formulário: nova zona -->
+        <p class="section-title" style="margin:0 0 1rem; font-size:0.95rem;">Adicionar Nova Zona</p>
+        <form method="POST" action="{{ url_for('configuracoes.geofence_criar') }}">
+          <div class="form-group">
+            <label class="form-label" for="geo_name">Nome da Zona</label>
+            <input class="form-input" type="text" id="geo_name" name="name"
+              placeholder="Ex: Sede Central, Filial Norte" maxlength="100" required />
+          </div>
+          <div style="display:grid; grid-template-columns:1fr 1fr; gap:1rem;">
+            <div class="form-group" style="margin-bottom:0;">
+              <label class="form-label" for="geo_lat">Latitude</label>
+              <input class="form-input" type="number" id="geo_lat" name="latitude"
+                step="0.000001" placeholder="-23.550520" required />
+              <p class="form-hint">Graus decimais (ex: -23.550520)</p>
+            </div>
+            <div class="form-group" style="margin-bottom:0;">
+              <label class="form-label" for="geo_lng">Longitude</label>
+              <input class="form-input" type="number" id="geo_lng" name="longitude"
+                step="0.000001" placeholder="-46.633309" required />
+              <p class="form-hint">Graus decimais (ex: -46.633309)</p>
+            </div>
+          </div>
+          <div class="form-group" style="margin-top:1rem;">
+            <label class="form-label" for="geo_radius">Raio (metros)</label>
+            <input class="form-input" type="number" id="geo_radius" name="radius_meters"
+              min="10" max="50000" value="200" required />
+            <p class="form-hint">Distância máxima do centro para o colaborador ser aceito. Mínimo: 10 m.</p>
+          </div>
+          <button type="submit" class="btn-primary">Adicionar Zona</button>
+        </form>
+      </div>
+    </div>
+
   </main>
+
+  <!-- ── Modal: Editar Zona de Geofence ──────────────────────────────────── -->
+  <div id="modal-editar-geo" style="display:none; position:fixed; inset:0; background:rgba(0,0,0,.5); z-index:1000; align-items:center; justify-content:center;">
+    <div style="background:#fff; border-radius:16px; padding:2rem; width:min(480px,92vw); box-shadow:0 20px 50px rgba(0,0,0,.2);">
+      <p style="font-size:1.1rem; font-weight:700; color:#1e293b; margin:0 0 1.5rem;">Editar Zona de Geofence</p>
+      <form method="POST" id="form-editar-geo">
+        <div class="form-group">
+          <label class="form-label">Nome</label>
+          <input class="form-input" type="text" name="name" id="edit_geo_name" maxlength="100" required />
+        </div>
+        <div style="display:grid; grid-template-columns:1fr 1fr; gap:1rem;">
+          <div class="form-group" style="margin-bottom:0;">
+            <label class="form-label">Latitude</label>
+            <input class="form-input" type="number" name="latitude" id="edit_geo_lat" step="0.000001" required />
+          </div>
+          <div class="form-group" style="margin-bottom:0;">
+            <label class="form-label">Longitude</label>
+            <input class="form-input" type="number" name="longitude" id="edit_geo_lng" step="0.000001" required />
+          </div>
+        </div>
+        <div class="form-group" style="margin-top:1rem;">
+          <label class="form-label">Raio (metros)</label>
+          <input class="form-input" type="number" name="radius_meters" id="edit_geo_radius" min="10" max="50000" required />
+        </div>
+        <div class="form-group" style="display:flex; align-items:center; gap:0.5rem;">
+          <input type="checkbox" name="is_active" id="edit_geo_active" value="1" style="width:18px; height:18px;" />
+          <label for="edit_geo_active" style="font-weight:500; color:#334155; margin:0;">Zona ativa</label>
+        </div>
+        <div style="display:flex; gap:0.75rem; margin-top:1.5rem;">
+          <button type="submit" class="btn-primary" style="flex:1;">Salvar Alterações</button>
+          <button type="button" onclick="fecharModalGeo()"
+            style="flex:1; background:#f1f5f9; color:#475569; border:none; padding:0.75rem; border-radius:10px; font-weight:600; font-size:0.95rem; cursor:pointer; min-height:44px;">
+            Cancelar
+          </button>
+        </div>
+      </form>
+    </div>
+  </div>
 
   <script>
     // ── Tab switching ──────────────────────────────────────────────────────
@@ -796,6 +943,31 @@
         checkbox.disabled = false;
       }
     }
+
+    // ── Geofence modal ────────────────────────────────────────────────────
+    const modalGeo  = document.getElementById('modal-editar-geo');
+    const formGeo   = document.getElementById('form-editar-geo');
+
+    document.querySelectorAll('.btn-editar-geo').forEach(btn => {
+      btn.addEventListener('click', () => {
+        const id = btn.dataset.id;
+        document.getElementById('edit_geo_name').value   = btn.dataset.name;
+        document.getElementById('edit_geo_lat').value    = btn.dataset.lat;
+        document.getElementById('edit_geo_lng').value    = btn.dataset.lng;
+        document.getElementById('edit_geo_radius').value = btn.dataset.radius;
+        document.getElementById('edit_geo_active').checked = btn.dataset.active === '1';
+        formGeo.action = `/admin/configuracoes/geofence/${id}/editar`;
+        modalGeo.style.display = 'flex';
+      });
+    });
+
+    function fecharModalGeo() {
+      modalGeo.style.display = 'none';
+    }
+
+    modalGeo.addEventListener('click', e => {
+      if (e.target === modalGeo) fecharModalGeo();
+    });
   </script>
 
 </body>

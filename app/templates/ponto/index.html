@@ -924,6 +924,8 @@
             <!-- Botão de batida inteligente -->
             <form method="POST" action="{{ url_for('ponto.registrar') }}" id="form-ponto">
               <input type="hidden" name="punch_time" id="punch_time_input" />
+              <input type="hidden" name="lat" id="geo_lat_input" />
+              <input type="hidden" name="lng" id="geo_lng_input" />
               <button type="submit" id="punch-btn" class="punch-btn punch-btn--{{ next_type }} punch-btn--idle">
                 <span class="punch-btn__icon" id="punch-icon">
                   {{ punch_icons[next_type] }}
@@ -1206,15 +1208,38 @@
     const punchBtn = document.getElementById('punch-btn');
 
     formPonto.addEventListener('submit', function (e) {
+      e.preventDefault();
+
+      // Injeta horário do cliente
       const now = new Date();
       const iso = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}-${String(now.getDate()).padStart(2, '0')}T${String(now.getHours()).padStart(2, '0')}:${String(now.getMinutes()).padStart(2, '0')}:${String(now.getSeconds()).padStart(2, '0')}`;
       document.getElementById('punch_time_input').value = iso;
 
-      // Visual feedback while submitting
+      // Visual feedback
       punchBtn.disabled = true;
       punchBtn.classList.remove('punch-btn--idle');
       punchBtn.classList.add('punch-btn--loading');
-      document.getElementById('punch-label').textContent = 'Registrando…';
+      document.getElementById('punch-label').textContent = 'Obtendo localização…';
+
+      function submitForm() {
+        document.getElementById('punch-label').textContent = 'Registrando…';
+        formPonto.submit();
+      }
+
+      // Captura GPS antes de submeter — fail-open se negado ou indisponível
+      if (navigator.geolocation) {
+        navigator.geolocation.getCurrentPosition(
+          function (pos) {
+            document.getElementById('geo_lat_input').value = pos.coords.latitude;
+            document.getElementById('geo_lng_input').value = pos.coords.longitude;
+            submitForm();
+          },
+          function () { submitForm(); },  // permissão negada → submit sem coordenadas
+          { timeout: 8000, maximumAge: 60000 }
+        );
+      } else {
+        submitForm();  // navegador sem suporte → submit sem coordenadas
+      }
     });
   </script>
 </body>

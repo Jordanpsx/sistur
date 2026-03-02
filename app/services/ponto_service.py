@@ -15,12 +15,21 @@ Rule #3  Admin CRUD: edições administrativas exigem motivo não vazio e AuditL
 
 from __future__ import annotations
 
+import math
 from datetime import datetime, timedelta, timezone
 from typing import Any
 
 from app.core.audit import AuditService
 from app.extensions import db
 from app.services.base import BaseService
+
+
+# ---------------------------------------------------------------------------
+# Exceções customizadas
+# ---------------------------------------------------------------------------
+
+class GeofenceViolationError(ValueError):
+    """Lançada quando as coordenadas do colaborador estão fora de todas as zonas autorizadas."""
 
 
 # ---------------------------------------------------------------------------
@@ -95,6 +104,53 @@ class PontoService(BaseService):
 
     TOLERANCE_MINUTES: int = 10
     DUPLICATE_WINDOW_SECONDS: int = 5
+
+    # -----------------------------------------------------------------------
+    # Geofencing — Haversine (Rule #2)
+    # -----------------------------------------------------------------------
+
+    @staticmethod
+    def _haversine_metros(lat1: float, lng1: float, lat2: float, lng2: float) -> float:
+        """Calcula a distância em metros entre dois pontos usando a fórmula de Haversine.
+
+        Args:
+            lat1: Latitude do ponto 1 em graus decimais.
+            lng1: Longitude do ponto 1 em graus decimais.
+            lat2: Latitude do ponto 2 em graus decimais.
+            lng2: Longitude do ponto 2 em graus decimais.
+
+        Returns:
+            Distância em metros entre os dois pontos.
+        """
+        R = 6_371_000  # raio médio da Terra em metros
+        phi1, phi2 = math.radians(lat1), math.radians(lat2)
+        dphi    = math.radians(lat2 - lat1)
+        dlambda = math.radians(lng2 - lng1)
+        a = math.sin(dphi / 2) ** 2 + math.cos(phi1) * math.cos(phi2) * math.sin(dlambda / 2) ** 2
+        return R * 2 * math.atan2(math.sqrt(a), math.sqrt(1 - a))
+
+    @staticmethod
+    def _esta_dentro_do_geofence(lat: float, lng: float) -> bool:
+        """Verifica se as coordenadas estão dentro de pelo menos uma zona de geofence ativa.
+
+        Comportamento fail-open: se nenhuma zona ativa estiver cadastrada, retorna True
+        para não bloquear registros em instalações sem geofencing configurado.
+
+        Args:
+            lat: Latitude atual do colaborador em graus decimais.
+            lng: Longitude atual do colaborador em graus decimais.
+
+        Returns:
+            True se dentro de alguma zona ativa ou se não há zonas cadastradas; False caso contrário.
+        """
+        from app.models.geofence import GeofenceLocation
+        zonas = db.session.query(GeofenceLocation).filter_by(is_active=True).all()
+        if not zonas:
+            return True  # sem zonas configuradas → permite (fail-open)
+        return any(
+            PontoService._haversine_metros(lat, lng, z.latitude, z.longitude) <= z.radius_meters
+            for z in zonas
+        )
 
     @staticmethod
     def reprocess_interval(
@@ -335,10 +391,13 @@ class PontoService(BaseService):
         punch_time: datetime | None = None,
         source: str = "employee",
         ator_id: int | None = None,
+        current_lat: float | None = None,
+        current_lng: float | None = None,
     ) -> "TimeEntry":  # type: ignore[name-defined]  # noqa: F821
         """
         Registra uma nova batida de ponto para o colaborador.
 
+        Valida geofencing (Rule #2) quando coordenadas são fornecidas.
         Valida duplicata nos últimos DUPLICATE_WINDOW_SECONDS segundos.
         Após persistir a TimeEntry, recalcula o TimeDay do dia via processar_dia().
         Registra AuditLog com action=create, module='ponto'.
@@ -348,16 +407,26 @@ class PontoService(BaseService):
             punch_time:     Timestamp da batida em UTC. Se None, usa o momento atual.
             source:         Origem do registro ('employee', 'admin', 'KIOSK', 'QR').
             ator_id:        ID do funcionário autor da ação.
+            current_lat:    Latitude atual do colaborador (graus decimais). None = sem validação GPS.
+            current_lng:    Longitude atual do colaborador (graus decimais). None = sem validação GPS.
 
         Returns:
             Instância persistida de TimeEntry.
 
         Raises:
+            GeofenceViolationError: Se as coordenadas estiverem fora de todas as zonas ativas.
             ValueError: Se o colaborador não for encontrado ou estiver inativo.
             ValueError: Se já existir uma batida nos últimos 5 segundos (anti-duplicata).
         """
         from app.models.funcionario import Funcionario
         from app.models.ponto import ProcessingStatus, PunchSource, PunchType, TimeDay, TimeEntry
+
+        # Validação de geofencing (Rule #2) — apenas quando coordenadas foram fornecidas
+        if current_lat is not None and current_lng is not None:
+            if not PontoService._esta_dentro_do_geofence(current_lat, current_lng):
+                raise GeofenceViolationError(
+                    "Você não está em uma localização autorizada para registrar o ponto."
+                )
 
         funcionario = db.session.get(Funcionario, funcionario_id)
         if not funcionario or not funcionario.ativo:
