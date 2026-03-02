@@ -21,6 +21,10 @@ services:
       - .env
     ports:
       - "${APP_PORT:-8083}:5000"
+    volumes:
+      # O "Pulo do Gato": Sincroniza a pasta atual do host com a do container
+      # Isso permite que 'flask db migrate' crie arquivos que o seu Git enxerga fora.
+      - .:/app
 
 volumes:
   sistur_db_data:
