@@ -35,6 +35,7 @@ from app.services.configuracao_service import (
     ConfiguracaoService, CHAVE_BRANDING_EMPRESA_NOME, CHAVE_EMPRESA_RAZAO_SOCIAL, CHAVE_EMPRESA_CNPJ, CHAVE_EMPRESA_ENDERECO,
 )
 from app.services.funcionario_service import FuncionarioService
+from app.services.qr_service import QRService
 from app.services.rh_service import RHService
 from app.services.role_service import RoleService
 
@@ -995,3 +996,82 @@ def folha_ponto_pdf(funcionario_id: int):
     response.headers["Content-Type"] = "application/pdf"
     response.headers["Content-Disposition"] = f'inline; filename="{filename}"'
     return response
+
+
+# ---------------------------------------------------------------------------
+# QR Code — geração e regeneração
+# ---------------------------------------------------------------------------
+
+@bp.route("/funcionarios/<int:funcionario_id>/qrcode.png")
+@login_required
+def qrcode_png(funcionario_id: int):
+    """Serve a imagem PNG do QR code do funcionário.
+
+    Exige permissão rh.view ou que o próprio colaborador esteja visualizando
+    seu QR code (self-serve).
+
+    Args:
+        funcionario_id: PK do funcionário cujo QR code será gerado.
+
+    Returns:
+        Resposta HTTP com Content-Type image/png e os bytes do QR code.
+    """
+    from flask import current_app
+
+    ator_id = session["funcionario_id"]
+    # Permite visualização própria OU quem tem permissão de RH
+    if ator_id != funcionario_id and not has_permission(ator_id, "rh", "view"):
+        abort(403)
+
+    funcionario = db.session.get(Funcionario, funcionario_id)
+    if not funcionario:
+        abort(404)
+
+    if not funcionario.token_qr:
+        # Gera token se ainda não existir (funcionários cadastrados antes da feature)
+        funcionario = FuncionarioService.regenerar_token_qr(
+            funcionario_id=funcionario_id,
+            ator_id=ator_id,
+        )
+
+    try:
+        png_bytes = QRService.gerar_imagem_bytes(
+            funcionario_id=funcionario.id,
+            nome=funcionario.nome,
+            token_qr=funcionario.token_qr,
+            qr_secret_key=current_app.config["QR_SECRET_KEY"],
+        )
+    except RuntimeError as exc:
+        flash(str(exc), "erro")
+        return redirect(url_for("rh.editar_funcionario", funcionario_id=funcionario_id))
+
+    response = make_response(png_bytes)
+    response.headers["Content-Type"] = "image/png"
+    response.headers["Cache-Control"] = "no-store"
+    return response
+
+
+@bp.route("/funcionarios/<int:funcionario_id>/regenerar-qrcode", methods=["POST"])
+@login_required
+@require_permission("rh", "edit")
+def regenerar_qrcode(funcionario_id: int):
+    """Invalida o QR code atual e emite um novo token para o funcionário.
+
+    Deve ser usado quando o QR code físico é perdido ou comprometido.
+
+    Args:
+        funcionario_id: PK do funcionário cujo QR code será regenerado.
+
+    Returns:
+        Redirect para o formulário de edição com flash de sucesso ou erro.
+    """
+    ator_id = session["funcionario_id"]
+    try:
+        FuncionarioService.regenerar_token_qr(
+            funcionario_id=funcionario_id,
+            ator_id=ator_id,
+        )
+        flash("QR code regenerado com sucesso. Imprima o novo código.", "sucesso")
+    except ValueError as exc:
+        flash(str(exc), "erro")
+    return redirect(url_for("rh.editar_funcionario", funcionario_id=funcionario_id))

@@ -430,6 +430,51 @@
       </div>
 
     </form>
+
+  {% if funcionario %}
+  <!-- SEÇÃO QR CODE -->
+  <section class="mx-auto w-full max-w-2xl px-4 sm:px-6 pb-8">
+    <div class="bg-white rounded-2xl shadow-sm border border-slate-100 overflow-hidden">
+      <div class="px-6 py-4 border-b border-slate-100 flex items-center justify-between gap-3">
+        <div>
+          <h2 class="text-base font-semibold text-slate-800">QR Code do Colaborador</h2>
+          <p class="text-xs text-slate-500 mt-0.5">Usado para registro de ponto eletrônico</p>
+        </div>
+        <form method="POST" action="{{ url_for('rh.regenerar_qrcode', funcionario_id=funcionario.id) }}"
+          onsubmit="return confirm('Regenerar o QR code invalidará o cartão físico atual. Continuar?')">
+          <button type="submit"
+            class="inline-flex items-center gap-2 px-4 py-2 rounded-xl border border-slate-200 text-sm font-medium text-slate-600 bg-white hover:bg-slate-50 transition-colors">
+            🔄 Regenerar QR
+          </button>
+        </form>
+      </div>
+      <div class="p-6 flex flex-col sm:flex-row items-center gap-6">
+        <div class="flex-shrink-0">
+          <img src="{{ url_for('rh.qrcode_png', funcionario_id=funcionario.id) }}"
+            alt="QR Code de {{ funcionario.nome }}"
+            class="w-48 h-48 rounded-xl border border-slate-200 shadow-sm"
+            id="qrcode-img" />
+        </div>
+        <div class="flex-1 text-center sm:text-left">
+          <p class="text-sm font-medium text-slate-700">{{ funcionario.nome }}</p>
+          {% if funcionario.matricula %}
+          <p class="text-xs text-slate-500 mt-1">Matrícula: {{ funcionario.matricula }}</p>
+          {% endif %}
+          <p class="text-xs text-slate-400 mt-3 leading-relaxed">
+            O QR code contém os dados do colaborador criptografados.
+            Apresente-o ao leitor na entrada ou saída para registrar o ponto.
+          </p>
+          <a href="{{ url_for('rh.qrcode_png', funcionario_id=funcionario.id) }}"
+            download="qrcode_{{ funcionario.cpf or funcionario.id }}.png"
+            class="mt-4 inline-flex items-center gap-2 px-4 py-2 rounded-xl bg-primary text-white text-sm font-medium hover:bg-primary-dark transition-colors shadow-sm">
+            ⬇️ Baixar PNG
+          </a>
+        </div>
+      </div>
+    </div>
+  </section>
+  {% endif %}
+
   </main>
 
   {% if funcionario %}

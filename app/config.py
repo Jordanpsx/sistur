@@ -14,6 +14,10 @@ class Config:
     COMPANY_NAME = os.environ.get("COMPANY_NAME", "SISTUR")
     COMPANY_LOGO = os.environ.get("COMPANY_LOGO", "")  # URL; empty = SVG fallback
 
+    # QR code encryption key — falls back to SECRET_KEY if not set.
+    # Used by QRService to derive a Fernet key (SHA-256 → base64url).
+    QR_SECRET_KEY = os.environ.get("QR_SECRET_KEY") or os.environ.get("SECRET_KEY", "change-me-in-production")
+
 
 class DevelopmentConfig(Config):
     DEBUG = True

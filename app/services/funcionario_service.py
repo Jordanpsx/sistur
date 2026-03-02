@@ -15,6 +15,7 @@ from app.core.audit import AuditService
 from app.extensions import db
 from app.models.funcionario import Funcionario, validar_cpf
 from app.services.base import BaseService
+from app.services.qr_service import QRService
 
 
 # Fields captured in audit snapshots for this entity
@@ -119,6 +120,7 @@ class FuncionarioService(BaseService):
             minutos_esperados_dia=minutos_esperados_dia,
             minutos_almoco=minutos_almoco,
             ativo=True,
+            token_qr=QRService.gerar_token(),
         )
         db.session.add(funcionario)
         db.session.flush()  # get PK before audit commit
@@ -264,6 +266,45 @@ class FuncionarioService(BaseService):
             entity_id=funcionario.id,
             previous_state=snapshot_antes,
             new_state=BaseService._snapshot(funcionario, _AUDIT_FIELDS),
+            actor_id=ator_id,
+        )
+        db.session.commit()
+        return funcionario
+
+    @staticmethod
+    def regenerar_token_qr(
+        funcionario_id: int,
+        ator_id: int | None = None,
+    ) -> Funcionario:
+        """Invalida o QR code atual e gera um novo token UUID para o funcionário.
+
+        Deve ser usado quando o QR code físico é perdido ou comprometido.
+        O token antigo deixa de ser válido imediatamente após o commit.
+
+        Args:
+            funcionario_id: PK do funcionário.
+            ator_id:        ID do ator que solicitou a regeneração.
+
+        Returns:
+            Instância atualizada do Funcionario com o novo token_qr.
+
+        Raises:
+            ValueError: Se o funcionário não for encontrado.
+        """
+        funcionario = db.session.get(Funcionario, funcionario_id)
+        if not funcionario:
+            raise ValueError(f"Funcionário {funcionario_id} não encontrado.")
+
+        token_anterior = funcionario.token_qr or "(nenhum)"
+        funcionario.token_qr = QRService.gerar_token()
+        db.session.flush()
+
+        # Antigravity Rule #1
+        AuditService.log_update(
+            "funcionarios",
+            entity_id=funcionario.id,
+            previous_state={"token_qr": token_anterior},
+            new_state={"token_qr": funcionario.token_qr},
             actor_id=ator_id,
         )
         db.session.commit()
