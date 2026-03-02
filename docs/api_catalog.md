@@ -220,7 +220,7 @@ Visualizador de logs de auditoria com filtros dinâmicos e paginação server-si
 
 ### `GET /admin/configuracoes/`
 
-Exibe o painel de controle com três abas: Módulos Ativos, Regras Globais, Identidade Visual.
+Exibe o painel de controle com quatro abas: Módulos Ativos, Regras Globais, Identidade Visual, Dados da Empresa.
 
 **Auth required:** Yes (super_admin)
 **Response:** `200 text/html` — `admin/configuracoes/index.html`
@@ -232,6 +232,8 @@ Exibe o painel de controle com três abas: Módulos Ativos, Regras Globais, Iden
 | `modulos_info` | `list[dict]` | Lista de módulos com chave, nome, label, ativo |
 | `empresa_nome` | str | Nome da empresa (do banco ou "") |
 | `empresa_logo` | str | URL do logo (do banco ou "") |
+| `empresa_cnpj` | str | CNPJ da empresa (do banco ou "") |
+| `empresa_endereco` | str | Endereço completo (do banco ou "") |
 
 ---
 
@@ -316,3 +318,85 @@ Desativa um role (soft-delete).
 **Path param:** `id` (int)
 **Response:** Redirect `GET /admin/configuracoes/roles` com flash de resultado
 **Error:** Flash `"erro"` se o role for `is_super_admin=True` (proteção contra lockout)
+
+---
+
+### `POST /admin/configuracoes/dados-empresa`
+
+Salva CNPJ e endereço da empresa para uso no cabeçalho do PDF da Folha de Ponto.
+
+**Auth required:** Yes (super_admin)
+**Form fields:** `empresa_cnpj` (str), `empresa_endereco` (str)
+**Response:** Redirect `GET /admin/configuracoes/` com flash de sucesso
+**Storage:** `sistur_system_settings` — chaves `empresa.cnpj` e `empresa.endereco`
+**Audit:** `AuditLog` via `ConfiguracaoService.set`
+
+---
+
+## Module: RH — Folha de Ponto (`/rh`)
+
+> **Access:** Requer permissão `folha_ponto.*` por ação. Super admins têm acesso total.
+> Ver documentação completa em `docs/rh/README.md`.
+
+### `GET /rh/folha-ponto/<funcionario_id>`
+
+Exibe a Folha de Ponto CLT de 10 colunas do funcionário para o mês/ano selecionado.
+
+**Permission:** `folha_ponto.view`
+**Query params:** `mes` (int), `ano` (int)
+**Response:** `200 text/html` — `rh/folha_ponto.html`
+
+---
+
+### `POST /rh/folha-ponto/<funcionario_id>/batida/adicionar`
+
+Adiciona uma batida administrativa com motivo auditado.
+
+**Permission:** `folha_ponto.edit`
+**Form fields:** `novo_horario` (datetime-local), `motivo` (str), `mes`, `ano`
+**Response:** Redirect `GET /rh/folha-ponto/<id>` com flash de resultado
+**Audit:** `AuditLog` via `PontoService.registrar_batida(source="admin")`
+
+---
+
+### `POST /rh/folha-ponto/<funcionario_id>/batida/<entry_id>/editar`
+
+Edita o horário de uma batida existente.
+
+**Permission:** `folha_ponto.edit`
+**Form fields:** `novo_horario`, `motivo`, `mes`, `ano`
+**Response:** Redirect com flash
+**Audit:** `PontoService.editar_batida_admin` — snapshot before/after
+
+---
+
+### `POST /rh/folha-ponto/<funcionario_id>/batida/<entry_id>/deletar`
+
+Remove uma batida com auditoria completa.
+
+**Permission:** `folha_ponto.edit`
+**Form fields:** `motivo` (obrigatório), `mes`, `ano`
+**Response:** Redirect com flash
+**Audit:** `PontoService.deletar_batida_admin` — snapshot antes da exclusão
+
+---
+
+### `POST /rh/folha-ponto/<funcionario_id>/deducao`
+
+Registra uma dedução de banco de horas.
+
+**Permission:** `folha_ponto.deducao`
+**Form fields:** `deduction_type`, `minutos`, `data_registro`, `observacao`, `mes`, `ano`
+**Response:** Redirect com flash
+**Delegates to:** `PontoService.registrar_abatimento_horas`
+
+---
+
+### `GET /rh/folha-ponto/<funcionario_id>/pdf`
+
+Gera PDF da Folha de Ponto via WeasyPrint.
+
+**Permission:** `folha_ponto.imprimir`
+**Query params:** `mes`, `ano`
+**Response:** `application/pdf` inline — filename `folha_ponto_{cpf}_{ano}-{MM}.pdf`
+**Template:** `rh/folha_ponto_pdf.html` (CSS inline, A4 landscape, sem JS)

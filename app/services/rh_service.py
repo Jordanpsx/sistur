@@ -178,6 +178,128 @@ class RHService(BaseService):
         return query.order_by(Funcionario.nome).all()
 
     # ------------------------------------------------------------------
+    # Folha de Ponto Individual (Tab 3 do Dashboard RH)
+    # ------------------------------------------------------------------
+
+    @staticmethod
+    def folha_ponto_mes(funcionario_id: int, ano: int, mes: int) -> dict:
+        """Monta a Folha de Ponto CLT de um funcionário para um mês específico.
+
+        Carrega TimeDay e TimeEntry em queries separadas (evitando produto
+        cartesiano) e monta a estrutura de 10 colunas usada na tabela CLT
+        e no PDF da Folha de Ponto.
+
+        Antigravity Rule #2: sem queries em blueprints — toda lógica aqui.
+
+        Args:
+            funcionario_id: PK do funcionário.
+            ano: Ano do período (ex.: 2026).
+            mes: Mês do período (1–12).
+
+        Returns:
+            Dicionário com:
+            - funcionario (Funcionario): instância do funcionário.
+            - linhas (list[dict]): uma linha por dia com TimeDay registrado,
+              contendo as 10 colunas CLT + time_day_id + needs_review.
+              Cada linha:
+                shift_date, dia_semana, clock_in, lunch_start, lunch_end,
+                clock_out, minutos_trabalhados, expected_minutes_snapshot,
+                saldo_calculado_minutos, status, needs_review, time_day_id.
+              Os campos de batida são instâncias de TimeEntry ou None.
+            - total_minutos_trabalhados (int): soma dos minutos trabalhados.
+            - total_saldo_minutos (int): soma dos saldos calculados do mês.
+            - total_expected_minutos (int): soma dos minutos esperados.
+            - dias_com_revisao (int): contagem de dias com needs_review=True.
+
+        Raises:
+            ValueError: Se o funcionário não for encontrado.
+        """
+        from collections import defaultdict
+
+        funcionario = db.session.get(Funcionario, funcionario_id)
+        if not funcionario:
+            raise ValueError(f"Funcionário {funcionario_id} não encontrado.")
+
+        inicio = date(ano, mes, 1)
+        fim = date(ano + 1, 1, 1) if mes == 12 else date(ano, mes + 1, 1)
+
+        # Query 1: dias processados
+        days = (
+            db.session.query(TimeDay)
+            .filter(
+                TimeDay.funcionario_id == funcionario_id,
+                TimeDay.shift_date >= inicio,
+                TimeDay.shift_date < fim,
+            )
+            .order_by(TimeDay.shift_date)
+            .all()
+        )
+
+        # Query 2: batidas — separada para evitar produto cartesiano
+        entries_raw = (
+            db.session.query(TimeEntry)
+            .filter(
+                TimeEntry.funcionario_id == funcionario_id,
+                TimeEntry.shift_date >= inicio,
+                TimeEntry.shift_date < fim,
+            )
+            .order_by(TimeEntry.shift_date, TimeEntry.punch_time)
+            .all()
+        )
+
+        # Agrupa batidas por dia
+        entries_by_day: dict = defaultdict(list)
+        for e in entries_raw:
+            entries_by_day[e.shift_date].append(e)
+
+        DOW_ABBR = ["Seg", "Ter", "Qua", "Qui", "Sex", "Sáb", "Dom"]
+
+        _STATUS_LABELS = {
+            True:  "Revisar",
+            False: "OK",
+        }
+
+        linhas = []
+        for d in days:
+            entries = entries_by_day.get(d.shift_date, [])
+
+            # Mapeia tipo → primeiro TimeEntry daquele tipo
+            by_type: dict[str, "TimeEntry"] = {}  # type: ignore[name-defined]
+            for e in entries:
+                key = e.punch_type.value
+                if key not in by_type:
+                    by_type[key] = e
+
+            linhas.append({
+                "shift_date":              d.shift_date,
+                "dia_semana":             DOW_ABBR[d.shift_date.weekday()],
+                "clock_in":               by_type.get("clock_in"),
+                "lunch_start":            by_type.get("lunch_start"),
+                "lunch_end":              by_type.get("lunch_end"),
+                "clock_out":              by_type.get("clock_out"),
+                "minutos_trabalhados":    d.minutos_trabalhados,
+                "expected_minutes_snapshot": d.expected_minutes_snapshot,
+                "saldo_calculado_minutos": d.saldo_calculado_minutos,
+                "status":                 _STATUS_LABELS[d.needs_review],
+                "needs_review":           d.needs_review,
+                "time_day_id":            d.id,
+            })
+
+        total_minutos_trabalhados = sum(d.minutos_trabalhados for d in days)
+        total_saldo_minutos = sum(d.saldo_calculado_minutos for d in days)
+        total_expected_minutos = sum(d.expected_minutes_snapshot for d in days)
+        dias_com_revisao = sum(1 for d in days if d.needs_review)
+
+        return {
+            "funcionario":             funcionario,
+            "linhas":                  linhas,
+            "total_minutos_trabalhados": total_minutos_trabalhados,
+            "total_saldo_minutos":     total_saldo_minutos,
+            "total_expected_minutos":  total_expected_minutos,
+            "dias_com_revisao":        dias_com_revisao,
+        }
+
+    # ------------------------------------------------------------------
     # Planilha Mensal de Batidas
     # ------------------------------------------------------------------
 

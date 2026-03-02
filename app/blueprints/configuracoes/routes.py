@@ -41,6 +41,8 @@ from app.models.role import Role
 from app.services.configuracao_service import (
     CHAVE_BRANDING_EMPRESA_LOGO,
     CHAVE_BRANDING_EMPRESA_NOME,
+    CHAVE_EMPRESA_CNPJ,
+    CHAVE_EMPRESA_ENDERECO,
     ConfiguracaoService,
 )
 from app.services.role_service import RoleService
@@ -60,6 +62,7 @@ PERMISSOES_DO_SISTEMA: dict[str, list[str]] = {
     "restaurante":  ["view", "create", "edit", "delete"],
     "audit":        ["view", "view_all"],
     "leads":        ["view", "create", "edit"],
+    "folha_ponto":  ["view", "edit", "deducao", "imprimir"],
 }
 
 # Nomes legíveis para exibição nas permissões
@@ -71,6 +74,8 @@ _LABELS_ACAO: dict[str, str] = {
     "desativar":  "Desativar",
     "view_all":   "Visualizar Tudo",
     "edit_admin": "Editar (Admin)",
+    "deducao":    "Registrar Dedução",
+    "imprimir":   "Imprimir / Exportar PDF",
 }
 
 _LABELS_MODULO: dict[str, str] = {
@@ -81,6 +86,7 @@ _LABELS_MODULO: dict[str, str] = {
     "restaurante":  "Restaurante",
     "audit":        "Auditoria",
     "leads":        "Leads",
+    "folha_ponto":  "Folha de Ponto",
 }
 
 
@@ -171,6 +177,8 @@ def index():
         modulos_info=modulos_info,
         empresa_nome=todas.get(CHAVE_BRANDING_EMPRESA_NOME) or "",
         empresa_logo=todas.get(CHAVE_BRANDING_EMPRESA_LOGO) or "",
+        empresa_cnpj=todas.get(CHAVE_EMPRESA_CNPJ) or "",
+        empresa_endereco=todas.get(CHAVE_EMPRESA_ENDERECO) or "",
     )
 
 
@@ -235,6 +243,40 @@ def salvar_branding():
     ConfiguracaoService.set(CHAVE_BRANDING_EMPRESA_LOGO, logo, ator_id=ator_id)
 
     flash("Identidade visual salva com sucesso.", "sucesso")
+    return redirect(url_for("configuracoes.index"))
+
+
+# ---------------------------------------------------------------------------
+# Dados da Empresa (para cabeçalho da Folha de Ponto)
+# ---------------------------------------------------------------------------
+
+@bp.route("/dados-empresa", methods=["POST"])
+@_login_required
+@_super_admin_required
+def salvar_dados_empresa():
+    """Salva CNPJ e endereço da empresa nos system settings.
+
+    Esses dados são exibidos no cabeçalho do PDF da Folha de Ponto.
+
+    Form fields:
+        empresa_cnpj (str): CNPJ no formato XX.XXX.XXX/XXXX-XX. Pode ser vazio.
+        empresa_endereco (str): Endereço completo. Pode ser vazio.
+
+    Returns:
+        Redirect para o painel de configurações com flash de confirmação.
+    """
+    ator_id = _get_ator_id()
+    ConfiguracaoService.set(
+        CHAVE_EMPRESA_CNPJ,
+        (request.form.get("empresa_cnpj") or "").strip() or None,
+        ator_id=ator_id,
+    )
+    ConfiguracaoService.set(
+        CHAVE_EMPRESA_ENDERECO,
+        (request.form.get("empresa_endereco") or "").strip() or None,
+        ator_id=ator_id,
+    )
+    flash("Dados da empresa salvos com sucesso.", "sucesso")
     return redirect(url_for("configuracoes.index"))
 
 

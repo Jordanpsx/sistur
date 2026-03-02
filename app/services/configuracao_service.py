@@ -9,6 +9,7 @@ Antigravity Rule #2: sem imports do Flask — puro Python, compatível com Cytho
 Chaves conhecidas (constantes):
     CHAVE_MODULO_*    → toggles de habilitação de módulos (bool, default True)
     CHAVE_BRANDING_*  → substituições de identidade visual (string, default None)
+    CHAVE_EMPRESA_*   → dados cadastrais da empresa para Folha de Ponto (string, default None)
 """
 
 from __future__ import annotations
@@ -31,6 +32,8 @@ CHAVE_MODULO_RESTAURANTE = "modulo.restaurante"
 CHAVE_MODULO_FINANCEIRO = "modulo.financeiro"
 CHAVE_BRANDING_EMPRESA_NOME = "branding.empresa_nome"
 CHAVE_BRANDING_EMPRESA_LOGO = "branding.empresa_logo"
+CHAVE_EMPRESA_CNPJ          = "empresa.cnpj"
+CHAVE_EMPRESA_ENDERECO      = "empresa.endereco"
 
 # Metadados descritivos por chave — usados para popular a UI de configurações
 _METADADOS: dict[str, dict] = {
@@ -62,6 +65,16 @@ _METADADOS: dict[str, dict] = {
     CHAVE_BRANDING_EMPRESA_LOGO: {
         "tipo": SettingType.string,
         "descricao": "URL do logotipo da empresa. Deixe vazio para usar a variável de ambiente COMPANY_LOGO.",
+        "padrao": None,
+    },
+    CHAVE_EMPRESA_CNPJ: {
+        "tipo": SettingType.string,
+        "descricao": "CNPJ da empresa para exibição no cabeçalho da Folha de Ponto (formato: XX.XXX.XXX/XXXX-XX).",
+        "padrao": None,
+    },
+    CHAVE_EMPRESA_ENDERECO: {
+        "tipo": SettingType.string,
+        "descricao": "Endereço completo da empresa para exibição no cabeçalho da Folha de Ponto.",
         "padrao": None,
     },
 }

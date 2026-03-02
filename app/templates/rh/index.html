@@ -21,14 +21,14 @@
        DESIGN TOKENS
     ============================================= */
     :root {
-      --indigo-50:  #eef2ff;
+      --indigo-50: #eef2ff;
       --indigo-100: #e0e7ff;
       --indigo-500: #6366f1;
       --indigo-600: #4f46e5;
       --indigo-700: #4338ca;
       --indigo-800: #3730a3;
 
-      --slate-50:  #f8fafc;
+      --slate-50: #f8fafc;
       --slate-100: #f1f5f9;
       --slate-200: #e2e8f0;
       --slate-300: #cbd5e1;
@@ -39,41 +39,47 @@
       --slate-800: #1e293b;
       --slate-900: #0f172a;
 
-      --green-50:  #f0fdf4;
+      --green-50: #f0fdf4;
       --green-500: #22c55e;
       --green-600: #16a34a;
-      --amber-50:  #fffbeb;
+      --amber-50: #fffbeb;
       --amber-100: #fef3c7;
       --amber-500: #f59e0b;
       --amber-600: #d97706;
       --amber-800: #92400e;
-      --red-50:    #fef2f2;
-      --red-400:   #f87171;
-      --red-500:   #ef4444;
-      --red-600:   #dc2626;
+      --red-50: #fef2f2;
+      --red-400: #f87171;
+      --red-500: #ef4444;
+      --red-600: #dc2626;
       --violet-50: #f5f3ff;
-      --violet-500:#8b5cf6;
-      --violet-600:#7c3aed;
+      --violet-500: #8b5cf6;
+      --violet-600: #7c3aed;
 
-      --shadow-sm: 0 1px 2px rgba(0,0,0,.05);
-      --shadow-md: 0 4px 6px -1px rgba(0,0,0,.07), 0 2px 4px -1px rgba(0,0,0,.04);
-      --shadow-lg: 0 10px 25px -5px rgba(0,0,0,.08), 0 4px 6px -2px rgba(0,0,0,.04);
-      --shadow-xl: 0 20px 40px -10px rgba(0,0,0,.1);
+      --shadow-sm: 0 1px 2px rgba(0, 0, 0, .05);
+      --shadow-md: 0 4px 6px -1px rgba(0, 0, 0, .07), 0 2px 4px -1px rgba(0, 0, 0, .04);
+      --shadow-lg: 0 10px 25px -5px rgba(0, 0, 0, .08), 0 4px 6px -2px rgba(0, 0, 0, .04);
+      --shadow-xl: 0 20px 40px -10px rgba(0, 0, 0, .1);
 
-      --radius-sm:   8px;
-      --radius-md:   14px;
-      --radius-lg:   20px;
-      --radius-xl:   28px;
+      --radius-sm: 8px;
+      --radius-md: 14px;
+      --radius-lg: 20px;
+      --radius-xl: 28px;
       --radius-full: 9999px;
 
-      --font:      'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+      --font: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
       --font-mono: 'DM Mono', 'Fira Code', monospace;
     }
 
     /* =============================================
        RESET & BASE
     ============================================= */
-    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+    *,
+    *::before,
+    *::after {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+    }
 
     body {
       font-family: var(--font);
@@ -86,46 +92,114 @@
     /* =============================================
        LAYOUT
     ============================================= */
-    .page-shell   { display: grid; grid-template-rows: auto 1fr; min-height: 100vh; }
-    .content-wrap { max-width: 1000px; margin: 0 auto; padding: 0 1.25rem 3rem; width: 100%; }
+    .page-shell {
+      display: grid;
+      grid-template-rows: auto 1fr;
+      min-height: 100vh;
+    }
+
+    .content-wrap {
+      max-width: 1000px;
+      margin: 0 auto;
+      padding: 0 1.25rem 3rem;
+      width: 100%;
+    }
 
     /* =============================================
        TOP BAR
     ============================================= */
     .top-bar {
-      background: rgba(255,255,255,.88);
+      background: rgba(255, 255, 255, .88);
       backdrop-filter: blur(16px);
       border-bottom: 1px solid var(--slate-100);
-      position: sticky; top: 0; z-index: 100;
+      position: sticky;
+      top: 0;
+      z-index: 100;
     }
+
     .top-bar__inner {
-      max-width: 1000px; margin: 0 auto; padding: 0 1.25rem;
-      height: 3.75rem; display: flex; align-items: center;
-      justify-content: space-between; gap: 1rem;
+      max-width: 1000px;
+      margin: 0 auto;
+      padding: 0 1.25rem;
+      height: 3.75rem;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 1rem;
     }
-    .top-bar__left  { display: flex; align-items: center; gap: .75rem; }
+
+    .top-bar__left {
+      display: flex;
+      align-items: center;
+      gap: .75rem;
+    }
+
     .back-link {
-      display: inline-flex; align-items: center; gap: .4rem;
-      font-size: .8rem; font-weight: 600; color: var(--slate-500);
-      text-decoration: none; padding: .35rem .65rem;
-      border-radius: var(--radius-sm); transition: all .15s;
+      display: inline-flex;
+      align-items: center;
+      gap: .4rem;
+      font-size: .8rem;
+      font-weight: 600;
+      color: var(--slate-500);
+      text-decoration: none;
+      padding: .35rem .65rem;
+      border-radius: var(--radius-sm);
+      transition: all .15s;
     }
-    .back-link:hover { background: var(--indigo-100); color: var(--indigo-700); }
-    .top-bar__sep   { color: var(--slate-200); font-size: .75rem; }
-    .top-bar__title { font-size: .9rem; font-weight: 700; color: var(--slate-700); }
+
+    .back-link:hover {
+      background: var(--indigo-100);
+      color: var(--indigo-700);
+    }
+
+    .top-bar__sep {
+      color: var(--slate-200);
+      font-size: .75rem;
+    }
+
+    .top-bar__title {
+      font-size: .9rem;
+      font-weight: 700;
+      color: var(--slate-700);
+    }
 
     /* =============================================
        FLASH MESSAGES
     ============================================= */
-    .flash-area { max-width: 1000px; margin: 0 auto; padding: .75rem 1.25rem 0; }
-    .flash {
-      display: flex; align-items: flex-start; gap: .6rem;
-      padding: .8rem 1rem; border-radius: var(--radius-md);
-      font-size: .85rem; font-weight: 500; border: 1px solid transparent;
+    .flash-area {
+      max-width: 1000px;
+      margin: 0 auto;
+      padding: .75rem 1.25rem 0;
     }
-    .flash--sucesso { background: var(--green-50);  border-color: #bbf7d0; color: var(--green-600); }
-    .flash--erro    { background: var(--red-50);    border-color: #fecaca; color: var(--red-600);   }
-    .flash--aviso   { background: var(--amber-50);  border-color: #fde68a; color: var(--amber-600); }
+
+    .flash {
+      display: flex;
+      align-items: flex-start;
+      gap: .6rem;
+      padding: .8rem 1rem;
+      border-radius: var(--radius-md);
+      font-size: .85rem;
+      font-weight: 500;
+      border: 1px solid transparent;
+    }
+
+    .flash--sucesso {
+      background: var(--green-50);
+      border-color: #bbf7d0;
+      color: var(--green-600);
+    }
+
+    .flash--erro {
+      background: var(--red-50);
+      border-color: #fecaca;
+      color: var(--red-600);
+    }
+
+    .flash--aviso {
+      background: var(--amber-50);
+      border-color: #fde68a;
+      color: var(--amber-600);
+    }
 
     /* =============================================
        HERO BANNER
@@ -135,22 +209,32 @@
       border-radius: var(--radius-xl);
       padding: 2rem 2rem 1.75rem;
       color: white;
-      position: relative; overflow: hidden;
-      box-shadow: 0 20px 50px -12px rgba(79,70,229,.4);
-      margin-top: 1.75rem; margin-bottom: 1.5rem;
+      position: relative;
+      overflow: hidden;
+      box-shadow: 0 20px 50px -12px rgba(79, 70, 229, .4);
+      margin-top: 1.75rem;
+      margin-bottom: 1.5rem;
     }
+
     .hero-banner::before {
       content: '';
-      position: absolute; inset: 0;
-      background: radial-gradient(ellipse at 80% 50%, rgba(255,255,255,.07) 0%, transparent 70%);
+      position: absolute;
+      inset: 0;
+      background: radial-gradient(ellipse at 80% 50%, rgba(255, 255, 255, .07) 0%, transparent 70%);
       pointer-events: none;
     }
+
     .hero-banner__title {
       font-size: clamp(1.4rem, 4vw, 2rem);
-      font-weight: 900; letter-spacing: -.03em; margin-bottom: .35rem;
+      font-weight: 900;
+      letter-spacing: -.03em;
+      margin-bottom: .35rem;
     }
+
     .hero-banner__sub {
-      font-size: .88rem; opacity: .75; font-weight: 500;
+      font-size: .88rem;
+      opacity: .75;
+      font-weight: 500;
     }
 
     /* =============================================
@@ -159,70 +243,146 @@
     .summary-grid {
       display: grid;
       grid-template-columns: repeat(4, 1fr);
-      gap: 1rem; margin-bottom: 1.5rem;
+      gap: 1rem;
+      margin-bottom: 1.5rem;
     }
-    @media (max-width: 640px) { .summary-grid { grid-template-columns: 1fr 1fr; } }
+
+    @media (max-width: 640px) {
+      .summary-grid {
+        grid-template-columns: 1fr 1fr;
+      }
+    }
 
     .summary-card {
-      background: white; border-radius: var(--radius-lg);
-      padding: 1.25rem; box-shadow: var(--shadow-md);
+      background: white;
+      border-radius: var(--radius-lg);
+      padding: 1.25rem;
+      box-shadow: var(--shadow-md);
       border: 1px solid var(--slate-100);
       transition: transform .15s, box-shadow .15s;
-      position: relative; overflow: hidden;
+      position: relative;
+      overflow: hidden;
     }
-    .summary-card::before {
-      content: ''; position: absolute;
-      bottom: 0; left: 0; right: 0; height: 3px;
-    }
-    .summary-card--people::before  { background: var(--indigo-500); }
-    .summary-card--hours::before   { background: var(--green-500);  }
-    .summary-card--balance::before { background: var(--amber-500);  }
-    .summary-card--review::before  { background: var(--red-500);    }
-    .summary-card:hover { transform: translateY(-2px); box-shadow: var(--shadow-lg); }
 
-    .summary-card__icon  { font-size: 1.5rem; margin-bottom: .6rem; }
+    .summary-card::before {
+      content: '';
+      position: absolute;
+      bottom: 0;
+      left: 0;
+      right: 0;
+      height: 3px;
+    }
+
+    .summary-card--people::before {
+      background: var(--indigo-500);
+    }
+
+    .summary-card--hours::before {
+      background: var(--green-500);
+    }
+
+    .summary-card--balance::before {
+      background: var(--amber-500);
+    }
+
+    .summary-card--review::before {
+      background: var(--red-500);
+    }
+
+    .summary-card:hover {
+      transform: translateY(-2px);
+      box-shadow: var(--shadow-lg);
+    }
+
+    .summary-card__icon {
+      font-size: 1.5rem;
+      margin-bottom: .6rem;
+    }
+
     .summary-card__label {
-      font-size: .7rem; font-weight: 700; letter-spacing: .08em;
-      text-transform: uppercase; color: var(--slate-400); margin-bottom: .3rem;
+      font-size: .7rem;
+      font-weight: 700;
+      letter-spacing: .08em;
+      text-transform: uppercase;
+      color: var(--slate-400);
+      margin-bottom: .3rem;
     }
+
     .summary-card__value {
-      font-family: var(--font-mono); font-size: 1.35rem;
-      font-weight: 500; color: var(--slate-800); line-height: 1; margin-bottom: .3rem;
+      font-family: var(--font-mono);
+      font-size: 1.35rem;
+      font-weight: 500;
+      color: var(--slate-800);
+      line-height: 1;
+      margin-bottom: .3rem;
     }
+
     .summary-card__sub {
-      font-size: .75rem; font-weight: 600;
-      padding: .2rem .5rem; border-radius: var(--radius-sm); display: inline-block;
+      font-size: .75rem;
+      font-weight: 600;
+      padding: .2rem .5rem;
+      border-radius: var(--radius-sm);
+      display: inline-block;
     }
-    .sub--pos  { color: var(--green-600); background: var(--green-50); }
-    .sub--neg  { color: var(--red-600);   background: var(--red-50);   }
-    .sub--warn { color: var(--amber-800); background: var(--amber-100); }
-    .sub--zero { color: var(--slate-400); background: var(--slate-100); }
+
+    .sub--pos {
+      color: var(--green-600);
+      background: var(--green-50);
+    }
+
+    .sub--neg {
+      color: var(--red-600);
+      background: var(--red-50);
+    }
+
+    .sub--warn {
+      color: var(--amber-800);
+      background: var(--amber-100);
+    }
+
+    .sub--zero {
+      color: var(--slate-400);
+      background: var(--slate-100);
+    }
 
     /* =============================================
        TABS
     ============================================= */
-    .tabs-wrapper { margin-bottom: 1.25rem; }
+    .tabs-wrapper {
+      margin-bottom: 1.25rem;
+    }
 
     .tabs-nav {
-      display: flex; gap: .25rem;
+      display: flex;
+      gap: .25rem;
       background: var(--slate-100);
       border-radius: var(--radius-lg);
       padding: .3rem;
       width: fit-content;
     }
+
     .tab-link {
-      display: inline-flex; align-items: center; gap: .4rem;
+      display: inline-flex;
+      align-items: center;
+      gap: .4rem;
       padding: .6rem 1.25rem;
       border-radius: var(--radius-md);
-      font-size: .85rem; font-weight: 600;
+      font-size: .85rem;
+      font-weight: 600;
       color: var(--slate-500);
       text-decoration: none;
       transition: all .2s;
       white-space: nowrap;
     }
-    .tab-link:hover { color: var(--indigo-700); background: rgba(255,255,255,.6); }
+
+    .tab-link:hover {
+      color: var(--indigo-700);
+      background: rgba(255, 255, 255, .6);
+    }
+
     .tab-link--active {
-      background: white; color: var(--indigo-700);
+      background: white;
+      color: var(--indigo-700);
       box-shadow: var(--shadow-sm);
     }
 
@@ -230,22 +390,38 @@
        SECTION CARD
     ============================================= */
     .section-card {
-      background: white; border-radius: var(--radius-lg);
-      box-shadow: var(--shadow-md); border: 1px solid var(--slate-100);
-      overflow: hidden; margin-bottom: 1.5rem;
+      background: white;
+      border-radius: var(--radius-lg);
+      box-shadow: var(--shadow-md);
+      border: 1px solid var(--slate-100);
+      overflow: hidden;
+      margin-bottom: 1.5rem;
     }
+
     .section-card__header {
       padding: 1.25rem 1.5rem .9rem;
       border-bottom: 1px solid var(--slate-100);
-      display: flex; align-items: center; justify-content: space-between; gap: 1rem;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 1rem;
       flex-wrap: wrap;
     }
+
     .section-card__title {
-      font-size: .85rem; font-weight: 700; letter-spacing: .06em;
-      text-transform: uppercase; color: var(--slate-500);
-      display: flex; align-items: center; gap: .5rem;
+      font-size: .85rem;
+      font-weight: 700;
+      letter-spacing: .06em;
+      text-transform: uppercase;
+      color: var(--slate-500);
+      display: flex;
+      align-items: center;
+      gap: .5rem;
     }
-    .section-card__body { padding: .5rem 1rem 1rem; }
+
+    .section-card__body {
+      padding: .5rem 1rem 1rem;
+    }
 
     /* =============================================
        ALERT CARDS (Central de Alertas)
@@ -256,55 +432,104 @@
       gap: .75rem;
       padding: 1rem;
     }
+
     .alert-card {
       background: var(--amber-50);
       border: 1px solid #fde68a;
       border-radius: var(--radius-md);
       padding: 1rem 1.1rem;
-      display: flex; flex-direction: column; gap: .5rem;
+      display: flex;
+      flex-direction: column;
+      gap: .5rem;
     }
-    .alert-card__top { display: flex; align-items: center; gap: .5rem; }
+
+    .alert-card__top {
+      display: flex;
+      align-items: center;
+      gap: .5rem;
+    }
+
     .alert-card__icon {
-      width: 2rem; height: 2rem;
-      background: #fef3c7; border-radius: var(--radius-sm);
-      display: flex; align-items: center; justify-content: center;
-      font-size: 1rem; flex-shrink: 0;
+      width: 2rem;
+      height: 2rem;
+      background: #fef3c7;
+      border-radius: var(--radius-sm);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 1rem;
+      flex-shrink: 0;
     }
+
     .alert-card__name {
-      font-size: .88rem; font-weight: 700; color: var(--slate-800);
-      white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+      font-size: .88rem;
+      font-weight: 700;
+      color: var(--slate-800);
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
     }
+
     .alert-card__date {
-      font-size: .75rem; color: var(--amber-800); font-weight: 600;
+      font-size: .75rem;
+      color: var(--amber-800);
+      font-weight: 600;
     }
+
     .alert-card__link {
-      display: inline-flex; align-items: center; gap: .3rem;
-      font-size: .75rem; font-weight: 700; color: var(--indigo-600);
-      text-decoration: none; margin-top: .25rem;
-      padding: .3rem .65rem; background: var(--indigo-50);
-      border-radius: var(--radius-sm); transition: all .15s;
+      display: inline-flex;
+      align-items: center;
+      gap: .3rem;
+      font-size: .75rem;
+      font-weight: 700;
+      color: var(--indigo-600);
+      text-decoration: none;
+      margin-top: .25rem;
+      padding: .3rem .65rem;
+      background: var(--indigo-50);
+      border-radius: var(--radius-sm);
+      transition: all .15s;
       width: fit-content;
     }
-    .alert-card__link:hover { background: var(--indigo-100); }
+
+    .alert-card__link:hover {
+      background: var(--indigo-100);
+    }
 
     .empty-state {
-      display: flex; flex-direction: column;
-      align-items: center; justify-content: center;
-      padding: 2.5rem 1rem; color: var(--slate-300); gap: .6rem;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      padding: 2.5rem 1rem;
+      color: var(--slate-300);
+      gap: .6rem;
       text-align: center;
     }
-    .empty-state__icon { font-size: 2.5rem; opacity: .5; }
-    .empty-state__text { font-size: .9rem; font-weight: 500; color: var(--slate-400); }
+
+    .empty-state__icon {
+      font-size: 2.5rem;
+      opacity: .5;
+    }
+
+    .empty-state__text {
+      font-size: .9rem;
+      font-weight: 500;
+      color: var(--slate-400);
+    }
 
     /* =============================================
        FILTERS (Aba Colaboradores)
     ============================================= */
     .filters-bar {
-      display: flex; gap: .75rem; flex-wrap: wrap;
+      display: flex;
+      gap: .75rem;
+      flex-wrap: wrap;
       padding: 1rem 1.25rem;
       border-bottom: 1px solid var(--slate-100);
       background: var(--slate-50);
     }
+
     .filters-bar input,
     .filters-bar select {
       font-family: var(--font);
@@ -317,142 +542,328 @@
       outline: none;
       transition: border-color .15s, box-shadow .15s;
     }
+
     .filters-bar input:focus,
     .filters-bar select:focus {
       border-color: var(--indigo-500);
-      box-shadow: 0 0 0 3px rgba(99,102,241,.15);
+      box-shadow: 0 0 0 3px rgba(99, 102, 241, .15);
     }
-    .filters-bar input { flex: 1; min-width: 180px; }
+
+    .filters-bar input {
+      flex: 1;
+      min-width: 180px;
+    }
+
     .btn-filter {
-      font-family: var(--font); font-size: .85rem; font-weight: 600;
-      padding: .55rem 1.1rem; border-radius: var(--radius-sm);
-      border: none; cursor: pointer; transition: all .15s;
+      font-family: var(--font);
+      font-size: .85rem;
+      font-weight: 600;
+      padding: .55rem 1.1rem;
+      border-radius: var(--radius-sm);
+      border: none;
+      cursor: pointer;
+      transition: all .15s;
     }
+
     .btn-filter--primary {
-      background: var(--indigo-600); color: white;
+      background: var(--indigo-600);
+      color: white;
     }
-    .btn-filter--primary:hover { background: var(--indigo-700); }
+
+    .btn-filter--primary:hover {
+      background: var(--indigo-700);
+    }
+
     .btn-filter--ghost {
-      background: var(--slate-100); color: var(--slate-500);
+      background: var(--slate-100);
+      color: var(--slate-500);
       border: 1px solid var(--slate-200);
     }
-    .btn-filter--ghost:hover { background: white; color: var(--slate-700); }
+
+    .btn-filter--ghost:hover {
+      background: white;
+      color: var(--slate-700);
+    }
 
     /* =============================================
        EMPLOYEE TABLE
     ============================================= */
-    .table-wrap { overflow-x: auto; }
-    .emp-table {
-      width: 100%; border-collapse: collapse;
-      font-size: .85rem; min-width: 560px;
+    .table-wrap {
+      overflow-x: auto;
     }
+
+    .emp-table {
+      width: 100%;
+      border-collapse: collapse;
+      font-size: .85rem;
+      min-width: 560px;
+    }
+
     .emp-table thead th {
-      padding: .75rem 1rem; text-align: left;
-      font-size: .7rem; font-weight: 700; letter-spacing: .07em;
-      text-transform: uppercase; color: var(--slate-400);
-      background: var(--slate-50); border-bottom: 1px solid var(--slate-100);
+      padding: .75rem 1rem;
+      text-align: left;
+      font-size: .7rem;
+      font-weight: 700;
+      letter-spacing: .07em;
+      text-transform: uppercase;
+      color: var(--slate-400);
+      background: var(--slate-50);
+      border-bottom: 1px solid var(--slate-100);
       white-space: nowrap;
     }
-    .emp-table tbody tr { transition: background .12s; }
-    .emp-table tbody tr:hover { background: var(--slate-50); }
-    .emp-table tbody tr.inactive-row { opacity: .65; }
+
+    .emp-table tbody tr {
+      transition: background .12s;
+    }
+
+    .emp-table tbody tr:hover {
+      background: var(--slate-50);
+    }
+
+    .emp-table tbody tr.inactive-row {
+      opacity: .65;
+    }
+
     .emp-table td {
-      padding: .9rem 1rem; border-bottom: 1px solid var(--slate-50);
-      color: var(--slate-700); vertical-align: middle;
+      padding: .9rem 1rem;
+      border-bottom: 1px solid var(--slate-50);
+      color: var(--slate-700);
+      vertical-align: middle;
     }
 
     /* Name cell */
-    .name-cell__main { font-weight: 700; color: var(--slate-800); }
-    .name-cell__sub  { font-size: .73rem; color: var(--slate-400); margin-top: .1rem; }
+    .name-cell__main {
+      font-weight: 700;
+      color: var(--slate-800);
+    }
+
+    .name-cell__sub {
+      font-size: .73rem;
+      color: var(--slate-400);
+      margin-top: .1rem;
+    }
 
     /* CPF cell */
-    .cpf-cell { font-family: var(--font-mono); font-size: .82rem; color: var(--slate-500); }
+    .cpf-cell {
+      font-family: var(--font-mono);
+      font-size: .82rem;
+      color: var(--slate-500);
+    }
 
     /* Banco de Horas cell — always visible, highlighted */
-    .banco-cell { font-family: var(--font-mono); font-weight: 700; font-size: .95rem; }
-    .banco-cell--pos  { color: var(--green-600); }
-    .banco-cell--neg  { color: var(--red-500);   }
-    .banco-cell--zero { color: var(--slate-400); }
+    .banco-cell {
+      font-family: var(--font-mono);
+      font-weight: 700;
+      font-size: .95rem;
+    }
+
+    .banco-cell--pos {
+      color: var(--green-600);
+    }
+
+    .banco-cell--neg {
+      color: var(--red-500);
+    }
+
+    .banco-cell--zero {
+      color: var(--slate-400);
+    }
 
     /* Badges */
     .badge {
-      display: inline-flex; align-items: center; gap: .25rem;
-      font-size: .72rem; font-weight: 700;
-      padding: .2rem .55rem; border-radius: var(--radius-full); white-space: nowrap;
+      display: inline-flex;
+      align-items: center;
+      gap: .25rem;
+      font-size: .72rem;
+      font-weight: 700;
+      padding: .2rem .55rem;
+      border-radius: var(--radius-full);
+      white-space: nowrap;
     }
-    .badge--role-admin { background: var(--violet-50); color: var(--violet-600); }
-    .badge--role       { background: var(--indigo-50); color: var(--indigo-700); }
-    .badge--no-role    { background: var(--slate-100); color: var(--slate-500);  }
-    .badge--inactive   { background: #fee2e2; color: var(--red-600); }
+
+    .badge--role-admin {
+      background: var(--violet-50);
+      color: var(--violet-600);
+    }
+
+    .badge--role {
+      background: var(--indigo-50);
+      color: var(--indigo-700);
+    }
+
+    .badge--no-role {
+      background: var(--slate-100);
+      color: var(--slate-500);
+    }
+
+    .badge--inactive {
+      background: #fee2e2;
+      color: var(--red-600);
+    }
 
     /* Action buttons */
-    .actions-cell { display: flex; gap: .4rem; flex-wrap: wrap; }
+    .actions-cell {
+      display: flex;
+      gap: .4rem;
+      flex-wrap: wrap;
+    }
+
     .btn-action {
-      display: inline-flex; align-items: center; gap: .3rem;
-      font-family: var(--font); font-size: .75rem; font-weight: 600;
-      padding: .35rem .7rem; border-radius: var(--radius-sm);
-      text-decoration: none; border: none; cursor: pointer;
-      transition: all .15s; white-space: nowrap;
+      display: inline-flex;
+      align-items: center;
+      gap: .3rem;
+      font-family: var(--font);
+      font-size: .75rem;
+      font-weight: 600;
+      padding: .35rem .7rem;
+      border-radius: var(--radius-sm);
+      text-decoration: none;
+      border: none;
+      cursor: pointer;
+      transition: all .15s;
+      white-space: nowrap;
     }
+
     .btn-action--edit {
-      background: var(--indigo-50); color: var(--indigo-700);
+      background: var(--indigo-50);
+      color: var(--indigo-700);
     }
-    .btn-action--edit:hover { background: var(--indigo-100); }
+
+    .btn-action--edit:hover {
+      background: var(--indigo-100);
+    }
+
     .btn-action--deactivate {
-      background: var(--red-50); color: var(--red-600);
+      background: var(--red-50);
+      color: var(--red-600);
     }
-    .btn-action--deactivate:hover { background: #fee2e2; }
+
+    .btn-action--deactivate:hover {
+      background: #fee2e2;
+    }
+
     .btn-action--banco {
-      background: var(--green-50); color: var(--green-600);
+      background: var(--green-50);
+      color: var(--green-600);
     }
-    .btn-action--banco:hover { background: #dcfce7; }
+
+    .btn-action--banco:hover {
+      background: #dcfce7;
+    }
 
     /* Responsive hidden columns */
     @media (max-width: 640px) {
-      .col-cpf  { display: none; }
+      .col-cpf {
+        display: none;
+      }
     }
+
     @media (max-width: 768px) {
-      .col-cargo { display: none; }
+      .col-cargo {
+        display: none;
+      }
     }
+
     @media (max-width: 1024px) {
-      .col-area  { display: none; }
-      .col-role  { display: none; }
+      .col-area {
+        display: none;
+      }
+
+      .col-role {
+        display: none;
+      }
     }
 
     /* =============================================
        CONFIRM MODAL (Desativar)
     ============================================= */
     .modal-overlay {
-      display: none; position: fixed; inset: 0;
-      background: rgba(15,23,42,.45);
-      z-index: 200; align-items: center; justify-content: center; padding: 1rem;
+      display: none;
+      position: fixed;
+      inset: 0;
+      background: rgba(15, 23, 42, .45);
+      z-index: 200;
+      align-items: center;
+      justify-content: center;
+      padding: 1rem;
     }
-    .modal-overlay.open { display: flex; }
+
+    .modal-overlay.open {
+      display: flex;
+    }
+
     .modal-box {
-      background: white; border-radius: var(--radius-xl);
-      padding: 2rem; max-width: 400px; width: 100%;
-      box-shadow: var(--shadow-xl); text-align: center;
+      background: white;
+      border-radius: var(--radius-xl);
+      padding: 2rem;
+      max-width: 400px;
+      width: 100%;
+      box-shadow: var(--shadow-xl);
+      text-align: center;
     }
-    .modal-box__icon { font-size: 2.5rem; margin-bottom: .75rem; }
-    .modal-box__title { font-size: 1.1rem; font-weight: 800; color: var(--slate-800); margin-bottom: .5rem; }
-    .modal-box__text  { font-size: .88rem; color: var(--slate-500); margin-bottom: 1.5rem; }
-    .modal-box__actions { display: flex; gap: .75rem; justify-content: center; }
+
+    .modal-box__icon {
+      font-size: 2.5rem;
+      margin-bottom: .75rem;
+    }
+
+    .modal-box__title {
+      font-size: 1.1rem;
+      font-weight: 800;
+      color: var(--slate-800);
+      margin-bottom: .5rem;
+    }
+
+    .modal-box__text {
+      font-size: .88rem;
+      color: var(--slate-500);
+      margin-bottom: 1.5rem;
+    }
+
+    .modal-box__actions {
+      display: flex;
+      gap: .75rem;
+      justify-content: center;
+    }
+
     .btn-modal {
-      font-family: var(--font); font-size: .88rem; font-weight: 700;
-      padding: .7rem 1.5rem; border-radius: var(--radius-md);
-      border: none; cursor: pointer; transition: all .15s;
+      font-family: var(--font);
+      font-size: .88rem;
+      font-weight: 700;
+      padding: .7rem 1.5rem;
+      border-radius: var(--radius-md);
+      border: none;
+      cursor: pointer;
+      transition: all .15s;
     }
-    .btn-modal--cancel  { background: var(--slate-100); color: var(--slate-600); }
-    .btn-modal--cancel:hover  { background: var(--slate-200); }
-    .btn-modal--confirm { background: var(--red-500); color: white; }
-    .btn-modal--confirm:hover { background: var(--red-600); }
+
+    .btn-modal--cancel {
+      background: var(--slate-100);
+      color: var(--slate-600);
+    }
+
+    .btn-modal--cancel:hover {
+      background: var(--slate-200);
+    }
+
+    .btn-modal--confirm {
+      background: var(--red-500);
+      color: white;
+    }
+
+    .btn-modal--confirm:hover {
+      background: var(--red-600);
+    }
 
     /* =============================================
        RESULT COUNT
     ============================================= */
     .result-count {
-      font-size: .78rem; font-weight: 600; color: var(--slate-400);
-      background: var(--slate-100); padding: .2rem .6rem;
+      font-size: .78rem;
+      font-weight: 600;
+      color: var(--slate-400);
+      background: var(--slate-100);
+      padding: .2rem .6rem;
       border-radius: var(--radius-full);
     }
 
@@ -460,95 +871,214 @@
        NEW EMPLOYEE CTA
     ============================================= */
     .btn-new {
-      display: inline-flex; align-items: center; gap: .4rem;
-      font-family: var(--font); font-size: .82rem; font-weight: 700;
-      padding: .5rem 1rem; border-radius: var(--radius-full);
-      background: var(--indigo-600); color: white; text-decoration: none;
+      display: inline-flex;
+      align-items: center;
+      gap: .4rem;
+      font-family: var(--font);
+      font-size: .82rem;
+      font-weight: 700;
+      padding: .5rem 1rem;
+      border-radius: var(--radius-full);
+      background: var(--indigo-600);
+      color: white;
+      text-decoration: none;
       transition: all .15s;
     }
-    .btn-new:hover { background: var(--indigo-700); transform: translateY(-1px); box-shadow: var(--shadow-md); }
+
+    .btn-new:hover {
+      background: var(--indigo-700);
+      transform: translateY(-1px);
+      box-shadow: var(--shadow-md);
+    }
 
     /* =============================================
        PLANILHA MENSAL DE BATIDAS
     ============================================= */
     .matrix-nav {
-      display: flex; align-items: center; gap: .75rem; flex-wrap: wrap;
+      display: flex;
+      align-items: center;
+      gap: .75rem;
+      flex-wrap: wrap;
     }
+
     .matrix-nav__month {
-      font-size: .875rem; font-weight: 700; color: var(--slate-700);
-      min-width: 9rem; text-align: center;
+      font-size: .875rem;
+      font-weight: 700;
+      color: var(--slate-700);
+      min-width: 9rem;
+      text-align: center;
     }
+
     .matrix-nav__btn {
-      display: inline-flex; align-items: center; justify-content: center;
-      width: 32px; height: 32px; border-radius: 8px;
-      background: var(--slate-100); color: var(--slate-600);
-      text-decoration: none; font-weight: 700; font-size: .9rem;
-      transition: background .15s; border: 1px solid var(--slate-200);
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      width: 32px;
+      height: 32px;
+      border-radius: 8px;
+      background: var(--slate-100);
+      color: var(--slate-600);
+      text-decoration: none;
+      font-weight: 700;
+      font-size: .9rem;
+      transition: background .15s;
+      border: 1px solid var(--slate-200);
     }
-    .matrix-nav__btn:hover { background: var(--indigo-100); color: var(--indigo-700); }
+
+    .matrix-nav__btn:hover {
+      background: var(--indigo-100);
+      color: var(--indigo-700);
+    }
 
     .matrix-scroll {
-      overflow-x: auto; -webkit-overflow-scrolling: touch;
+      overflow-x: auto;
+      -webkit-overflow-scrolling: touch;
     }
+
     .punch-matrix {
-      border-collapse: collapse; font-size: .7rem;
-      width: 100%; min-width: max-content;
+      border-collapse: collapse;
+      font-size: .7rem;
+      width: 100%;
+      min-width: max-content;
     }
+
     .punch-matrix th,
     .punch-matrix td {
-      padding: .35rem .45rem; text-align: center;
+      padding: .35rem .45rem;
+      text-align: center;
       border: 1px solid var(--slate-100);
       white-space: nowrap;
     }
+
     .punch-matrix .matrix-emp {
-      position: sticky; left: 0; z-index: 5;
-      background: #fff; font-weight: 600;
-      text-align: left; min-width: 160px;
+      position: sticky;
+      left: 0;
+      z-index: 5;
+      background: #fff;
+      font-weight: 600;
+      text-align: left;
+      min-width: 160px;
       border-right: 2px solid var(--slate-200);
-      max-width: 220px; overflow: hidden;
+      max-width: 220px;
+      overflow: hidden;
       text-overflow: ellipsis;
     }
-    .punch-matrix thead tr { background: var(--slate-50); }
-    .punch-matrix thead .matrix-emp { background: var(--slate-50); }
-    .punch-matrix .matrix-weekend { background: #f3e8ff !important; }
-    .punch-matrix thead .matrix-weekend { background: #ede9fe !important; }
+
+    .punch-matrix thead tr {
+      background: var(--slate-50);
+    }
+
+    .punch-matrix thead .matrix-emp {
+      background: var(--slate-50);
+    }
+
+    .punch-matrix .matrix-weekend {
+      background: #f3e8ff !important;
+    }
+
+    .punch-matrix thead .matrix-weekend {
+      background: #ede9fe !important;
+    }
+
     .punch-matrix thead .matrix-day-label {
-      font-size: .6rem; color: var(--slate-400); font-weight: 500;
+      font-size: .6rem;
+      color: var(--slate-400);
+      font-weight: 500;
     }
+
     .punch-matrix thead .matrix-day-num {
-      font-weight: 700; color: var(--slate-600);
+      font-weight: 700;
+      color: var(--slate-600);
     }
+
     .punch-matrix thead .matrix-weekend .matrix-day-num,
-    .punch-matrix thead .matrix-weekend .matrix-day-label { color: #7c3aed; }
+    .punch-matrix thead .matrix-weekend .matrix-day-label {
+      color: #7c3aed;
+    }
+
     /* Linhas alternadas */
-    .punch-matrix tbody tr:nth-child(even) .matrix-emp { background: var(--slate-50); }
+    .punch-matrix tbody tr:nth-child(even) .matrix-emp {
+      background: var(--slate-50);
+    }
+
     .punch-matrix tbody tr:nth-child(even) td:not(.matrix-emp):not(.matrix-weekend) {
       background: var(--slate-50);
     }
+
     /* Células por contagem */
-    .matrix-cell--empty { color: var(--slate-300); }
-    .matrix-cell--complete { background: #dcfce7 !important; color: #15803d; font-weight: 700; }
-    .matrix-cell--incomplete { background: #ffedd5 !important; color: #c2410c; font-weight: 600; }
-    .matrix-cell--odd { background: #fee2e2 !important; color: #dc2626; font-weight: 700; }
-    .matrix-cell--extra { background: #dbeafe !important; color: #1d4ed8; font-weight: 600; }
+    .matrix-cell--empty {
+      color: var(--slate-300);
+    }
+
+    .matrix-cell--complete {
+      background: #dcfce7 !important;
+      color: #15803d;
+      font-weight: 700;
+    }
+
+    .matrix-cell--incomplete {
+      background: #ffedd5 !important;
+      color: #c2410c;
+      font-weight: 600;
+    }
+
+    .matrix-cell--odd {
+      background: #fee2e2 !important;
+      color: #dc2626;
+      font-weight: 700;
+    }
+
+    .matrix-cell--extra {
+      background: #dbeafe !important;
+      color: #1d4ed8;
+      font-weight: 600;
+    }
 
     .matrix-legend {
-      display: flex; gap: .75rem; flex-wrap: wrap;
-      margin-top: .75rem; padding: .5rem .75rem;
-      background: var(--slate-50); border-radius: 8px;
+      display: flex;
+      gap: .75rem;
+      flex-wrap: wrap;
+      margin-top: .75rem;
+      padding: .5rem .75rem;
+      background: var(--slate-50);
+      border-radius: 8px;
       border: 1px solid var(--slate-100);
     }
+
     .legend-item {
-      display: flex; align-items: center; gap: .35rem;
-      font-size: .7rem; color: var(--slate-500);
+      display: flex;
+      align-items: center;
+      gap: .35rem;
+      font-size: .7rem;
+      color: var(--slate-500);
     }
+
     .legend-dot {
-      width: 10px; height: 10px; border-radius: 3px; flex-shrink: 0;
+      width: 10px;
+      height: 10px;
+      border-radius: 3px;
+      flex-shrink: 0;
     }
-    .legend-dot--complete  { background: #dcfce7; border: 1px solid #86efac; }
-    .legend-dot--incomplete{ background: #ffedd5; border: 1px solid #fed7aa; }
-    .legend-dot--odd       { background: #fee2e2; border: 1px solid #fca5a5; }
-    .legend-dot--weekend   { background: #f3e8ff; border: 1px solid #d8b4fe; }
+
+    .legend-dot--complete {
+      background: #dcfce7;
+      border: 1px solid #86efac;
+    }
+
+    .legend-dot--incomplete {
+      background: #ffedd5;
+      border: 1px solid #fed7aa;
+    }
+
+    .legend-dot--odd {
+      background: #fee2e2;
+      border: 1px solid #fca5a5;
+    }
+
+    .legend-dot--weekend {
+      background: #f3e8ff;
+      border: 1px solid #d8b4fe;
+    }
   </style>
 </head>
 
@@ -561,8 +1091,8 @@
         <div class="top-bar__left">
           <a href="{{ url_for('portal.dashboard') }}" class="back-link">
             <svg width="14" height="14" viewBox="0 0 24 24" fill="none">
-              <path d="M19 12H5M12 19l-7-7 7-7" stroke="currentColor" stroke-width="2.5"
-                stroke-linecap="round" stroke-linejoin="round" />
+              <path d="M19 12H5M12 19l-7-7 7-7" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"
+                stroke-linejoin="round" />
             </svg>
             Dashboard
           </a>
@@ -594,8 +1124,9 @@
           <div class="hero-banner__title">Recursos Humanos</div>
           <div class="hero-banner__sub">
             {{ ["Janeiro","Fevereiro","Março","Abril","Maio","Junho",
-                "Julho","Agosto","Setembro","Outubro","Novembro","Dezembro"][mes-1] }} {{ ano }}
-            · {{ resumo.total_funcionarios }} colaborador{{ 'es' if resumo.total_funcionarios != 1 else '' }} ativo{{ 's' if resumo.total_funcionarios != 1 else '' }}
+            "Julho","Agosto","Setembro","Outubro","Novembro","Dezembro"][mes-1] }} {{ ano }}
+            · {{ resumo.total_funcionarios }} colaborador{{ 'es' if resumo.total_funcionarios != 1 else '' }} ativo{{
+            's' if resumo.total_funcionarios != 1 else '' }}
           </div>
         </div>
 
@@ -618,7 +1149,7 @@
             {% if resumo.dias_com_revisao > 0 %}
             <span class="summary-card__sub sub--warn">
               <a href="{{ url_for('rh.dashboard') }}?aba=visao-geral#alertas"
-                 style="color:inherit; text-decoration:none;">Ver alertas ↓</a>
+                style="color:inherit; text-decoration:none;">Ver alertas ↓</a>
             </span>
             {% else %}
             <span class="summary-card__sub sub--zero">Sem pendências</span>
@@ -632,35 +1163,39 @@
         <div class="tabs-wrapper">
           <nav class="tabs-nav">
             <a href="{{ url_for('rh.dashboard') }}?aba=visao-geral"
-               class="tab-link {{ 'tab-link--active' if aba == 'visao-geral' else '' }}">
+              class="tab-link {{ 'tab-link--active' if aba == 'visao-geral' else '' }}">
               📊 Visão Geral
             </a>
             <a href="{{ url_for('rh.dashboard') }}?aba=colaboradores"
-               class="tab-link {{ 'tab-link--active' if aba == 'colaboradores' else '' }}">
+              class="tab-link {{ 'tab-link--active' if aba == 'colaboradores' else '' }}">
               👤 Colaboradores
               <span class="result-count">{{ resumo.total_funcionarios }}</span>
+            </a>
+            <a href="{{ url_for('rh.dashboard') }}?aba=folha-ponto"
+              class="tab-link {{ 'tab-link--active' if aba == 'folha-ponto' else '' }}">
+              📄 Folha de Ponto
             </a>
           </nav>
         </div>
 
 
         {# ═══════════════════════════════════════════════════════
-           ABA 1 — VISÃO GERAL
+        ABA 1 — VISÃO GERAL
         ═══════════════════════════════════════════════════════ #}
         {% if aba == 'visao-geral' %}
 
         {# ── Planilha Mensal de Batidas ──────────────────────────────────── #}
         {% set _meses_pt = ['', 'Janeiro','Fevereiro','Março','Abril','Maio','Junho',
-                             'Julho','Agosto','Setembro','Outubro','Novembro','Dezembro'] %}
+        'Julho','Agosto','Setembro','Outubro','Novembro','Dezembro'] %}
         <div class="section-card">
           <div class="section-card__header">
             <span class="section-card__title">📋 Planilha de Batidas</span>
             <nav class="matrix-nav">
               <a href="{{ url_for('rh.dashboard', mes=mes_ant_mes, ano=mes_ant_ano, aba='visao-geral') }}"
-                 class="matrix-nav__btn" title="Mês anterior">‹</a>
+                class="matrix-nav__btn" title="Mês anterior">‹</a>
               <span class="matrix-nav__month">{{ _meses_pt[mes] }} {{ ano }}</span>
               <a href="{{ url_for('rh.dashboard', mes=mes_prx_mes, ano=mes_prx_ano, aba='visao-geral') }}"
-                 class="matrix-nav__btn" title="Próximo mês">›</a>
+                class="matrix-nav__btn" title="Próximo mês">›</a>
             </nav>
           </div>
           <div class="section-card__body">
@@ -686,15 +1221,15 @@
                     {% set n = f.batidas.get(dia, 0) %}
                     {% set _is_wknd = dia in matriz.fins_semana %}
                     {% if n == 0 %}
-                      {% set _cls = 'matrix-cell--empty' %}
+                    {% set _cls = 'matrix-cell--empty' %}
                     {% elif n == 4 %}
-                      {% set _cls = 'matrix-cell--complete' %}
+                    {% set _cls = 'matrix-cell--complete' %}
                     {% elif n % 2 == 1 %}
-                      {% set _cls = 'matrix-cell--odd' %}
+                    {% set _cls = 'matrix-cell--odd' %}
                     {% elif n == 2 %}
-                      {% set _cls = 'matrix-cell--incomplete' %}
+                    {% set _cls = 'matrix-cell--incomplete' %}
                     {% else %}
-                      {% set _cls = 'matrix-cell--extra' %}
+                    {% set _cls = 'matrix-cell--extra' %}
                     {% endif %}
                     <td class="{{ _cls }}{{ ' matrix-weekend' if _is_wknd else '' }}">
                       {{ n if n > 0 else '–' }}
@@ -713,7 +1248,8 @@
             </div>
             <div class="matrix-legend">
               <span class="legend-item"><span class="legend-dot legend-dot--complete"></span>4 batidas (completo)</span>
-              <span class="legend-item"><span class="legend-dot legend-dot--incomplete"></span>2 batidas (parcial)</span>
+              <span class="legend-item"><span class="legend-dot legend-dot--incomplete"></span>2 batidas
+                (parcial)</span>
               <span class="legend-item"><span class="legend-dot legend-dot--odd"></span>Batidas ímpares (revisar)</span>
               <span class="legend-item"><span class="legend-dot legend-dot--weekend"></span>Fim de semana</span>
             </div>
@@ -726,7 +1262,8 @@
             <span class="section-card__title">
               ⚠️ Central de Alertas
             </span>
-            <span class="result-count">{{ alertas | length }} alerta{{ 's' if alertas | length != 1 else '' }} (últimos 7 dias)</span>
+            <span class="result-count">{{ alertas | length }} alerta{{ 's' if alertas | length != 1 else '' }} (últimos
+              7 dias)</span>
           </div>
 
           {% if alertas %}
@@ -746,11 +1283,12 @@
               {% set h = alerta.minutos_trabalhados // 60 %}
               {% set m = alerta.minutos_trabalhados % 60 %}
               <div style="font-size:.78rem; color: var(--slate-500);">
-                Trabalhado: <strong style="color:var(--slate-700); font-family:var(--font-mono);">{{ "%dh%02d" | format(h, m) }}</strong>
+                Trabalhado: <strong style="color:var(--slate-700); font-family:var(--font-mono);">{{ "%dh%02d" |
+                  format(h, m) }}</strong>
                 · Batidas ímpares
               </div>
               <a href="{{ url_for('rh.editar_funcionario', funcionario_id=alerta.funcionario_id) }}"
-                 class="alert-card__link">
+                class="alert-card__link">
                 ✏️ Corrigir
               </a>
             </div>
@@ -768,34 +1306,34 @@
 
 
         {# ═══════════════════════════════════════════════════════
-           ABA 2 — COLABORADORES
+        ABA 2 — COLABORADORES
         ═══════════════════════════════════════════════════════ #}
         {% if aba == 'colaboradores' %}
 
         <div class="section-card">
           <div class="section-card__header">
             <span class="section-card__title">👤 Colaboradores</span>
-            <span class="result-count">{{ funcionarios | length }} encontrado{{ 's' if funcionarios | length != 1 else '' }}</span>
+            <span class="result-count">{{ funcionarios | length }} encontrado{{ 's' if funcionarios | length != 1 else
+              '' }}</span>
           </div>
 
           <!-- Filtros -->
           <form method="GET" action="{{ url_for('rh.dashboard') }}">
             <input type="hidden" name="aba" value="colaboradores" />
             <div class="filters-bar">
-              <input type="text" name="q" value="{{ q | e }}"
-                placeholder="Buscar por nome ou CPF…" />
+              <input type="text" name="q" value="{{ q | e }}" placeholder="Buscar por nome ou CPF…" />
               <select name="area_id">
                 <option value="">Todas as Áreas</option>
                 {% for area in areas %}
-                <option value="{{ area.id }}" {{ 'selected' if area_id == area.id else '' }}>
+                <option value="{{ area.id }}" {{ 'selected' if area_id==area.id else '' }}>
                   {{ area.name | e }}
                 </option>
                 {% endfor %}
               </select>
               <select name="status">
-                <option value="ativo"   {{ 'selected' if status == 'ativo'   else '' }}>Ativos</option>
-                <option value="inativo" {{ 'selected' if status == 'inativo' else '' }}>Inativos</option>
-                <option value="todos"   {{ 'selected' if status == 'todos'   else '' }}>Todos</option>
+                <option value="ativo" {{ 'selected' if status=='ativo' else '' }}>Ativos</option>
+                <option value="inativo" {{ 'selected' if status=='inativo' else '' }}>Inativos</option>
+                <option value="todos" {{ 'selected' if status=='todos' else '' }}>Todos</option>
               </select>
               <button type="submit" class="btn-filter btn-filter--primary">Filtrar</button>
               <a href="{{ url_for('rh.dashboard') }}?aba=colaboradores" class="btn-filter btn-filter--ghost">Limpar</a>
@@ -846,11 +1384,11 @@
                   <!-- Perfil/Role -->
                   <td class="col-role">
                     {% if f.role %}
-                      {% if f.role.is_super_admin %}
-                      <span class="badge badge--role-admin">⭐ {{ f.role.nome | e }}</span>
-                      {% else %}
-                      <span class="badge badge--role">{{ f.role.nome | e }}</span>
-                      {% endif %}
+                    {% if f.role.is_super_admin %}
+                    <span class="badge badge--role-admin">⭐ {{ f.role.nome | e }}</span>
+                    {% else %}
+                    <span class="badge badge--role">{{ f.role.nome | e }}</span>
+                    {% endif %}
                     {% else %}
                     <span class="badge badge--no-role">Sem perfil</span>
                     {% endif %}
@@ -861,22 +1399,26 @@
                     {% set saldo = f.saldo_banco_horas() %}
                     {% if saldo > 0 %}
                     <span class="banco-cell banco-cell--pos">+{{ f.saldo_banco_horas_formatado() }}</span>
-                    {% elif saldo < 0 %}
-                    <span class="banco-cell banco-cell--neg">{{ f.saldo_banco_horas_formatado() }}</span>
-                    {% else %}
-                    <span class="banco-cell banco-cell--zero">0h00</span>
-                    {% endif %}
+                    {% elif saldo < 0 %} <span class="banco-cell banco-cell--neg">{{ f.saldo_banco_horas_formatado()
+                      }}</span>
+                      {% else %}
+                      <span class="banco-cell banco-cell--zero">0h00</span>
+                      {% endif %}
                   </td>
 
                   <!-- Ações -->
                   <td>
                     <div class="actions-cell">
-                      <a href="{{ url_for('rh.banco_horas_funcionario', funcionario_id=f.id) }}"
-                         class="btn-action btn-action--banco">
-                        📊 Banco de Horas
+                      <a href="{{ url_for('rh.folha_ponto', funcionario_id=f.id) }}"
+                        class="btn-action btn-action--banco">
+                        📄 Folha de Ponto
+                      </a>
+                      <a href="{{ url_for('rh.banco_horas_funcionario', funcionario_id=f.id) }}" class="btn-action"
+                        style="background:var(--green-50);color:var(--green-600);">
+                        ⏱ Banco de Horas
                       </a>
                       <a href="{{ url_for('rh.editar_funcionario', funcionario_id=f.id) }}"
-                         class="btn-action btn-action--edit">
+                        class="btn-action btn-action--edit">
                         ✏️ Editar
                       </a>
                       {% if f.ativo %}
@@ -906,6 +1448,31 @@
         </div>{# .section-card #}
 
         {% endif %}{# fim aba colaboradores #}
+
+
+        {# ═══════════════════════════════════════════════════════
+        ABA 3 — FOLHA DE PONTO
+        ═══════════════════════════════════════════════════════ #}
+        {% if aba == 'folha-ponto' %}
+
+        <div class="section-card">
+          <div class="section-card__header">
+            <span class="section-card__title">📄 Folha de Ponto Individual</span>
+          </div>
+          <div class="empty-state" style="padding:3rem 1.5rem;">
+            <span class="empty-state__icon">👤</span>
+            <span class="empty-state__text">
+              Selecione um colaborador na aba <strong>Colaboradores</strong>
+              e clique em <strong>Folha de Ponto</strong> para visualizar
+              o registro mensal individual.
+            </span>
+            <a href="{{ url_for('rh.dashboard') }}?aba=colaboradores" class="btn-new" style="margin-top:1rem;">
+              Ir para Colaboradores
+            </a>
+          </div>
+        </div>
+
+        {% endif %}{# fim aba folha-ponto #}
 
       </div><!-- .content-wrap -->
     </main>
@@ -944,7 +1511,7 @@
     function closeConfirm() {
       document.getElementById('modal-desativar').classList.remove('open');
     }
-    document.getElementById('modal-desativar').addEventListener('click', function(e) {
+    document.getElementById('modal-desativar').addEventListener('click', function (e) {
       if (e.target === this) closeConfirm();
     });
   </script>

@@ -22,15 +22,18 @@ from __future__ import annotations
 
 import json
 from collections import defaultdict
-from datetime import date, timedelta
+from datetime import date, datetime, timezone, timedelta
 
-from flask import Blueprint, flash, redirect, render_template, request, session, url_for
+from flask import Blueprint, abort, flash, make_response, redirect, render_template, request, session, url_for
 
 from app.blueprints.portal.routes import login_required
 from app.core.models import Area
-from app.core.permissions import require_permission
+from app.core.permissions import has_permission, require_permission
 from app.extensions import db
 from app.models.funcionario import Funcionario
+from app.services.configuracao_service import (
+    ConfiguracaoService, CHAVE_BRANDING_EMPRESA_NOME, CHAVE_EMPRESA_CNPJ, CHAVE_EMPRESA_ENDERECO,
+)
 from app.services.funcionario_service import FuncionarioService
 from app.services.rh_service import RHService
 from app.services.role_service import RoleService
@@ -650,3 +653,343 @@ def banco_horas_funcionario(funcionario_id: int):
         from_rh=True,
         back_url=url_for("rh.dashboard", aba="colaboradores"),
     )
+
+
+# ---------------------------------------------------------------------------
+# Folha de Ponto — helper de permissão
+# ---------------------------------------------------------------------------
+
+def _verificar_permissao_folha(acao: str) -> bool:
+    """Verifica se o funcionário logado possui a permissão 'folha_ponto.<acao>'.
+
+    Retorna bool (não aborta) para exibição condicional de botões no template.
+    Não levanta exceção; a rota final deve verificar independentemente.
+
+    Args:
+        acao: Ação a verificar ('view', 'edit', 'deducao', 'imprimir').
+
+    Returns:
+        True se o funcionário tiver a permissão, False caso contrário.
+    """
+    fid = session.get("funcionario_id")
+    return bool(fid and has_permission(fid, "folha_ponto", acao))
+
+
+# ---------------------------------------------------------------------------
+# Folha de Ponto — Visualização
+# ---------------------------------------------------------------------------
+
+@bp.route("/folha-ponto/<int:funcionario_id>", methods=["GET"])
+@login_required
+@require_permission("folha_ponto", "view")
+def folha_ponto(funcionario_id: int):
+    """Exibe a Folha de Ponto CLT individual de um funcionário.
+
+    Renderiza a tabela de 10 colunas conforme o padrão CLT, com navegação
+    por mês e botões de ação condicionados pelas permissões do usuário.
+
+    Path params:
+        funcionario_id (int): PK do funcionário.
+
+    Query params:
+        mes (int): Mês a exibir (1–12). Padrão: mês corrente.
+        ano (int): Ano a exibir. Padrão: ano corrente.
+
+    Returns:
+        Renderização de rh/folha_ponto.html.
+    """
+    hoje = date.today()
+    try:
+        mes = int(request.args.get("mes") or hoje.month)
+        ano = int(request.args.get("ano") or hoje.year)
+    except (TypeError, ValueError):
+        mes, ano = hoje.month, hoje.year
+
+    try:
+        dados = RHService.folha_ponto_mes(funcionario_id, ano, mes)
+    except ValueError as exc:
+        flash(str(exc), "erro")
+        return redirect(url_for("rh.dashboard", aba="folha-ponto"))
+
+    primeiro_do_mes = date(ano, mes, 1)
+    mes_ant = (primeiro_do_mes - timedelta(days=1)).replace(day=1)
+    mes_prx = (primeiro_do_mes.replace(day=28) + timedelta(days=4)).replace(day=1)
+
+    return render_template(
+        "rh/folha_ponto.html",
+        dados=dados,
+        mes=mes,
+        ano=ano,
+        mes_ant_mes=mes_ant.month,
+        mes_ant_ano=mes_ant.year,
+        mes_prx_mes=mes_prx.month,
+        mes_prx_ano=mes_prx.year,
+        pode_editar=_verificar_permissao_folha("edit"),
+        pode_deducao=_verificar_permissao_folha("deducao"),
+        pode_imprimir=_verificar_permissao_folha("imprimir"),
+    )
+
+
+# ---------------------------------------------------------------------------
+# Folha de Ponto — Adicionar batida
+# ---------------------------------------------------------------------------
+
+@bp.route("/folha-ponto/<int:funcionario_id>/batida/adicionar", methods=["POST"])
+@login_required
+@require_permission("folha_ponto", "edit")
+def folha_ponto_adicionar_batida(funcionario_id: int):
+    """Registra uma nova batida administrativa na Folha de Ponto.
+
+    Usa PontoService.registrar_batida com source='admin' e registra o
+    AuditLog exigido pela Rule #3 do Ponto Eletrônico.
+
+    Form fields:
+        novo_horario (str): Datetime no formato datetime-local (YYYY-MM-DDTHH:MM).
+        motivo (str): Justificativa obrigatória da inclusão.
+
+    Returns:
+        Redirect para folha_ponto com flash de resultado.
+    """
+    from app.services.ponto_service import PontoService
+
+    ator_id = _get_ator_id()
+    mes = int(request.form.get("mes") or date.today().month)
+    ano = int(request.form.get("ano") or date.today().year)
+
+    horario_str = (request.form.get("novo_horario") or "").strip()
+    motivo = (request.form.get("motivo") or "").strip()
+
+    try:
+        if not horario_str:
+            raise ValueError("O horário é obrigatório.")
+        if not motivo:
+            raise ValueError("O motivo é obrigatório.")
+
+        punch_time = datetime.strptime(horario_str, "%Y-%m-%dT%H:%M").replace(
+            tzinfo=timezone.utc
+        )
+        entry = PontoService.registrar_batida(
+            funcionario_id=funcionario_id,
+            punch_time=punch_time,
+            source="admin",
+            ator_id=ator_id,
+        )
+        flash("Batida adicionada com sucesso.", "sucesso")
+    except ValueError as exc:
+        flash(str(exc), "erro")
+
+    return redirect(url_for("rh.folha_ponto", funcionario_id=funcionario_id, mes=mes, ano=ano))
+
+
+# ---------------------------------------------------------------------------
+# Folha de Ponto — Editar batida
+# ---------------------------------------------------------------------------
+
+@bp.route("/folha-ponto/<int:funcionario_id>/batida/<int:entry_id>/editar", methods=["POST"])
+@login_required
+@require_permission("folha_ponto", "edit")
+def folha_ponto_editar_batida(funcionario_id: int, entry_id: int):
+    """Edita o horário de uma batida existente na Folha de Ponto.
+
+    Delega a PontoService.editar_batida_admin que exige motivo não vazio
+    e registra AuditLog com snapshots before/after (Rule #1 e Rule #3).
+
+    Path params:
+        funcionario_id (int): PK do funcionário.
+        entry_id (int): PK da TimeEntry a editar.
+
+    Form fields:
+        novo_horario (str): Novo datetime (YYYY-MM-DDTHH:MM).
+        motivo (str): Justificativa obrigatória.
+
+    Returns:
+        Redirect para folha_ponto com flash de resultado.
+    """
+    from app.services.ponto_service import PontoService
+
+    ator_id = _get_ator_id()
+    mes = int(request.form.get("mes") or date.today().month)
+    ano = int(request.form.get("ano") or date.today().year)
+
+    horario_str = (request.form.get("novo_horario") or "").strip()
+    motivo = (request.form.get("motivo") or "").strip()
+
+    try:
+        if not horario_str:
+            raise ValueError("O horário é obrigatório.")
+        novo_horario = datetime.strptime(horario_str, "%Y-%m-%dT%H:%M").replace(
+            tzinfo=timezone.utc
+        )
+        PontoService.editar_batida_admin(
+            time_entry_id=entry_id,
+            novo_horario=novo_horario,
+            motivo=motivo,
+            ator_id=ator_id,
+        )
+        flash("Batida editada com sucesso.", "sucesso")
+    except ValueError as exc:
+        flash(str(exc), "erro")
+
+    return redirect(url_for("rh.folha_ponto", funcionario_id=funcionario_id, mes=mes, ano=ano))
+
+
+# ---------------------------------------------------------------------------
+# Folha de Ponto — Deletar batida
+# ---------------------------------------------------------------------------
+
+@bp.route("/folha-ponto/<int:funcionario_id>/batida/<int:entry_id>/deletar", methods=["POST"])
+@login_required
+@require_permission("folha_ponto", "edit")
+def folha_ponto_deletar_batida(funcionario_id: int, entry_id: int):
+    """Remove uma batida da Folha de Ponto.
+
+    Delega a PontoService.deletar_batida_admin que registra AuditLog
+    com snapshot completo antes da exclusão (Rule #1 e Rule #3).
+
+    Path params:
+        funcionario_id (int): PK do funcionário.
+        entry_id (int): PK da TimeEntry a remover.
+
+    Form fields:
+        motivo (str): Justificativa obrigatória da exclusão.
+
+    Returns:
+        Redirect para folha_ponto com flash de resultado.
+    """
+    from app.services.ponto_service import PontoService
+
+    ator_id = _get_ator_id()
+    mes = int(request.form.get("mes") or date.today().month)
+    ano = int(request.form.get("ano") or date.today().year)
+    motivo = (request.form.get("motivo") or "").strip()
+
+    try:
+        PontoService.deletar_batida_admin(
+            time_entry_id=entry_id,
+            motivo=motivo,
+            ator_id=ator_id,
+        )
+        flash("Batida removida com sucesso.", "sucesso")
+    except ValueError as exc:
+        flash(str(exc), "erro")
+
+    return redirect(url_for("rh.folha_ponto", funcionario_id=funcionario_id, mes=mes, ano=ano))
+
+
+# ---------------------------------------------------------------------------
+# Folha de Ponto — Registrar dedução de banco de horas
+# ---------------------------------------------------------------------------
+
+@bp.route("/folha-ponto/<int:funcionario_id>/deducao", methods=["POST"])
+@login_required
+@require_permission("folha_ponto", "deducao")
+def folha_ponto_deducao(funcionario_id: int):
+    """Registra uma dedução de banco de horas a partir da Folha de Ponto.
+
+    Delega a PontoService.registrar_abatimento_horas que cria o registro
+    TimeBankDeduction e atualiza o saldo do Funcionario, com AuditLog.
+
+    Path params:
+        funcionario_id (int): PK do funcionário.
+
+    Form fields:
+        deduction_type (str): Tipo de dedução (conforme DeductionType enum).
+        minutos (int): Quantidade de minutos a deduzir.
+        data_registro (str): Data do desconto (YYYY-MM-DD).
+        observacao (str): Observação opcional.
+
+    Returns:
+        Redirect para folha_ponto com flash de resultado.
+    """
+    from app.services.ponto_service import PontoService
+
+    ator_id = _get_ator_id()
+    mes = int(request.form.get("mes") or date.today().month)
+    ano = int(request.form.get("ano") or date.today().year)
+
+    try:
+        deduction_type = request.form.get("deduction_type") or ""
+        minutos = int(request.form.get("minutos") or 0)
+        data_str = (request.form.get("data_registro") or "").strip()
+        observacao = (request.form.get("observacao") or "").strip()
+
+        data_registro = datetime.strptime(data_str, "%Y-%m-%d").date() if data_str else date.today()
+
+        PontoService.registrar_abatimento_horas(
+            funcionario_id=funcionario_id,
+            deduction_type=deduction_type,
+            minutos=minutos,
+            data_registro=data_registro,
+            observacao=observacao,
+            ator_id=ator_id,
+        )
+        flash("Dedução registrada com sucesso.", "sucesso")
+    except (ValueError, KeyError) as exc:
+        flash(str(exc), "erro")
+
+    return redirect(url_for("rh.folha_ponto", funcionario_id=funcionario_id, mes=mes, ano=ano))
+
+
+# ---------------------------------------------------------------------------
+# Folha de Ponto — Gerar PDF
+# ---------------------------------------------------------------------------
+
+@bp.route("/folha-ponto/<int:funcionario_id>/pdf", methods=["GET"])
+@login_required
+@require_permission("folha_ponto", "imprimir")
+def folha_ponto_pdf(funcionario_id: int):
+    """Gera e retorna o PDF da Folha de Ponto via WeasyPrint.
+
+    Renderiza o template folha_ponto_pdf.html com os dados do mês,
+    dados cadastrais da empresa (CNPJ/endereço) e converte para PDF
+    usando WeasyPrint. Retorna o arquivo inline com nome padronizado.
+
+    Path params:
+        funcionario_id (int): PK do funcionário.
+
+    Query params:
+        mes (int): Mês do PDF (1–12). Padrão: mês corrente.
+        ano (int): Ano do PDF. Padrão: ano corrente.
+
+    Returns:
+        Response com Content-Type application/pdf e filename padronizado.
+    """
+    from weasyprint import HTML
+
+    hoje = date.today()
+    try:
+        mes = int(request.args.get("mes") or hoje.month)
+        ano = int(request.args.get("ano") or hoje.year)
+    except (TypeError, ValueError):
+        mes, ano = hoje.month, hoje.year
+
+    try:
+        dados = RHService.folha_ponto_mes(funcionario_id, ano, mes)
+    except ValueError as exc:
+        flash(str(exc), "erro")
+        return redirect(url_for("rh.dashboard", aba="folha-ponto"))
+
+    empresa_nome = ConfiguracaoService.get(CHAVE_BRANDING_EMPRESA_NOME) or ""
+    empresa_cnpj = ConfiguracaoService.get(CHAVE_EMPRESA_CNPJ) or ""
+    empresa_endereco = ConfiguracaoService.get(CHAVE_EMPRESA_ENDERECO) or ""
+
+    html_str = render_template(
+        "rh/folha_ponto_pdf.html",
+        dados=dados,
+        mes=mes,
+        ano=ano,
+        empresa_nome=empresa_nome,
+        empresa_cnpj=empresa_cnpj,
+        empresa_endereco=empresa_endereco,
+        gerado_em=datetime.now(timezone.utc),
+    )
+
+    pdf_bytes = HTML(string=html_str).write_pdf()
+
+    cpf = dados["funcionario"].cpf or "sem_cpf"
+    filename = f"folha_ponto_{cpf}_{ano}-{mes:02d}.pdf"
+
+    response = make_response(pdf_bytes)
+    response.headers["Content-Type"] = "application/pdf"
+    response.headers["Content-Disposition"] = f'inline; filename="{filename}"'
+    return response

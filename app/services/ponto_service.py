@@ -617,6 +617,74 @@ class PontoService(BaseService):
         }
 
     @staticmethod
+    def deletar_batida_admin(
+        time_entry_id: int,
+        motivo: str,
+        ator_id: int,
+    ) -> dict[str, Any]:
+        """
+        Remove uma batida de ponto existente (operação exclusiva de admin).
+
+        Antigravity Rule #1: registra AuditLog com snapshot completo antes da exclusão.
+        Antigravity Rule #2: sem imports do Flask.
+        Rule #3: motivo não vazio é obrigatório.
+
+        Após deletar, recalcula o TimeDay do dia afetado via processar_dia() para
+        refletir o novo saldo (possivelmente com batidas ímpares → needs_review=True).
+
+        Args:
+            time_entry_id: PK da batida a remover.
+            motivo:        Justificativa da exclusão — obrigatória e não vazia.
+            ator_id:       ID do admin que realiza a ação.
+
+        Returns:
+            Dict com id, shift_date e motivo da batida removida.
+
+        Raises:
+            ValueError: Se motivo for vazio.
+            ValueError: Se a batida não for encontrada.
+        """
+        from app.models.ponto import TimeEntry
+
+        BaseService._require(motivo, "motivo")
+
+        entry = db.session.get(TimeEntry, time_entry_id)
+        if not entry:
+            raise ValueError(f"Batida {time_entry_id} não encontrada.")
+
+        snapshot = {
+            "funcionario_id": entry.funcionario_id,
+            "punch_time": entry.punch_time.isoformat(),
+            "shift_date": entry.shift_date.isoformat(),
+            "punch_type": entry.punch_type.value,
+            "source": entry.source.value,
+            "admin_change_reason": motivo.strip(),
+            "deleted_by_user_id": ator_id,
+        }
+
+        funcionario_id = entry.funcionario_id
+        shift_date = entry.shift_date
+
+        # Antigravity Rule #1 — audita antes de deletar para o entity_id ainda existir
+        AuditService.log_delete(
+            "ponto",
+            entity_id=entry.id,
+            previous_state=snapshot,
+            actor_id=ator_id,
+        )
+        db.session.delete(entry)
+        db.session.commit()
+
+        # Recalcula o dia afetado (pode ficar com batidas ímpares → needs_review)
+        PontoService.processar_dia(funcionario_id, shift_date)
+
+        return {
+            "id": time_entry_id,
+            "shift_date": shift_date,
+            "motivo": motivo,
+        }
+
+    @staticmethod
     def recalcular_banco_global(funcionario_id: int, ator_id: int | None = None) -> int:
         """
         Refaz a contagem total do banco de horas do zero para um funcionário.
