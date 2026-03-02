@@ -10,13 +10,14 @@ chama AuditService.
 
 from __future__ import annotations
 
+import calendar
 from datetime import date, timedelta
 
 from sqlalchemy import func
 
 from app.extensions import db
 from app.models.funcionario import Funcionario
-from app.models.ponto import TimeDay
+from app.models.ponto import TimeDay, TimeEntry
 from app.services.base import BaseService
 
 
@@ -175,3 +176,81 @@ class RHService(BaseService):
             )
 
         return query.order_by(Funcionario.nome).all()
+
+    # ------------------------------------------------------------------
+    # Planilha Mensal de Batidas
+    # ------------------------------------------------------------------
+
+    @staticmethod
+    def matriz_batidas_mes(ano: int, mes: int) -> dict:
+        """Agrega contagem de batidas (TimeEntry) por funcionário × dia do mês.
+
+        Retorna estrutura pronta para renderização da planilha mensal no dashboard RH.
+        Usa GROUP BY em TimeEntry (não TimeDay) para obter a contagem bruta de batidas,
+        independentemente do processamento do saldo.
+
+        Args:
+            ano: Ano do período (ex.: 2026).
+            mes: Mês do período (1–12).
+
+        Returns:
+            Dicionário com:
+            - dias_no_mes (int): total de dias no mês.
+            - fins_semana (set[int]): dias 1..N que são sábado ou domingo.
+            - linhas (list[dict]): uma entrada por funcionário ativo, contendo:
+                - funcionario_id (int)
+                - nome (str)
+                - batidas (dict[int, int]): {dia: contagem}; ausente = zero batidas.
+        """
+        inicio = date(ano, mes, 1)
+        dias_no_mes = calendar.monthrange(ano, mes)[1]
+        fim = date(ano, mes, dias_no_mes) + timedelta(days=1)
+
+        # Identifica fins de semana (5=sáb, 6=dom)
+        fins_semana = {
+            d for d in range(1, dias_no_mes + 1)
+            if date(ano, mes, d).weekday() >= 5
+        }
+
+        # Funcionários ativos ordenados por nome
+        funcionarios = (
+            db.session.query(Funcionario)
+            .filter_by(ativo=True)
+            .order_by(Funcionario.nome)
+            .all()
+        )
+
+        # Contagem de batidas agrupada por funcionario_id + shift_date
+        agg = (
+            db.session.query(
+                TimeEntry.funcionario_id,
+                TimeEntry.shift_date,
+                func.count(TimeEntry.id).label("punch_count"),
+            )
+            .filter(
+                TimeEntry.shift_date >= inicio,
+                TimeEntry.shift_date < fim,
+            )
+            .group_by(TimeEntry.funcionario_id, TimeEntry.shift_date)
+            .all()
+        )
+
+        # Lookup: funcionario_id → {dia_do_mes: contagem}
+        lookup: dict[int, dict[int, int]] = {}
+        for row in agg:
+            lookup.setdefault(row.funcionario_id, {})[row.shift_date.day] = row.punch_count
+
+        linhas = [
+            {
+                "funcionario_id": f.id,
+                "nome": f.nome,
+                "batidas": lookup.get(f.id, {}),
+            }
+            for f in funcionarios
+        ]
+
+        return {
+            "dias_no_mes": dias_no_mes,
+            "fins_semana": fins_semana,
+            "linhas": linhas,
+        }

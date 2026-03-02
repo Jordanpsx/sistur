@@ -463,6 +463,88 @@
       transition: all .15s;
     }
     .btn-new:hover { background: var(--indigo-700); transform: translateY(-1px); box-shadow: var(--shadow-md); }
+
+    /* =============================================
+       PLANILHA MENSAL DE BATIDAS
+    ============================================= */
+    .matrix-nav {
+      display: flex; align-items: center; gap: .75rem; flex-wrap: wrap;
+    }
+    .matrix-nav__month {
+      font-size: .875rem; font-weight: 700; color: var(--slate-700);
+      min-width: 9rem; text-align: center;
+    }
+    .matrix-nav__btn {
+      display: inline-flex; align-items: center; justify-content: center;
+      width: 32px; height: 32px; border-radius: 8px;
+      background: var(--slate-100); color: var(--slate-600);
+      text-decoration: none; font-weight: 700; font-size: .9rem;
+      transition: background .15s; border: 1px solid var(--slate-200);
+    }
+    .matrix-nav__btn:hover { background: var(--indigo-100); color: var(--indigo-700); }
+
+    .matrix-scroll {
+      overflow-x: auto; -webkit-overflow-scrolling: touch;
+    }
+    .punch-matrix {
+      border-collapse: collapse; font-size: .7rem;
+      width: 100%; min-width: max-content;
+    }
+    .punch-matrix th,
+    .punch-matrix td {
+      padding: .35rem .45rem; text-align: center;
+      border: 1px solid var(--slate-100);
+      white-space: nowrap;
+    }
+    .punch-matrix .matrix-emp {
+      position: sticky; left: 0; z-index: 5;
+      background: #fff; font-weight: 600;
+      text-align: left; min-width: 160px;
+      border-right: 2px solid var(--slate-200);
+      max-width: 220px; overflow: hidden;
+      text-overflow: ellipsis;
+    }
+    .punch-matrix thead tr { background: var(--slate-50); }
+    .punch-matrix thead .matrix-emp { background: var(--slate-50); }
+    .punch-matrix .matrix-weekend { background: #f3e8ff !important; }
+    .punch-matrix thead .matrix-weekend { background: #ede9fe !important; }
+    .punch-matrix thead .matrix-day-label {
+      font-size: .6rem; color: var(--slate-400); font-weight: 500;
+    }
+    .punch-matrix thead .matrix-day-num {
+      font-weight: 700; color: var(--slate-600);
+    }
+    .punch-matrix thead .matrix-weekend .matrix-day-num,
+    .punch-matrix thead .matrix-weekend .matrix-day-label { color: #7c3aed; }
+    /* Linhas alternadas */
+    .punch-matrix tbody tr:nth-child(even) .matrix-emp { background: var(--slate-50); }
+    .punch-matrix tbody tr:nth-child(even) td:not(.matrix-emp):not(.matrix-weekend) {
+      background: var(--slate-50);
+    }
+    /* Células por contagem */
+    .matrix-cell--empty { color: var(--slate-300); }
+    .matrix-cell--complete { background: #dcfce7 !important; color: #15803d; font-weight: 700; }
+    .matrix-cell--incomplete { background: #ffedd5 !important; color: #c2410c; font-weight: 600; }
+    .matrix-cell--odd { background: #fee2e2 !important; color: #dc2626; font-weight: 700; }
+    .matrix-cell--extra { background: #dbeafe !important; color: #1d4ed8; font-weight: 600; }
+
+    .matrix-legend {
+      display: flex; gap: .75rem; flex-wrap: wrap;
+      margin-top: .75rem; padding: .5rem .75rem;
+      background: var(--slate-50); border-radius: 8px;
+      border: 1px solid var(--slate-100);
+    }
+    .legend-item {
+      display: flex; align-items: center; gap: .35rem;
+      font-size: .7rem; color: var(--slate-500);
+    }
+    .legend-dot {
+      width: 10px; height: 10px; border-radius: 3px; flex-shrink: 0;
+    }
+    .legend-dot--complete  { background: #dcfce7; border: 1px solid #86efac; }
+    .legend-dot--incomplete{ background: #ffedd5; border: 1px solid #fed7aa; }
+    .legend-dot--odd       { background: #fee2e2; border: 1px solid #fca5a5; }
+    .legend-dot--weekend   { background: #f3e8ff; border: 1px solid #d8b4fe; }
   </style>
 </head>
 
@@ -591,6 +673,77 @@
            ABA 1 — VISÃO GERAL
         ═══════════════════════════════════════════════════════ #}
         {% if aba == 'visao-geral' %}
+
+        {# ── Planilha Mensal de Batidas ──────────────────────────────────── #}
+        {% set _meses_pt = ['', 'Janeiro','Fevereiro','Março','Abril','Maio','Junho',
+                             'Julho','Agosto','Setembro','Outubro','Novembro','Dezembro'] %}
+        <div class="section-card">
+          <div class="section-card__header">
+            <span class="section-card__title">📋 Planilha de Batidas</span>
+            <nav class="matrix-nav">
+              <a href="{{ url_for('rh.dashboard', mes=mes_ant_mes, ano=mes_ant_ano, aba='visao-geral') }}"
+                 class="matrix-nav__btn" title="Mês anterior">‹</a>
+              <span class="matrix-nav__month">{{ _meses_pt[mes] }} {{ ano }}</span>
+              <a href="{{ url_for('rh.dashboard', mes=mes_prx_mes, ano=mes_prx_ano, aba='visao-geral') }}"
+                 class="matrix-nav__btn" title="Próximo mês">›</a>
+            </nav>
+          </div>
+          <div class="section-card__body">
+            <div class="matrix-scroll">
+              <table class="punch-matrix">
+                <thead>
+                  <tr>
+                    <th class="matrix-emp">Funcionário</th>
+                    {% for dia in range(1, matriz.dias_no_mes + 1) %}
+                    {% set _is_wknd = dia in matriz.fins_semana %}
+                    <th class="{{ 'matrix-weekend' if _is_wknd else '' }}">
+                      <div class="matrix-day-num">{{ dia }}</div>
+                      <div class="matrix-day-label">{{ dias_semana_labels[dia] }}</div>
+                    </th>
+                    {% endfor %}
+                  </tr>
+                </thead>
+                <tbody>
+                  {% for f in matriz.linhas %}
+                  <tr>
+                    <td class="matrix-emp" title="{{ f.nome }}">{{ f.nome }}</td>
+                    {% for dia in range(1, matriz.dias_no_mes + 1) %}
+                    {% set n = f.batidas.get(dia, 0) %}
+                    {% set _is_wknd = dia in matriz.fins_semana %}
+                    {% if n == 0 %}
+                      {% set _cls = 'matrix-cell--empty' %}
+                    {% elif n == 4 %}
+                      {% set _cls = 'matrix-cell--complete' %}
+                    {% elif n % 2 == 1 %}
+                      {% set _cls = 'matrix-cell--odd' %}
+                    {% elif n == 2 %}
+                      {% set _cls = 'matrix-cell--incomplete' %}
+                    {% else %}
+                      {% set _cls = 'matrix-cell--extra' %}
+                    {% endif %}
+                    <td class="{{ _cls }}{{ ' matrix-weekend' if _is_wknd else '' }}">
+                      {{ n if n > 0 else '–' }}
+                    </td>
+                    {% endfor %}
+                  </tr>
+                  {% endfor %}
+                  {% if not matriz.linhas %}
+                  <tr>
+                    <td class="matrix-emp" style="color:var(--slate-400);">Nenhum colaborador ativo</td>
+                    {% for _ in range(matriz.dias_no_mes) %}<td class="matrix-cell--empty">–</td>{% endfor %}
+                  </tr>
+                  {% endif %}
+                </tbody>
+              </table>
+            </div>
+            <div class="matrix-legend">
+              <span class="legend-item"><span class="legend-dot legend-dot--complete"></span>4 batidas (completo)</span>
+              <span class="legend-item"><span class="legend-dot legend-dot--incomplete"></span>2 batidas (parcial)</span>
+              <span class="legend-item"><span class="legend-dot legend-dot--odd"></span>Batidas ímpares (revisar)</span>
+              <span class="legend-item"><span class="legend-dot legend-dot--weekend"></span>Fim de semana</span>
+            </div>
+          </div>
+        </div>
 
         <!-- Central de Alertas -->
         <div class="section-card" id="alertas">

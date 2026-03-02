@@ -62,9 +62,29 @@ def dashboard():
     """
     hoje = date.today()
 
+    # Navegação de mês (padrão: mês atual)
+    try:
+        mes = int(request.args.get("mes") or hoje.month)
+        ano = int(request.args.get("ano") or hoje.year)
+    except (ValueError, TypeError):
+        mes, ano = hoje.month, hoje.year
+
     # --- Aba 1: Visão Geral ---
-    resumo = RHService.resumo_mensal(hoje.year, hoje.month)
+    resumo = RHService.resumo_mensal(ano, mes)
     alertas = RHService.alertas_revisao(7)
+    matriz = RHService.matriz_batidas_mes(ano, mes)
+
+    # Meses adjacentes para navegação ← →
+    primeiro_do_mes = date(ano, mes, 1)
+    mes_ant = (primeiro_do_mes - timedelta(days=1)).replace(day=1)
+    mes_prx = (primeiro_do_mes.replace(day=28) + timedelta(days=4)).replace(day=1)
+
+    # Rótulos abreviados de dia da semana para cada dia do mês (1-indexed)
+    _abrev = ["Seg", "Ter", "Qua", "Qui", "Sex", "Sáb", "Dom"]
+    dias_semana_labels = {
+        d: _abrev[date(ano, mes, d).weekday()]
+        for d in range(1, matriz["dias_no_mes"] + 1)
+    }
 
     # --- Aba 2: Colaboradores ---
     q = (request.args.get("q") or "").strip()
@@ -79,14 +99,20 @@ def dashboard():
         "rh/index.html",
         resumo=resumo,
         alertas=alertas,
+        matriz=matriz,
+        dias_semana_labels=dias_semana_labels,
         funcionarios=funcionarios,
         areas=areas,
         q=q,
         area_id=area_id,
         status=status,
         aba=aba,
-        mes=hoje.month,
-        ano=hoje.year,
+        mes=mes,
+        ano=ano,
+        mes_ant_mes=mes_ant.month,
+        mes_ant_ano=mes_ant.year,
+        mes_prx_mes=mes_prx.month,
+        mes_prx_ano=mes_prx.year,
     )
 
 
