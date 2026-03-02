@@ -892,8 +892,7 @@
     <main>
       <div class="content-wrap">
 
-        {# ── Pre-compute today's entries ── #}
-        {% set today_entries = entries_by_day.get(hoje, []) %}
+        {# ── Pre-compute today's entries (passado pelo servidor, sempre do dia atual) ── #}
         {% set punch_count = today_entries | length %}
         {% set punch_labels = {
         'clock_in': 'Entrada',

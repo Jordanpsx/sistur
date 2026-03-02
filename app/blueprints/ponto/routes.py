@@ -122,11 +122,27 @@ def historico():
     for e in entries_raw:
         entries_by_day.setdefault(e.shift_date, []).append(e)
 
+    # Batidas de hoje sempre buscadas independentemente do mês visualizado,
+    # para que o botão de registrar ponto reflita o estado real do dia atual.
+    if inicio <= hoje < fim:
+        today_entries = entries_by_day.get(hoje, [])
+    else:
+        today_entries = (
+            db.session.query(TimeEntry)
+            .filter(
+                TimeEntry.funcionario_id == funcionario_id,
+                TimeEntry.shift_date == hoje,
+            )
+            .order_by(TimeEntry.punch_time)
+            .all()
+        )
+
     return render_template(
         "ponto/index.html",
         funcionario=funcionario,
         days=days,
         entries_by_day=entries_by_day,
+        today_entries=today_entries,
         mes=mes,
         ano=ano,
         hoje=hoje,
