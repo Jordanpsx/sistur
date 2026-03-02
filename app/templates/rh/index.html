@@ -606,35 +606,6 @@
             <span class="summary-card__sub sub--zero">Ativos</span>
           </div>
 
-          <!-- Horas Trabalhadas no Mês -->
-          <div class="summary-card summary-card--hours">
-            <div class="summary-card__icon">⏱️</div>
-            <div class="summary-card__label">Horas ({{ ["Jan","Fev","Mar","Abr","Mai","Jun","Jul","Ago","Set","Out","Nov","Dez"][mes-1] }})</div>
-            {% set h = resumo.total_minutos_trabalhados // 60 %}
-            {% set m = resumo.total_minutos_trabalhados % 60 %}
-            <div class="summary-card__value">{{ "%dh%02d" | format(h, m) }}</div>
-            <span class="summary-card__sub sub--zero">Total da equipe</span>
-          </div>
-
-          <!-- Saldo Acumulado -->
-          <div class="summary-card summary-card--balance">
-            <div class="summary-card__icon">⚖️</div>
-            <div class="summary-card__label">Saldo do Mês</div>
-            {% set s = resumo.total_saldo_minutos %}
-            {% set sh = (s | abs) // 60 %}
-            {% set sm = (s | abs) % 60 %}
-            <div class="summary-card__value">
-              {% if s > 0 %}+{% elif s < 0 %}-{% endif %}{{ "%dh%02d" | format(sh, sm) }}
-            </div>
-            {% if s > 0 %}
-            <span class="summary-card__sub sub--pos">Saldo Positivo</span>
-            {% elif s < 0 %}
-            <span class="summary-card__sub sub--neg">Saldo Negativo</span>
-            {% else %}
-            <span class="summary-card__sub sub--zero">Zerado</span>
-            {% endif %}
-          </div>
-
           <!-- Dias para Revisar -->
           <div class="summary-card summary-card--review">
             <div class="summary-card__icon">⚠️</div>
