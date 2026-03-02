@@ -41,6 +41,7 @@ from app.models.role import Role
 from app.services.configuracao_service import (
     CHAVE_BRANDING_EMPRESA_LOGO,
     CHAVE_BRANDING_EMPRESA_NOME,
+    CHAVE_EMPRESA_RAZAO_SOCIAL,
     CHAVE_EMPRESA_CNPJ,
     CHAVE_EMPRESA_ENDERECO,
     ConfiguracaoService,
