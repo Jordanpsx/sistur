@@ -140,7 +140,53 @@ Module-specific business rules go in `docs/<module>/README.md`.
 
 ---
 
-## Rule #9 — Mobile-First UI (Non-Negotiable)
+## Rule #9 — Database Migrations & Deployment
+
+**When are migrations needed?**
+
+Migrations are **only required when SQLAlchemy models change** (new columns, renamed fields, type changes, new tables, etc.).
+Simply adding service methods, routes, or read-only queries does NOT require a migration.
+
+**Migration Checklist:**
+
+| Change type | Needs migration? | Example |
+|---|---|---|
+| Add/modify SQLAlchemy model | ✅ YES | Adding `last_login: DateTime` to `Funcionario` |
+| Add service method (read-only) | ❌ NO | `RHService.matriz_batidas_mes()` — queries only |
+| Add route / blueprint | ❌ NO | `GET /rh/dashboard` — HTTP layer |
+| Add template / CSS / JS | ❌ NO | New Jinja2 template |
+| Modify model relationship | ✅ YES | Adding `ForeignKey` or changing `back_populates` |
+| Change model column constraint | ✅ YES | Adding `unique=True` or `nullable=False` |
+
+**When you MUST run migrations:**
+
+1. **Local development:**
+   ```bash
+   flask db migrate -m "Descriptive message"
+   flask db upgrade
+   ```
+
+2. **On VPS after `git push origin develop` deployment:**
+   ```bash
+   docker exec -it sistur-flask-app flask db upgrade
+   ```
+   (The CI/CD pipeline auto-runs this command on deploy; only run manually if needed for urgent fixes)
+
+3. **Generate migration file (local only):**
+   ```bash
+   flask db migrate -m "Add last_login to Funcionario"
+   ```
+   Then **commit and push** the generated migration file in `migrations/versions/`.
+
+**Important notes:**
+- Never edit migration files manually — they are version-controlled source of truth
+- Always commit the auto-generated migration file to git before pushing to VPS
+- If you forget to migrate locally, the VPS deployment will still work, but the app will crash when accessing the new model fields
+- The `flask db upgrade` command on VPS is **idempotent** — it only applies pending migrations
+
+---
+
+## Rule #10 — Mobile-First UI (Non-Negotiable)
 
 The primary users of the Portal do Colaborador are **employees accessing from their phones**.
 Every Jinja2 template must work on a 375px-wide screen before being considered done.
@@ -168,7 +214,7 @@ Hardcoded hex values for brand colors are forbidden — this enables client whit
 
 ---
 
-## Rule #8 — Mandatory Docstrings on Every Function
+## Rule #11 — Mandatory Docstrings on Every Function
 
 Every function and method in the codebase **must** have a Google-style docstring written in **Portuguese (pt-BR)**.
 This is non-negotiable — undocumented functions will not be accepted in `develop`.
