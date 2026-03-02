@@ -749,107 +749,121 @@
 
     <!-- ── Tab: Configurações por Módulo ─────────────────────────────────── -->
     <div id="tab-config-modulos" class="tab-panel" role="tabpanel">
-      <div class="section-card">
-        <p class="section-title" style="margin:0 0 0.25rem">📍 Ponto Eletrônico — Geofencing</p>
-        <p class="section-desc" style="margin:0 0 1.5rem">
-          Defina as zonas geográficas autorizadas para registro de ponto.
-          O colaborador deve estar dentro do raio de <strong>pelo menos uma zona ativa</strong> para poder registrar.
-          Quando nenhuma zona estiver cadastrada, o geofencing fica desabilitado (qualquer localização é aceita).
-        </p>
+      <div class="section-card" style="padding:0; overflow:hidden;">
 
-        <!-- Tabela de zonas cadastradas -->
-        {% if geofence_locations %}
-        <div style="overflow-x:auto; margin-bottom:2rem;">
-          <table style="width:100%; border-collapse:collapse; font-size:0.875rem;">
-            <thead>
-              <tr style="background:#f1f5f9; text-align:left;">
-                <th style="padding:0.6rem 0.75rem; font-weight:600; color:#475569;">Nome</th>
-                <th style="padding:0.6rem 0.75rem; font-weight:600; color:#475569;">Latitude</th>
-                <th style="padding:0.6rem 0.75rem; font-weight:600; color:#475569;">Longitude</th>
-                <th style="padding:0.6rem 0.75rem; font-weight:600; color:#475569;">Raio (m)</th>
-                <th style="padding:0.6rem 0.75rem; font-weight:600; color:#475569;">Status</th>
-                <th style="padding:0.6rem 0.75rem; font-weight:600; color:#475569;">Ações</th>
-              </tr>
-            </thead>
-            <tbody>
-              {% for loc in geofence_locations %}
-              <tr style="border-top:1px solid #e2e8f0;">
-                <td style="padding:0.6rem 0.75rem; font-weight:500; color:#1e293b;">{{ loc.name }}</td>
-                <td style="padding:0.6rem 0.75rem; color:#475569; font-family:monospace;">{{ "%.6f"|format(loc.latitude) }}</td>
-                <td style="padding:0.6rem 0.75rem; color:#475569; font-family:monospace;">{{ "%.6f"|format(loc.longitude) }}</td>
-                <td style="padding:0.6rem 0.75rem; color:#475569;">{{ loc.radius_meters }}</td>
-                <td style="padding:0.6rem 0.75rem;">
-                  {% if loc.is_active %}
-                  <span style="background:#dcfce7; color:#15803d; padding:0.2rem 0.6rem; border-radius:9999px; font-size:0.75rem; font-weight:600;">Ativa</span>
-                  {% else %}
-                  <span style="background:#f1f5f9; color:#64748b; padding:0.2rem 0.6rem; border-radius:9999px; font-size:0.75rem; font-weight:600;">Inativa</span>
-                  {% endif %}
-                </td>
-                <td style="padding:0.6rem 0.75rem;">
-                  <div style="display:flex; gap:0.5rem; align-items:center;">
-                    <button type="button" class="btn-editar-geo"
-                      data-id="{{ loc.id }}"
-                      data-name="{{ loc.name }}"
-                      data-lat="{{ loc.latitude }}"
-                      data-lng="{{ loc.longitude }}"
-                      data-radius="{{ loc.radius_meters }}"
-                      data-active="{{ '1' if loc.is_active else '0' }}"
-                      style="background:#ede9fe; color:#6d28d9; border:none; padding:0.35rem 0.75rem; border-radius:6px; font-size:0.8rem; font-weight:600; cursor:pointer; min-height:36px;">
-                      Editar
-                    </button>
-                    <form method="POST" action="{{ url_for('configuracoes.geofence_deletar', loc_id=loc.id) }}"
-                      onsubmit="return confirm('Remover a zona \'{{ loc.name }}\'? Esta ação não pode ser desfeita.')">
-                      <button type="submit"
-                        style="background:#fee2e2; color:#dc2626; border:none; padding:0.35rem 0.75rem; border-radius:6px; font-size:0.8rem; font-weight:600; cursor:pointer; min-height:36px;">
-                        Remover
+        <!-- Sub-nav de módulos -->
+        <div style="border-bottom:1px solid #e2e8f0; padding:0 1.5rem; background:#f8fafc; display:flex; gap:0; overflow-x:auto;">
+          <button class="subtab-btn subtab-btn--active" data-subtab="cfg-ponto"
+            style="padding:0.85rem 1.25rem; background:none; border:none; border-bottom:2px solid #0d9488; color:#0d9488; font-weight:600; font-size:0.875rem; cursor:pointer; white-space:nowrap; min-height:44px;">
+            🕐 Ponto Eletrônico
+          </button>
+        </div>
+
+        <!-- Sub-painel: Ponto Eletrônico -->
+        <div id="subtab-cfg-ponto" class="subtab-panel" style="padding:1.5rem;">
+
+          <p class="section-title" style="margin:0 0 0.25rem">📍 Geofencing</p>
+          <p class="section-desc" style="margin:0 0 1.5rem">
+            Defina as zonas geográficas autorizadas para registro de ponto.
+            O colaborador deve estar dentro do raio de <strong>pelo menos uma zona ativa</strong> para poder registrar.
+            Quando nenhuma zona estiver cadastrada, o geofencing fica <strong>desabilitado</strong> (qualquer localização é aceita).
+          </p>
+
+          <!-- Tabela de zonas cadastradas -->
+          {% if geofence_locations %}
+          <div style="overflow-x:auto; margin-bottom:2rem;">
+            <table style="width:100%; border-collapse:collapse; font-size:0.875rem;">
+              <thead>
+                <tr style="background:#f1f5f9; text-align:left;">
+                  <th style="padding:0.6rem 0.75rem; font-weight:600; color:#475569;">Nome</th>
+                  <th style="padding:0.6rem 0.75rem; font-weight:600; color:#475569;">Latitude</th>
+                  <th style="padding:0.6rem 0.75rem; font-weight:600; color:#475569;">Longitude</th>
+                  <th style="padding:0.6rem 0.75rem; font-weight:600; color:#475569;">Raio (m)</th>
+                  <th style="padding:0.6rem 0.75rem; font-weight:600; color:#475569;">Status</th>
+                  <th style="padding:0.6rem 0.75rem; font-weight:600; color:#475569;">Ações</th>
+                </tr>
+              </thead>
+              <tbody>
+                {% for loc in geofence_locations %}
+                <tr style="border-top:1px solid #e2e8f0;">
+                  <td style="padding:0.6rem 0.75rem; font-weight:500; color:#1e293b;">{{ loc.name }}</td>
+                  <td style="padding:0.6rem 0.75rem; color:#475569; font-family:monospace;">{{ "%.6f"|format(loc.latitude) }}</td>
+                  <td style="padding:0.6rem 0.75rem; color:#475569; font-family:monospace;">{{ "%.6f"|format(loc.longitude) }}</td>
+                  <td style="padding:0.6rem 0.75rem; color:#475569;">{{ loc.radius_meters }}</td>
+                  <td style="padding:0.6rem 0.75rem;">
+                    {% if loc.is_active %}
+                    <span style="background:#dcfce7; color:#15803d; padding:0.2rem 0.6rem; border-radius:9999px; font-size:0.75rem; font-weight:600;">Ativa</span>
+                    {% else %}
+                    <span style="background:#f1f5f9; color:#64748b; padding:0.2rem 0.6rem; border-radius:9999px; font-size:0.75rem; font-weight:600;">Inativa</span>
+                    {% endif %}
+                  </td>
+                  <td style="padding:0.6rem 0.75rem;">
+                    <div style="display:flex; gap:0.5rem; align-items:center;">
+                      <button type="button" class="btn-editar-geo"
+                        data-id="{{ loc.id }}"
+                        data-name="{{ loc.name }}"
+                        data-lat="{{ loc.latitude }}"
+                        data-lng="{{ loc.longitude }}"
+                        data-radius="{{ loc.radius_meters }}"
+                        data-active="{{ '1' if loc.is_active else '0' }}"
+                        style="background:#ede9fe; color:#6d28d9; border:none; padding:0.35rem 0.75rem; border-radius:6px; font-size:0.8rem; font-weight:600; cursor:pointer; min-height:36px;">
+                        Editar
                       </button>
-                    </form>
-                  </div>
-                </td>
-              </tr>
-              {% endfor %}
-            </tbody>
-          </table>
-        </div>
-        {% else %}
-        <div style="text-align:center; padding:2rem 1rem; color:#94a3b8; margin-bottom:1.5rem;">
-          <div style="font-size:2rem; margin-bottom:0.5rem;">📍</div>
-          <p style="font-size:0.9rem;">Nenhuma zona cadastrada. O geofencing está <strong>desabilitado</strong>.</p>
-        </div>
-        {% endif %}
+                      <form method="POST" action="{{ url_for('configuracoes.geofence_deletar', loc_id=loc.id) }}"
+                        onsubmit="return confirm('Remover a zona \'{{ loc.name }}\'? Esta ação não pode ser desfeita.')">
+                        <button type="submit"
+                          style="background:#fee2e2; color:#dc2626; border:none; padding:0.35rem 0.75rem; border-radius:6px; font-size:0.8rem; font-weight:600; cursor:pointer; min-height:36px;">
+                          Remover
+                        </button>
+                      </form>
+                    </div>
+                  </td>
+                </tr>
+                {% endfor %}
+              </tbody>
+            </table>
+          </div>
+          {% else %}
+          <div style="text-align:center; padding:2rem 1rem; color:#94a3b8; margin-bottom:1.5rem;">
+            <div style="font-size:2rem; margin-bottom:0.5rem;">📍</div>
+            <p style="font-size:0.9rem;">Nenhuma zona cadastrada. O geofencing está <strong>desabilitado</strong>.</p>
+          </div>
+          {% endif %}
 
-        <hr style="border:none; border-top:1px solid #e2e8f0; margin:1.5rem 0;" />
+          <hr style="border:none; border-top:1px solid #e2e8f0; margin:1.5rem 0;" />
 
-        <!-- Formulário: nova zona -->
-        <p class="section-title" style="margin:0 0 1rem; font-size:0.95rem;">Adicionar Nova Zona</p>
-        <form method="POST" action="{{ url_for('configuracoes.geofence_criar') }}">
-          <div class="form-group">
-            <label class="form-label" for="geo_name">Nome da Zona</label>
-            <input class="form-input" type="text" id="geo_name" name="name"
-              placeholder="Ex: Sede Central, Filial Norte" maxlength="100" required />
-          </div>
-          <div style="display:grid; grid-template-columns:1fr 1fr; gap:1rem;">
-            <div class="form-group" style="margin-bottom:0;">
-              <label class="form-label" for="geo_lat">Latitude</label>
-              <input class="form-input" type="number" id="geo_lat" name="latitude"
-                step="0.000001" placeholder="-23.550520" required />
-              <p class="form-hint">Graus decimais (ex: -23.550520)</p>
+          <!-- Formulário: nova zona -->
+          <p class="section-title" style="margin:0 0 1rem; font-size:0.95rem;">Adicionar Nova Zona</p>
+          <form method="POST" action="{{ url_for('configuracoes.geofence_criar') }}">
+            <div class="form-group">
+              <label class="form-label" for="geo_name">Nome da Zona</label>
+              <input class="form-input" type="text" id="geo_name" name="name"
+                placeholder="Ex: Sede Central, Filial Norte" maxlength="100" required />
             </div>
-            <div class="form-group" style="margin-bottom:0;">
-              <label class="form-label" for="geo_lng">Longitude</label>
-              <input class="form-input" type="number" id="geo_lng" name="longitude"
-                step="0.000001" placeholder="-46.633309" required />
-              <p class="form-hint">Graus decimais (ex: -46.633309)</p>
+            <div style="display:grid; grid-template-columns:1fr 1fr; gap:1rem;">
+              <div class="form-group" style="margin-bottom:0;">
+                <label class="form-label" for="geo_lat">Latitude</label>
+                <input class="form-input" type="number" id="geo_lat" name="latitude"
+                  step="0.000001" placeholder="-23.550520" required />
+                <p class="form-hint">Graus decimais (ex: -23.550520)</p>
+              </div>
+              <div class="form-group" style="margin-bottom:0;">
+                <label class="form-label" for="geo_lng">Longitude</label>
+                <input class="form-input" type="number" id="geo_lng" name="longitude"
+                  step="0.000001" placeholder="-46.633309" required />
+                <p class="form-hint">Graus decimais (ex: -46.633309)</p>
+              </div>
             </div>
-          </div>
-          <div class="form-group" style="margin-top:1rem;">
-            <label class="form-label" for="geo_radius">Raio (metros)</label>
-            <input class="form-input" type="number" id="geo_radius" name="radius_meters"
-              min="10" max="50000" value="200" required />
-            <p class="form-hint">Distância máxima do centro para o colaborador ser aceito. Mínimo: 10 m.</p>
-          </div>
-          <button type="submit" class="btn-primary">Adicionar Zona</button>
-        </form>
+            <div class="form-group" style="margin-top:1rem;">
+              <label class="form-label" for="geo_radius">Raio (metros)</label>
+              <input class="form-input" type="number" id="geo_radius" name="radius_meters"
+                min="10" max="50000" value="200" required />
+              <p class="form-hint">Distância máxima do centro para o colaborador ser aceito. Mínimo: 10 m.</p>
+            </div>
+            <button type="submit" class="btn-primary">Adicionar Zona</button>
+          </form>
+
+        </div>{# fim subtab-cfg-ponto #}
       </div>
     </div>
 
@@ -943,6 +957,25 @@
         checkbox.disabled = false;
       }
     }
+
+    // ── Sub-tabs dentro de "Configurações por Módulo" ────────────────────
+    document.querySelectorAll('.subtab-btn').forEach(btn => {
+      btn.addEventListener('click', () => {
+        const target = btn.dataset.subtab;
+        document.querySelectorAll('.subtab-btn').forEach(b => {
+          b.style.borderBottomColor = 'transparent';
+          b.style.color = '#64748b';
+          b.style.fontWeight = '500';
+          b.classList.remove('subtab-btn--active');
+        });
+        document.querySelectorAll('.subtab-panel').forEach(p => p.style.display = 'none');
+        btn.style.borderBottomColor = '#0d9488';
+        btn.style.color = '#0d9488';
+        btn.style.fontWeight = '600';
+        btn.classList.add('subtab-btn--active');
+        document.getElementById('subtab-' + target).style.display = 'block';
+      });
+    });
 
     // ── Geofence modal ────────────────────────────────────────────────────
     const modalGeo  = document.getElementById('modal-editar-geo');
