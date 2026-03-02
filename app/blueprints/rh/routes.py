@@ -12,6 +12,7 @@ POST /rh/funcionarios/novo              → salva novo funcionário
 GET  /rh/funcionarios/<id>/editar       → formulário de edição pré-preenchido
 POST /rh/funcionarios/<id>/editar       → salva edição
 POST /rh/funcionarios/<id>/desativar    → desativa funcionário (soft-delete)
+GET  /rh/funcionarios/<id>/banco-horas  → banco de horas detalhado do funcionário (visão RH)
 
 Todas as rotas exigem sessão ativa (@login_required) e a permissão
 correspondente no role do funcionário logado (@require_permission).
@@ -19,6 +20,8 @@ correspondente no role do funcionário logado (@require_permission).
 
 from __future__ import annotations
 
+import json
+from collections import defaultdict
 from datetime import date, timedelta
 
 from flask import Blueprint, flash, redirect, render_template, request, session, url_for
@@ -513,3 +516,137 @@ def reprocessar_ponto(funcionario_id: int):
 
     # Idealmente poderia redirecionar para a página de edição do funcionário, mantemos na listagem por padrão
     return redirect(url_for("rh.editar_funcionario", funcionario_id=funcionario_id))
+
+
+# ---------------------------------------------------------------------------
+# Banco de Horas Detalhado — visão do RH para qualquer funcionário
+# ---------------------------------------------------------------------------
+
+@bp.route("/funcionarios/<int:funcionario_id>/banco-horas", methods=["GET"])
+@login_required
+@require_permission("funcionarios", "view")
+def banco_horas_funcionario(funcionario_id: int):
+    """Exibe o banco de horas detalhado de um funcionário específico para o RH.
+
+    Reutiliza o template ponto/analise.html com visão administrativa:
+    o gestor pode ver o histórico de qualquer colaborador ativo, com gráficos,
+    estatísticas e tabela diária no layout CLT. A navegação de meses e o
+    botão "Voltar" apontam para o contexto do RH (não do portal do colaborador).
+
+    Path params:
+        funcionario_id (int): PK do funcionário a consultar.
+
+    Query params:
+        mes (int): mês a exibir (1–12). Padrão: mês corrente.
+        ano (int): ano a exibir. Padrão: ano corrente.
+
+    Returns:
+        Renderização de ponto/analise.html com dados do funcionário alvo.
+        HTTP 404 se o funcionário não for encontrado.
+    """
+    from app.models.ponto import TimeDay, TimeEntry
+
+    funcionario = db.session.get(Funcionario, funcionario_id)
+    if not funcionario:
+        flash("Funcionário não encontrado.", "erro")
+        return redirect(url_for("rh.dashboard", aba="colaboradores"))
+
+    hoje = date.today()
+    try:
+        mes = int(request.args.get("mes") or hoje.month)
+        ano = int(request.args.get("ano") or hoje.year)
+    except (TypeError, ValueError):
+        mes, ano = hoje.month, hoje.year
+
+    inicio = date(ano, mes, 1)
+    fim = date(ano + 1, 1, 1) if mes == 12 else date(ano, mes + 1, 1)
+
+    days = (
+        db.session.query(TimeDay)
+        .filter(
+            TimeDay.funcionario_id == funcionario_id,
+            TimeDay.shift_date >= inicio,
+            TimeDay.shift_date < fim,
+        )
+        .order_by(TimeDay.shift_date)
+        .all()
+    )
+
+    entries_raw = (
+        db.session.query(TimeEntry)
+        .filter(
+            TimeEntry.funcionario_id == funcionario_id,
+            TimeEntry.shift_date >= inicio,
+            TimeEntry.shift_date < fim,
+        )
+        .order_by(TimeEntry.shift_date, TimeEntry.punch_time)
+        .all()
+    )
+    entries_by_day: dict[date, list] = defaultdict(list)
+    for e in entries_raw:
+        entries_by_day[e.shift_date].append(e)
+
+    DOW_ABBR = ["Seg", "Ter", "Qua", "Qui", "Sex", "Sáb", "Dom"]
+    accumulated = 0
+    chart_labels, chart_worked, chart_balance, chart_expected = [], [], [], []
+    for d in days:
+        dow = DOW_ABBR[d.shift_date.weekday()]
+        chart_labels.append(f"{dow} {d.shift_date.strftime('%d/%m')}")
+        chart_worked.append(round(d.minutos_trabalhados / 60, 2))
+        chart_expected.append(round(d.expected_minutes_snapshot / 60, 2))
+        accumulated += d.saldo_calculado_minutos
+        chart_balance.append(round(accumulated / 60, 2))
+
+    total_min = sum(d.minutos_trabalhados for d in days)
+    total_saldo = sum(d.saldo_calculado_minutos for d in days)
+    dias_ok = sum(1 for d in days if not d.needs_review)
+    dias_revisar = sum(1 for d in days if d.needs_review)
+    maior_credito = max((d.saldo_calculado_minutos for d in days), default=0)
+    maior_debito = min((d.saldo_calculado_minutos for d in days), default=0)
+
+    TYPE_ORDER = ["clock_in", "lunch_start", "lunch_end", "clock_out"]
+    tabela_rows = []
+    for d in days:
+        entries = entries_by_day.get(d.shift_date, [])
+        by_type: dict[str, str] = {}
+        for e in entries:
+            key = e.punch_type.value
+            if key not in by_type:
+                by_type[key] = e.punch_time.strftime("%H:%M")
+        tabela_rows.append({
+            "shift_date": d.shift_date,
+            "dow": DOW_ABBR[d.shift_date.weekday()],
+            "clock_in":    by_type.get("clock_in", "—"),
+            "lunch_start": by_type.get("lunch_start", "—"),
+            "lunch_end":   by_type.get("lunch_end", "—"),
+            "clock_out":   by_type.get("clock_out", "—"),
+            "extras":      [e.punch_time.strftime("%H:%M") for e in entries
+                            if e.punch_type.value not in TYPE_ORDER],
+            "minutos_trabalhados": d.minutos_trabalhados,
+            "saldo_calculado":     d.saldo_calculado_minutos,
+            "needs_review":        d.needs_review,
+            "is_today":            d.shift_date == hoje,
+        })
+
+    return render_template(
+        "ponto/analise.html",
+        funcionario=funcionario,
+        mes=mes,
+        ano=ano,
+        hoje=hoje,
+        days=days,
+        tabela_rows=tabela_rows,
+        total_min=total_min,
+        total_saldo=total_saldo,
+        dias_ok=dias_ok,
+        dias_revisar=dias_revisar,
+        maior_credito=maior_credito,
+        maior_debito=maior_debito,
+        chart_labels=json.dumps(chart_labels),
+        chart_worked=json.dumps(chart_worked),
+        chart_expected=json.dumps(chart_expected),
+        chart_balance=json.dumps(chart_balance),
+        # flags para o template adaptar navegação ao contexto RH
+        from_rh=True,
+        back_url=url_for("rh.dashboard", aba="colaboradores"),
+    )

@@ -402,6 +402,10 @@
       background: var(--red-50); color: var(--red-600);
     }
     .btn-action--deactivate:hover { background: #fee2e2; }
+    .btn-action--banco {
+      background: var(--green-50); color: var(--green-600);
+    }
+    .btn-action--banco:hover { background: #dcfce7; }
 
     /* Responsive hidden columns */
     @media (max-width: 640px) {
@@ -867,6 +871,10 @@
                   <!-- Ações -->
                   <td>
                     <div class="actions-cell">
+                      <a href="{{ url_for('rh.banco_horas_funcionario', funcionario_id=f.id) }}"
+                         class="btn-action btn-action--banco">
+                        📊 Banco de Horas
+                      </a>
                       <a href="{{ url_for('rh.editar_funcionario', funcionario_id=f.id) }}"
                          class="btn-action btn-action--edit">
                         ✏️ Editar
