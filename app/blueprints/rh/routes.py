@@ -32,7 +32,7 @@ from app.core.permissions import has_permission, require_permission
 from app.extensions import db
 from app.models.funcionario import Funcionario
 from app.services.configuracao_service import (
-    ConfiguracaoService, CHAVE_BRANDING_EMPRESA_NOME, CHAVE_EMPRESA_CNPJ, CHAVE_EMPRESA_ENDERECO,
+    ConfiguracaoService, CHAVE_BRANDING_EMPRESA_NOME, CHAVE_EMPRESA_RAZAO_SOCIAL, CHAVE_EMPRESA_CNPJ, CHAVE_EMPRESA_ENDERECO,
 )
 from app.services.funcionario_service import FuncionarioService
 from app.services.rh_service import RHService
