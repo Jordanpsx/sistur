@@ -1413,6 +1413,10 @@
                         style="background:var(--green-50);color:var(--green-600);">
                         ⏱ Banco de Horas
                       </a>
+                      <a href="{{ url_for('rh.qrcode_png', funcionario_id=f.id) }}" target="_blank"
+                        class="btn-action" style="background:#eff6ff;color:#2563eb;">
+                        📲 QR Code
+                      </a>
                       <a href="{{ url_for('rh.editar_funcionario', funcionario_id=f.id) }}"
                         class="btn-action btn-action--edit">
                         ✏️ Editar
