@@ -53,6 +53,7 @@ def create_app(config_name: str = "default") -> Flask:
         from app.models import estoque  # noqa: F401
         from app.models import configuracoes  # noqa: F401
         from app.models import geofence  # noqa: F401
+        from app.models import calendario  # noqa: F401
 
     # Blueprints
     from app.blueprints.portal.routes import bp as portal_bp

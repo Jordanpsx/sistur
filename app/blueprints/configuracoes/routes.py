@@ -46,6 +46,7 @@ from app.services.configuracao_service import (
     CHAVE_EMPRESA_ENDERECO,
     ConfiguracaoService,
 )
+from app.models.calendario import TipoEvento
 from app.models.geofence import GeofenceLocation
 from app.services.role_service import RoleService
 
@@ -180,6 +181,13 @@ def index():
         .all()
     )
 
+    from app.models.calendario import GlobalEvent
+    eventos_calendario = (
+        db.session.query(GlobalEvent)
+        .order_by(GlobalEvent.data_evento.desc())
+        .all()
+    )
+
     return render_template(
         "admin/configuracoes/index.html",
         modulos_info=modulos_info,
@@ -189,6 +197,7 @@ def index():
         empresa_cnpj=todas.get(CHAVE_EMPRESA_CNPJ) or "",
         empresa_endereco=todas.get(CHAVE_EMPRESA_ENDERECO) or "",
         geofence_locations=geofence_locations,
+        eventos_calendario=eventos_calendario,
     )
 
 
@@ -630,4 +639,154 @@ def geofence_deletar(loc_id: int):
     )
 
     flash(f"Zona '{nome}' removida.", "aviso")
+    return redirect(url_for("configuracoes.index"))
+
+
+# ---------------------------------------------------------------------------
+# Calendário Global — CRUD de eventos/feriados
+# ---------------------------------------------------------------------------
+
+_TIPO_EVENTO_MAP = {
+    "NATIONAL_HOLIDAY": TipoEvento.NATIONAL_HOLIDAY,
+    "LOCAL_HOLIDAY": TipoEvento.LOCAL_HOLIDAY,
+    "MAINTENANCE": TipoEvento.MAINTENANCE,
+    "HIGH_SEASON": TipoEvento.HIGH_SEASON,
+}
+
+
+@bp.route("/calendario/criar", methods=["POST"])
+@_login_required
+@_super_admin_required
+def calendario_criar():
+    """Cria um novo evento global no calendário do sistema.
+
+    Form fields:
+        titulo (str): Nome descritivo do evento.
+        data_evento (str): Data no formato YYYY-MM-DD.
+        tipo (str): Tipo do evento (NATIONAL_HOLIDAY, LOCAL_HOLIDAY, etc.).
+        afeta_precificacao (str): '1' se afeta precificação.
+        afeta_folha (str): '1' se afeta folha de pagamento.
+        recorrente_anual (str): '1' se o evento é recorrente anual.
+
+    Returns:
+        Redirect para configuracoes.index.
+    """
+    from datetime import date as date_type
+
+    from app.services.calendar_service import CalendarService
+
+    try:
+        titulo = request.form["titulo"].strip()
+        data_str = request.form["data_evento"]
+        data_evento = date_type.fromisoformat(data_str)
+        tipo_str = request.form["tipo"]
+        tipo = _TIPO_EVENTO_MAP.get(tipo_str)
+        if not tipo:
+            raise ValueError(f"Tipo inválido: {tipo_str}")
+    except (KeyError, ValueError) as exc:
+        flash(f"Dados inválidos: {exc}", "erro")
+        return redirect(url_for("configuracoes.index"))
+
+    afeta_precificacao = request.form.get("afeta_precificacao") == "1"
+    afeta_folha = request.form.get("afeta_folha") == "1"
+    recorrente_anual = request.form.get("recorrente_anual") == "1"
+
+    try:
+        CalendarService.criar(
+            titulo=titulo,
+            data_evento=data_evento,
+            tipo=tipo,
+            afeta_precificacao=afeta_precificacao,
+            afeta_folha=afeta_folha,
+            recorrente_anual=recorrente_anual,
+            ator_id=_get_ator_id(),
+        )
+    except ValueError as exc:
+        flash(str(exc), "erro")
+        return redirect(url_for("configuracoes.index"))
+
+    flash(f"Evento '{titulo}' criado com sucesso.", "sucesso")
+    return redirect(url_for("configuracoes.index"))
+
+
+@bp.route("/calendario/<int:event_id>/editar", methods=["POST"])
+@_login_required
+@_super_admin_required
+def calendario_editar(event_id: int):
+    """Atualiza um evento existente no calendário do sistema.
+
+    Args:
+        event_id: PK do GlobalEvent a editar.
+
+    Form fields:
+        titulo (str): Novo nome do evento.
+        data_evento (str): Nova data no formato YYYY-MM-DD.
+        tipo (str): Novo tipo do evento.
+        afeta_precificacao (str): '1' se afeta precificação.
+        afeta_folha (str): '1' se afeta folha de pagamento.
+        recorrente_anual (str): '1' se o evento é recorrente anual.
+
+    Returns:
+        Redirect para configuracoes.index.
+    """
+    from datetime import date as date_type
+
+    from app.services.calendar_service import CalendarService
+
+    try:
+        titulo = request.form["titulo"].strip()
+        data_str = request.form["data_evento"]
+        data_evento = date_type.fromisoformat(data_str)
+        tipo_str = request.form["tipo"]
+        tipo = _TIPO_EVENTO_MAP.get(tipo_str)
+        if not tipo:
+            raise ValueError(f"Tipo inválido: {tipo_str}")
+    except (KeyError, ValueError) as exc:
+        flash(f"Dados inválidos: {exc}", "erro")
+        return redirect(url_for("configuracoes.index"))
+
+    afeta_precificacao = request.form.get("afeta_precificacao") == "1"
+    afeta_folha = request.form.get("afeta_folha") == "1"
+    recorrente_anual = request.form.get("recorrente_anual") == "1"
+
+    try:
+        CalendarService.atualizar(
+            event_id=event_id,
+            titulo=titulo,
+            data_evento=data_evento,
+            tipo=tipo,
+            afeta_precificacao=afeta_precificacao,
+            afeta_folha=afeta_folha,
+            recorrente_anual=recorrente_anual,
+            ator_id=_get_ator_id(),
+        )
+    except ValueError as exc:
+        flash(str(exc), "erro")
+        return redirect(url_for("configuracoes.index"))
+
+    flash(f"Evento '{titulo}' atualizado.", "sucesso")
+    return redirect(url_for("configuracoes.index"))
+
+
+@bp.route("/calendario/<int:event_id>/deletar", methods=["POST"])
+@_login_required
+@_super_admin_required
+def calendario_deletar(event_id: int):
+    """Remove um evento do calendário do sistema.
+
+    Args:
+        event_id: PK do GlobalEvent a remover.
+
+    Returns:
+        Redirect para configuracoes.index.
+    """
+    from app.services.calendar_service import CalendarService
+
+    try:
+        CalendarService.deletar(event_id=event_id, ator_id=_get_ator_id())
+    except ValueError as exc:
+        flash(str(exc), "erro")
+        return redirect(url_for("configuracoes.index"))
+
+    flash("Evento removido.", "aviso")
     return redirect(url_for("configuracoes.index"))

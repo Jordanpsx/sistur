@@ -124,6 +124,38 @@ major-version range (`WeasyPrint>=64.0,<65`).
 | **Permissões** | Role-based access control |
 | **Auditoria** | Full audit trail for all actions — viewer at `/admin/audit-logs` |
 | **Configurações** | Global settings & feature control — master switches, RBAC UI, branding |
+| **Calendário Global** | Centralized holiday/event engine — single source of truth for all date queries |
+
+---
+
+## Module: Calendário Global — Single Source of Truth for Holidays
+
+**Model:** `app/models/calendario.py` — `GlobalEvent` with `TipoEvento` enum
+**Service:** `app/services/calendar_service.py` — `CalendarService`
+**Admin UI:** Tab "Calendário Global" in `/admin/configuracoes/`
+
+### Non-Negotiable Rule
+
+**NO module should hardcode dates, holidays, or special dates.** All modules must query `CalendarService` methods:
+
+| Method | Purpose |
+|--------|---------|
+| `CalendarService.eh_feriado(date)` | Check if a date is a holiday (national or local) |
+| `CalendarService.obter_eventos_mes(year, month)` | Get all events for a given month |
+| `CalendarService.eh_alta_temporada(start, end)` | Check if a date range overlaps high season |
+
+### Event Types (`TipoEvento`)
+
+| Type | Description | Affects |
+|------|-------------|---------|
+| `NATIONAL_HOLIDAY` | National holiday (e.g., Christmas, Independence Day) | Payroll, pricing |
+| `LOCAL_HOLIDAY` | Municipal/state holiday | Payroll, pricing |
+| `MAINTENANCE` | Scheduled maintenance window | Operations |
+| `HIGH_SEASON` | Tourism high season period | Pricing |
+
+### Recurring Events
+
+Events with `recorrente_anual=True` match on month+day regardless of year (e.g., Christmas on Dec 25 matches every year).
 
 ---
 

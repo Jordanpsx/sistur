@@ -580,6 +580,9 @@
         <button class="tab-btn" role="tab" data-tab="config-modulos" aria-selected="false">
           ⚙️ Configurações por Módulo
         </button>
+        <button class="tab-btn" role="tab" data-tab="calendario" aria-selected="false">
+          Calendário Global
+        </button>
       </div>
     </div>
   </div>
@@ -876,7 +879,170 @@
       </div>
     </div>
 
+    <!-- ═══════ TAB: Calendário Global & Feriados ═══════════════════════════ -->
+    <div id="tab-calendario" class="tab-panel" role="tabpanel">
+      <div class="section-card">
+        <p style="font-size:1.15rem; font-weight:700; color:#1e293b; margin:0 0 0.3rem;">
+          Calendário Global & Feriados
+        </p>
+        <p style="font-size:0.85rem; color:#64748b; margin:0 0 1.5rem;">
+          Gerencie feriados nacionais, locais, datas de alta temporada e manutenções.
+          Todos os módulos consultam esta base — não hardcode datas.
+        </p>
+
+        <!-- Lista de eventos existentes -->
+        {% if eventos_calendario %}
+        <div style="overflow-x:auto; margin-bottom:2rem;">
+          <table style="width:100%; border-collapse:collapse; font-size:0.9rem;">
+            <thead>
+              <tr style="border-bottom:2px solid #e2e8f0; text-align:left;">
+                <th style="padding:0.75rem 0.5rem; color:#64748b; font-weight:600;">Data</th>
+                <th style="padding:0.75rem 0.5rem; color:#64748b; font-weight:600;">Título</th>
+                <th style="padding:0.75rem 0.5rem; color:#64748b; font-weight:600;">Tipo</th>
+                <th style="padding:0.75rem 0.5rem; color:#64748b; font-weight:600; text-align:center;">Precificação</th>
+                <th style="padding:0.75rem 0.5rem; color:#64748b; font-weight:600; text-align:center;">Folha</th>
+                <th style="padding:0.75rem 0.5rem; color:#64748b; font-weight:600; text-align:center;">Recorrente</th>
+                <th style="padding:0.75rem 0.5rem; color:#64748b; font-weight:600; text-align:right;">Ações</th>
+              </tr>
+            </thead>
+            <tbody>
+              {% for ev in eventos_calendario %}
+              <tr style="border-bottom:1px solid #f1f5f9;">
+                <td style="padding:0.75rem 0.5rem; font-family:'DM Mono',monospace; white-space:nowrap;">
+                  {{ ev.data_evento.strftime('%d/%m/%Y') }}
+                </td>
+                <td style="padding:0.75rem 0.5rem; font-weight:500;">{{ ev.titulo }}</td>
+                <td style="padding:0.75rem 0.5rem;">
+                  {% if ev.tipo.value == 'NATIONAL_HOLIDAY' %}
+                    <span style="background:#dbeafe; color:#1d4ed8; padding:0.15rem 0.6rem; border-radius:6px; font-size:0.78rem; font-weight:600;">Nacional</span>
+                  {% elif ev.tipo.value == 'LOCAL_HOLIDAY' %}
+                    <span style="background:#ede9fe; color:#7c3aed; padding:0.15rem 0.6rem; border-radius:6px; font-size:0.78rem; font-weight:600;">Local</span>
+                  {% elif ev.tipo.value == 'HIGH_SEASON' %}
+                    <span style="background:#fef3c7; color:#d97706; padding:0.15rem 0.6rem; border-radius:6px; font-size:0.78rem; font-weight:600;">Alta Temporada</span>
+                  {% elif ev.tipo.value == 'MAINTENANCE' %}
+                    <span style="background:#f1f5f9; color:#475569; padding:0.15rem 0.6rem; border-radius:6px; font-size:0.78rem; font-weight:600;">Manutenção</span>
+                  {% endif %}
+                </td>
+                <td style="padding:0.75rem 0.5rem; text-align:center;">{{ '✓' if ev.afeta_precificacao else '—' }}</td>
+                <td style="padding:0.75rem 0.5rem; text-align:center;">{{ '✓' if ev.afeta_folha else '—' }}</td>
+                <td style="padding:0.75rem 0.5rem; text-align:center;">{{ '✓' if ev.recorrente_anual else '—' }}</td>
+                <td style="padding:0.75rem 0.5rem; text-align:right; white-space:nowrap;">
+                  <button type="button" onclick="abrirModalEditarEvento({{ ev.id }}, '{{ ev.titulo }}', '{{ ev.data_evento.isoformat() }}', '{{ ev.tipo.value }}', {{ 'true' if ev.afeta_precificacao else 'false' }}, {{ 'true' if ev.afeta_folha else 'false' }}, {{ 'true' if ev.recorrente_anual else 'false' }})"
+                    style="background:none; border:none; color:var(--primary); font-weight:600; cursor:pointer; font-size:0.85rem; padding:0.3rem 0.5rem; min-height:44px;">
+                    Editar
+                  </button>
+                  <form method="POST" action="{{ url_for('configuracoes.calendario_deletar', event_id=ev.id) }}"
+                    style="display:inline;" onsubmit="return confirm('Remover evento \'{{ ev.titulo }}\'?');">
+                    <button type="submit"
+                      style="background:none; border:none; color:var(--red); font-weight:600; cursor:pointer; font-size:0.85rem; padding:0.3rem 0.5rem; min-height:44px;">
+                      Remover
+                    </button>
+                  </form>
+                </td>
+              </tr>
+              {% endfor %}
+            </tbody>
+          </table>
+        </div>
+        {% else %}
+        <p style="text-align:center; color:#94a3b8; padding:2rem 0; font-size:0.95rem;">
+          Nenhum evento cadastrado. Adicione feriados e datas especiais abaixo.
+        </p>
+        {% endif %}
+
+        <!-- Formulário de criação -->
+        <div style="border-top:1px solid #e2e8f0; padding-top:1.5rem;">
+          <p style="font-size:1rem; font-weight:600; color:#1e293b; margin:0 0 1rem;">Novo Evento</p>
+          <form method="POST" action="{{ url_for('configuracoes.calendario_criar') }}">
+            <div style="display:grid; grid-template-columns:1fr 1fr; gap:1rem;">
+              <div class="form-group" style="margin-bottom:0;">
+                <label class="form-label" for="cal_titulo">Título</label>
+                <input class="form-input" type="text" id="cal_titulo" name="titulo"
+                  placeholder="Ex: Natal, Carnaval, Alta Temporada Verão" maxlength="150" required />
+              </div>
+              <div class="form-group" style="margin-bottom:0;">
+                <label class="form-label" for="cal_data">Data</label>
+                <input class="form-input" type="date" id="cal_data" name="data_evento" required />
+              </div>
+            </div>
+            <div class="form-group" style="margin-top:1rem;">
+              <label class="form-label" for="cal_tipo">Tipo do Evento</label>
+              <select class="form-input" id="cal_tipo" name="tipo" required
+                style="cursor:pointer;">
+                <option value="NATIONAL_HOLIDAY">Feriado Nacional</option>
+                <option value="LOCAL_HOLIDAY">Feriado Local</option>
+                <option value="HIGH_SEASON">Alta Temporada</option>
+                <option value="MAINTENANCE">Manutenção</option>
+              </select>
+            </div>
+            <div style="display:flex; gap:1.5rem; margin-top:1rem; flex-wrap:wrap;">
+              <label style="display:flex; align-items:center; gap:0.5rem; font-size:0.9rem; color:#334155; cursor:pointer;">
+                <input type="checkbox" name="afeta_precificacao" value="1" style="width:18px; height:18px;" />
+                Afeta precificação
+              </label>
+              <label style="display:flex; align-items:center; gap:0.5rem; font-size:0.9rem; color:#334155; cursor:pointer;">
+                <input type="checkbox" name="afeta_folha" value="1" style="width:18px; height:18px;" />
+                Afeta folha/ponto
+              </label>
+              <label style="display:flex; align-items:center; gap:0.5rem; font-size:0.9rem; color:#334155; cursor:pointer;">
+                <input type="checkbox" name="recorrente_anual" value="1" style="width:18px; height:18px;" />
+                Recorrente anual
+              </label>
+            </div>
+            <button type="submit" class="btn-primary" style="margin-top:1.25rem;">Adicionar Evento</button>
+          </form>
+        </div>
+      </div>
+    </div>
+
   </main>
+
+  <!-- ── Modal: Editar Evento do Calendário ────────────────────────────────── -->
+  <div id="modal-editar-evento" style="display:none; position:fixed; inset:0; background:rgba(0,0,0,.5); z-index:1000; align-items:center; justify-content:center;">
+    <div style="background:#fff; border-radius:16px; padding:2rem; width:min(520px,92vw); box-shadow:0 20px 50px rgba(0,0,0,.2);">
+      <p style="font-size:1.1rem; font-weight:700; color:#1e293b; margin:0 0 1.5rem;">Editar Evento</p>
+      <form method="POST" id="form-editar-evento">
+        <div class="form-group">
+          <label class="form-label">Título</label>
+          <input class="form-input" type="text" name="titulo" id="edit_ev_titulo" maxlength="150" required />
+        </div>
+        <div class="form-group">
+          <label class="form-label">Data</label>
+          <input class="form-input" type="date" name="data_evento" id="edit_ev_data" required />
+        </div>
+        <div class="form-group">
+          <label class="form-label">Tipo</label>
+          <select class="form-input" name="tipo" id="edit_ev_tipo" required style="cursor:pointer;">
+            <option value="NATIONAL_HOLIDAY">Feriado Nacional</option>
+            <option value="LOCAL_HOLIDAY">Feriado Local</option>
+            <option value="HIGH_SEASON">Alta Temporada</option>
+            <option value="MAINTENANCE">Manutenção</option>
+          </select>
+        </div>
+        <div style="display:flex; gap:1.5rem; flex-wrap:wrap; margin-bottom:1rem;">
+          <label style="display:flex; align-items:center; gap:0.5rem; font-size:0.9rem; color:#334155; cursor:pointer;">
+            <input type="checkbox" name="afeta_precificacao" id="edit_ev_prec" value="1" style="width:18px; height:18px;" />
+            Afeta precificação
+          </label>
+          <label style="display:flex; align-items:center; gap:0.5rem; font-size:0.9rem; color:#334155; cursor:pointer;">
+            <input type="checkbox" name="afeta_folha" id="edit_ev_folha" value="1" style="width:18px; height:18px;" />
+            Afeta folha/ponto
+          </label>
+          <label style="display:flex; align-items:center; gap:0.5rem; font-size:0.9rem; color:#334155; cursor:pointer;">
+            <input type="checkbox" name="recorrente_anual" id="edit_ev_recorrente" value="1" style="width:18px; height:18px;" />
+            Recorrente anual
+          </label>
+        </div>
+        <div style="display:flex; gap:0.75rem; margin-top:1.5rem;">
+          <button type="submit" class="btn-primary" style="flex:1;">Salvar Alterações</button>
+          <button type="button" onclick="fecharModalEvento()"
+            style="flex:1; background:#f1f5f9; color:#475569; border:none; padding:0.75rem; border-radius:10px; font-weight:600; font-size:0.95rem; cursor:pointer; min-height:44px;">
+            Cancelar
+          </button>
+        </div>
+      </form>
+    </div>
+  </div>
 
   <!-- ── Modal: Editar Zona de Geofence ──────────────────────────────────── -->
   <div id="modal-editar-geo" style="display:none; position:fixed; inset:0; background:rgba(0,0,0,.5); z-index:1000; align-items:center; justify-content:center;">
@@ -1054,6 +1220,29 @@
 
     modalGeo.addEventListener('click', e => {
       if (e.target === modalGeo) fecharModalGeo();
+    });
+
+    // ── Calendário modal ──────────────────────────────────────────────────
+    const modalEvento = document.getElementById('modal-editar-evento');
+    const formEvento  = document.getElementById('form-editar-evento');
+
+    function abrirModalEditarEvento(id, titulo, data, tipo, precificacao, folha, recorrente) {
+      document.getElementById('edit_ev_titulo').value = titulo;
+      document.getElementById('edit_ev_data').value = data;
+      document.getElementById('edit_ev_tipo').value = tipo;
+      document.getElementById('edit_ev_prec').checked = precificacao;
+      document.getElementById('edit_ev_folha').checked = folha;
+      document.getElementById('edit_ev_recorrente').checked = recorrente;
+      formEvento.action = `/admin/configuracoes/calendario/${id}/editar`;
+      modalEvento.style.display = 'flex';
+    }
+
+    function fecharModalEvento() {
+      modalEvento.style.display = 'none';
+    }
+
+    modalEvento.addEventListener('click', e => {
+      if (e.target === modalEvento) fecharModalEvento();
     });
   </script>
 
