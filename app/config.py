@@ -18,6 +18,9 @@ class Config:
     # Used by QRService to derive a Fernet key (SHA-256 → base64url).
     QR_SECRET_KEY = os.environ.get("QR_SECRET_KEY") or os.environ.get("SECRET_KEY", "change-me-in-production")
 
+    # Token de autenticação para o serviço QR scanner (kiosk → API interna).
+    QR_SERVICE_TOKEN = os.environ.get("QR_SERVICE_TOKEN", "")
+
 
 class DevelopmentConfig(Config):
     DEBUG = True
@@ -39,6 +42,8 @@ class TestingConfig(Config):
     SQLALCHEMY_DATABASE_URI = "sqlite:///:memory:"
     # Disable CSRF-equivalent protections in tests
     WTF_CSRF_ENABLED = False
+    # Token fixo para testes do endpoint QR scanner
+    QR_SERVICE_TOKEN = "test-qr-service-token"
 
 
 config = {

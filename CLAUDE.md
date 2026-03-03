@@ -58,6 +58,10 @@ sistur/
 │   ├── config.py            # Flask config (Dev / Prod)
 │   ├── extensions.py        # SQLAlchemy singleton
 │   └── __init__.py          # App factory
+├── qr_service/              # Isolated QR scanner microservice (Docker container)
+│   ├── qr_reader.py         # OpenCV + pyzbar camera daemon (headless)
+│   ├── requirements.txt     # Deps: opencv-python-headless, pyzbar, requests
+│   └── Dockerfile           # python:3.11-slim + libzbar0
 ├── docs/
 │   └── antigravity.md       # Non-negotiable architecture rules
 ├── requirements.txt         # Python dependencies (Flask, SQLAlchemy, MySQL)
@@ -65,6 +69,17 @@ sistur/
 ├── CLAUDE.md                # This file
 └── README.md
 ```
+
+### Monorepo: `qr_service/`
+
+The `qr_service/` directory is an **isolated container** managed within the same repository.
+It runs on **kiosk machines** (Linux + USB camera) as a long-running daemon that reads QR codes
+and POSTs to `http://sistur-flask:5000/api/internal/ponto/qr-scan`.
+
+- **Not deployed on the VPS** — uses `profiles: ["kiosk"]` in `docker-compose.yml`
+- **VPS deploy:** `docker compose up -d --build` (starts only db + flask, unchanged)
+- **Kiosk deploy:** `docker compose --profile kiosk up -d --build` (starts all three services)
+- **Requires:** Linux host with USB camera at `/dev/video0` and `QR_SERVICE_TOKEN` env var
 
 ---
 

@@ -22,5 +22,21 @@ services:
     ports:
       - "${APP_PORT:-8083}:5000"
 
+  qr-reader:
+    build: ./qr_service
+    container_name: sistur-qr-reader
+    restart: unless-stopped
+    profiles:
+      - kiosk
+    depends_on:
+      - sistur-flask
+    environment:
+      - FLASK_API_URL=http://sistur-flask:5000/api/internal/ponto/qr-scan
+      - QR_SERVICE_TOKEN=${QR_SERVICE_TOKEN}
+      - CAMERA_INDEX=${CAMERA_INDEX:-0}
+      - DEBOUNCE_SECONDS=${DEBOUNCE_SECONDS:-5}
+    devices:
+      - "/dev/video0:/dev/video0"
+
 volumes:
   sistur_db_data:

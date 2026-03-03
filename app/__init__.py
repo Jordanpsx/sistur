@@ -76,6 +76,9 @@ def create_app(config_name: str = "default") -> Flask:
     from app.blueprints.configuracoes.routes import bp as configuracoes_bp
     app.register_blueprint(configuracoes_bp, url_prefix="/admin/configuracoes")
 
+    from app.blueprints.api_internal.routes import bp as api_internal_bp
+    app.register_blueprint(api_internal_bp, url_prefix="/api/internal")
+
     # CLI commands
     from app.cli import register_commands
     register_commands(app)
