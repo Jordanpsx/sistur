@@ -10,8 +10,14 @@ API_URL = "https://administrativo.cachoeiradogirassol.com.br/wp-json/meu-sistema
 SHARED_SECRET = "x7k9PzL2mN5qR8vJ3wA6yB4cE1dF0gH"
 
 # Hardware
-CAMERA_INDEX = 0 
-DELAY_ENTRE_LEITURAS = 5 
+# --- CÂMERA IP via RTSP (ativa) ---
+RTSP_URL = "rtsp://192.168.1.102:554/user=umeb_password=ggt3Apld_channel=0_stream=0&onvif=0.sdp?real_stream"
+# Resolução alvo após o recorte (largura, altura). Reduza para aliviar o processamento.
+RESOLUCAO_PROCESSAMENTO = (960, 360)
+DELAY_ENTRE_LEITURAS = 5
+
+# --- CÂMERA USB (desativada) ---
+# CAMERA_INDEX = 0  # Índice da câmera USB (0 = primeira câmera conectada)
 
 # --- CONFIGURAÇÃO DA IMPRESSORA ---
 # Nome da impressora no Windows (como aparece em "Dispositivos e Impressoras")
@@ -432,59 +438,74 @@ def iniciar_totem():
     else:
         print("⚠️ Nenhuma impressora USB encontrada. Comprovantes não serão impressos.\n")
     
-    # cv2.CAP_DSHOW é um truque para Windows carregar a câmera mais rápido
-    cap = cv2.VideoCapture(CAMERA_INDEX, cv2.CAP_DSHOW)
-    
-    # Define resolução (800x600 é ideal para leitura rápida)
-    cap.set(3, 800)
-    cap.set(4, 600)
+    # --- CÂMERA IP via RTSP (ativa) ---
+    print(f"📡 Conectando ao stream RTSP: {RTSP_URL}")
+    cap = cv2.VideoCapture(RTSP_URL)
+
+    # --- CÂMERA USB (desativada) ---
+    # print(f"📷 Conectando à câmera USB (índice {CAMERA_INDEX})...")
+    # cap = cv2.VideoCapture(CAMERA_INDEX, cv2.CAP_DSHOW)
 
     if not cap.isOpened():
-        print(f"ERRO: Não foi possível abrir a câmera {CAMERA_INDEX}.")
-        print("Tente mudar CAMERA_INDEX para 1 no código.")
+        print(f"ERRO: Não foi possível conectar ao stream RTSP.")
+        print(f"Verifique o endereço: {RTSP_URL}")
+        print("Certifique-se de que a câmera está acessível na rede e o endereço está correto.")
+        # print(f"ERRO: Não foi possível acessar a câmera USB (índice {CAMERA_INDEX}).")
+        # print("Verifique se a câmera está conectada e tente mudar CAMERA_INDEX para 1 ou 2.")
         return
+
+    ultimo_tempo_leitura = 0  # timestamp da última leitura bem-sucedida
 
     while True:
         success, frame = cap.read()
         if not success:
-            time.sleep(0.1)
+            # Não bloqueia a UI — usa waitKey ao invés de sleep
+            if cv2.waitKey(100) & 0xFF == ord('q'):
+                break
             continue
 
-        # Converter para escala de cinza facilita a vida do Pyzbar
-        gray_frame = cv2.cvtColor(frame, cv2.COLOR_BGR2GRAY)
-        
-        # Decodifica
-        qr_codes = decode(gray_frame)
+        # --- CÂMERA IP: recorte e redução de resolução (ativo) ---
+        # Recorta apenas a metade inferior do frame (câmera exibe duas imagens empilhadas)
+        altura = frame.shape[0]
+        frame = frame[altura // 2:, :]
+        # Reduz resolução para aliviar o processamento
+        frame = cv2.resize(frame, RESOLUCAO_PROCESSAMENTO, interpolation=cv2.INTER_LINEAR)
 
-        # Se encontrou código
-        for qr in qr_codes:
-            conteudo = qr.data.decode('utf-8')
-            
-            # Desenha retângulo visual
-            (x, y, w, h) = qr.rect
-            cv2.rectangle(frame, (x, y), (x + w, y + h), (0, 255, 0), 3)
-            cv2.putText(frame, "LENDO...", (x, y - 10), cv2.FONT_HERSHEY_SIMPLEX, 0.8, (0, 255, 0), 2)
-            
-            if conteudo:
-                # Envia e Pausa
-                registrar_ponto(conteudo)
-                
-                print(f"   [Aguardando {DELAY_ENTRE_LEITURAS}s...]")
-                
-                # Congela a imagem na tela por 1s para feedback visual
-                cv2.imshow('Leitor Ponto', frame)
-                cv2.waitKey(1000)
-                
-                # Pausa o loop lógico
-                time.sleep(DELAY_ENTRE_LEITURAS - 1)
-                
-                # Limpa o buffer da câmera para não ler frame velho
-                cap.grab() 
+        agora = time.time()
+        em_cooldown = (agora - ultimo_tempo_leitura) < DELAY_ENTRE_LEITURAS
 
-        # Mostra o vídeo
+        if em_cooldown:
+            # Exibe contagem regressiva na tela durante o cooldown
+            restante = DELAY_ENTRE_LEITURAS - (agora - ultimo_tempo_leitura)
+            cv2.putText(frame, f"Aguarde {restante:.1f}s", (10, 30),
+                        cv2.FONT_HERSHEY_SIMPLEX, 0.8, (0, 165, 255), 2)
+        else:
+            # Converte para escala de cinza APENAS para decodificação do QR
+            gray_frame = cv2.cvtColor(frame, cv2.COLOR_BGR2GRAY)
+
+            # Decodifica usando frame em preto e branco
+            qr_codes = decode(gray_frame)
+
+            # Se encontrou código
+            for qr in qr_codes:
+                conteudo = qr.data.decode('utf-8')
+
+                # Desenha retângulo visual no frame colorido
+                (x, y, w, h) = qr.rect
+                cv2.rectangle(frame, (x, y), (x + w, y + h), (0, 255, 0), 3)
+                cv2.putText(frame, "REGISTRANDO...", (x, y - 10),
+                            cv2.FONT_HERSHEY_SIMPLEX, 0.8, (0, 255, 0), 2)
+
+                if conteudo:
+                    registrar_ponto(conteudo)
+                    ultimo_tempo_leitura = time.time()  # inicia cooldown
+                    print(f"   [Aguardando {DELAY_ENTRE_LEITURAS}s...]")
+                    break  # evita processar múltiplos QRs no mesmo frame
+
+        # Mostra o vídeo em cores (sempre — mantém a janela responsiva)
         cv2.imshow('Leitor Ponto', frame)
 
-        # Sai com a tecla 'q'
+        # Sai com a tecla 'q' — waitKey(1) mantém a UI viva
         if cv2.waitKey(1) & 0xFF == ord('q'):
             break
 
