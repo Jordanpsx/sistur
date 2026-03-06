@@ -345,6 +345,130 @@ SCHEDULER_JOB_DEFAULTS = {"coalesce": True, "max_instances": 1}
 
 ---
 
+## Module: Reservas (Core) — Generic Booking System
+
+**Route:** `GET /reservas/` (and sub-routes)
+**Blueprint:** `app/blueprints/reservas/routes.py` — registered at `/reservas`
+**Models:** `app/models/reservas.py`
+
+### Overview
+
+Foundational API backend for a generic booking/reservation system. Designed as a **headless API** usable by multiple frontends (legacy WordPress, in-house portal, physical POS counter).
+
+**Key architectural patterns:**
+1. **Soft Delete** — `deleted_at` DateTime column; active records have `deleted_at IS NULL`
+2. **Versioning** — `Reserva` rows are never updated. Edits create new version (same `group_id`, incremented `version`)
+
+### Models
+
+**`ReservaSource`** — `app/models/reservas.py`, table `sistur_reserva_sources`
+- `id`, `name` (String 100, unique), `is_active` (Boolean), `deleted_at` (DateTime, nullable)
+- Represents a booking location/venue (e.g., "Cachoeira", "Vinhedo")
+- Relationships: `categories` → ReservaCategory
+
+**`ReservaCategory`** — table `sistur_reserva_categories`
+- `id`, `source_id` (FK, CASCADE), `name` (String 100), `deleted_at`
+- Category within a source (e.g., "Day Use", "Camping")
+- Unique constraint: `(source_id, name)`
+
+**`ReservaItem`** — table `sistur_reserva_items`
+- `id`, `name` (String 150), `billing_type` (Enum: FIXED, PER_DAY, PER_HOUR)
+- `stock_quantity` (Integer, null = infinite), `requires_deposit` (Boolean), `deleted_at`
+- Represents bookable items/services
+
+**`Reserva`** — table `sistur_reservas` — **VERSIONED**
+- `id`, `group_id` (String 36, UUID — links all versions), `version` (Integer)
+- `source_id`, `category_id` (FKs, nullable)
+- `customer_name`, `customer_document` (CPF/CNPJ), `origin` (Enum: WEB, BALCAO)
+- `status` (Enum: PENDING, PAID, CANCELED, COMPLETED, ARCHIVED_VERSION)
+- `check_in_date`, `check_out_date`, `expires_at` (15-min soft lock), `deleted_at`
+- `criado_em`, `atualizado_em` (DateTime)
+- Unique constraint: `(group_id, version)`
+
+**Versioning flow:** When a user edits a `Reserva`, the system marks the old row `status=ARCHIVED_VERSION` and inserts a new row with `version=old_version+1`, same `group_id`.
+
+**`ReservaItemLink`** — table `sistur_reserva_item_links` — **ASSOCIATION**
+- `id`, `reserva_id` (FK, CASCADE), `item_id` (FK, SET NULL)
+- `quantity` (Integer), `locked_price` (Numeric 10,2 — price snapshot)
+- `deleted_at` (enables soft-delete of items from a booking)
+- Unique constraint: `(reserva_id, item_id)`
+
+### Enums
+
+| Enum | Values |
+|---|---|
+| `BillingType` | FIXED, PER_DAY, PER_HOUR |
+| `ReservaOrigin` | WEB, BALCAO |
+| `ReservaStatus` | PENDING, PAID, CANCELED, COMPLETED, ARCHIVED_VERSION |
+
+### Dynamic RBAC Hook
+
+**SQLAlchemy event listener** (`after_insert` on `ReservaSource`):
+When a new `ReservaSource` is inserted, the system automatically creates two `RolePermission` entries for all `Role` objects with `is_super_admin=True`:
+- `(role.id, f"reservas_{source.name.lower()}", "view")`
+- `(role.id, f"reservas_{source.name.lower()}", "edit")`
+
+This keeps the RBAC system in sync with new booking sources without manual intervention.
+
+### Permissions (RBAC)
+
+**Base permission group:** `reservas: ["view", "create", "edit", "delete"]`
+- `reservas.view` — read access to bookings
+- `reservas.create` — create new bookings
+- `reservas.edit` — edit existing bookings (creates new version)
+- `reservas.delete` — delete bookings (soft delete via `deleted_at`)
+
+**Dynamic permissions** (auto-generated per source):
+- `reservas_{source_name}.view` — view bookings for specific source
+- `reservas_{source_name}.edit` — edit bookings for specific source
+
+### Routes (Headless API)
+
+| Route | Method | Status | Description |
+|---|---|---|---|
+| `GET /reservas/` | GET | 501 | List all reservas (placeholder) |
+| `GET /reservas/sources` | GET | 501 | List all sources (placeholder) |
+| `GET /reservas/<int:reserva_id>` | GET | 501 | Retrieve single reserva (placeholder) |
+
+All routes currently return `{"status": "not_implemented"}` with HTTP 501. Actual business logic will be implemented in `ReservaService` and additional routes as the feature matures.
+
+### Soft Delete Pattern
+
+Unlike older models that use `ativo: Boolean`, Reservas uses `deleted_at: DateTime`:
+- **Active record:** `deleted_at IS NULL`
+- **Soft-deleted record:** `deleted_at` is set to deletion timestamp
+- All service queries must filter `WHERE deleted_at IS NULL` by default
+- This pattern provides audit trail (deletion timestamp + identity) without extra auditing
+
+### Composite Key & Versioning Pattern
+
+| Scenario | Old Behavior | Reservas Behavior |
+|---|---|---|
+| **Initial booking** | Insert 1 row, `status=PENDING` | Insert 1 row, `group_id=UUID`, `version=1` |
+| **Edit (price change, items)** | UPDATE row in-place | INSERT new row: `version=2`, mark old `status=ARCHIVED_VERSION` |
+| **Cancel** | UPDATE `status=CANCELED` | Can modify either old version OR insert new version with `status=CANCELED` |
+| **Historical audit** | Lost after UPDATE | Full history in `sistur_reservas` with all versions |
+
+### Testing
+
+**File:** `tests/models/test_reservas.py` (to be created)
+**Coverage:** Model creation, constraints (unique group_id/version), relationships, soft-delete queries
+
+### Migration
+
+After model file created, run:
+```bash
+flask db migrate -m "Add reservas module: sources, categories, items, reservas, item_links"
+flask db upgrade
+```
+
+On VPS:
+```bash
+docker exec -it sistur-flask-app flask db upgrade
+```
+
+---
+
 ## Module: RH — Dashboard de Recursos Humanos
 
 **Route:** `GET /rh/` (dashboard principal com abas)

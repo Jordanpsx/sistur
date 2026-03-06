@@ -68,6 +68,8 @@ PERMISSOES_DO_SISTEMA: dict[str, list[str]] = {
     "folha_ponto":  ["view", "edit", "deducao", "imprimir"],
     # avisos: view = pode ver as próprias notificações; receber_alertas = recebe alertas de atraso/falta
     "avisos":       ["view", "receber_alertas"],
+    # reservas: module genérico com múltiplas fontes; view/create/edit/delete permissões base
+    "reservas":     ["view", "create", "edit", "delete"],
 }
 
 # Nomes legíveis para exibição nas permissões
@@ -81,6 +83,7 @@ _LABELS_ACAO: dict[str, str] = {
     "edit_admin": "Editar (Admin)",
     "deducao":    "Registrar Dedução",
     "imprimir":   "Imprimir / Exportar PDF",
+    "receber_alertas": "Receber Alertas",
 }
 
 _LABELS_MODULO: dict[str, str] = {
@@ -92,6 +95,7 @@ _LABELS_MODULO: dict[str, str] = {
     "audit":        "Auditoria",
     "leads":        "Leads",
     "folha_ponto":  "Folha de Ponto",
+    "reservas":     "Reservas",
 }
 
 

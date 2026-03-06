@@ -87,6 +87,7 @@ def create_app(config_name: str = "default") -> Flask:
         from app.models import calendario  # noqa: F401
         from app.models import avisos  # noqa: F401  — sistur_avisos, sistur_ausencias_justificadas
         from app.models import ajuste_ponto  # noqa: F401  — sistur_ajuste_ponto_requests
+        from app.models import reservas  # noqa: F401  — sistur_reserva_sources, categories, items, reservas, item_links
 
     # Blueprints
     from app.blueprints.portal.routes import bp as portal_bp
@@ -115,6 +116,9 @@ def create_app(config_name: str = "default") -> Flask:
 
     from app.blueprints.avisos.routes import bp as avisos_bp
     app.register_blueprint(avisos_bp, url_prefix="/avisos")
+
+    from app.blueprints.reservas.routes import bp as reservas_bp
+    app.register_blueprint(reservas_bp, url_prefix="/reservas")
 
     # CLI commands
     from app.cli import register_commands
