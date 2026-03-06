@@ -210,6 +210,141 @@ Methods: `get(chave, default)`, `set(chave, valor, ator_id)`, `is_module_enabled
 
 ---
 
+## Module: Avisos — Proactive Absence Monitoring & Internal Notifications
+
+**Route:** `GET /avisos/` (and sub-routes)
+**Blueprint:** `app/blueprints/avisos/routes.py` — registered at `/avisos`
+**Templates:** `app/templates/avisos/`, `app/templates/_avisos_bell.html` (include)
+
+### Overview
+
+Centralized notification system for detecting tardiness, managing justified absences, and delivering multi-level alerts to employees and supervisors.
+
+### Key Features
+
+1. **Proactive Tardy Detection** — Background scheduler runs every 5 min; detects missed clock-ins and applies provisional hour-bank debits
+2. **Absence Justification** — Employees/RH register justified absences (folgas, atestados, férias); approval reverses provisional debits automatically
+3. **Centralized Notifications** — Single `Aviso` model for all alerts; global notification bell in topbar with unread count badge
+4. **Supervisor Alerts** — Tardy/absence notifications auto-delivered to area supervisors via RBAC role permissions
+
+### Routes
+
+| Route | Method | Description |
+|---|---|---|
+| `GET /avisos/` | GET | List notifications with pagination |
+| `POST /avisos/<id>/marcar-lido` | POST | Mark single notification as read (IDOR guard) |
+| `POST /avisos/marcar-todos-lidos` | POST | Bulk mark all as read |
+| `POST /avisos/<id>/deletar` | POST | Delete notification (IDOR guard) |
+
+### Models
+
+**`Aviso`** — `app/models/avisos.py`, table `sistur_avisos`
+- `id`, `destinatario_id` (FK, indexed), `remetente_id` (FK, nullable)
+- `titulo` (String 200), `mensagem` (Text)
+- `tipo` (Enum: ATRASO, FALTA, SISTEMA), `is_lido` (Boolean, indexed)
+- `criado_em` (DateTime, indexed)
+- Relationships: destinatario, remetente → Funcionario
+
+**`AusenciaJustificada`** — `app/models/avisos.py`, table `sistur_ausencias_justificadas`
+- `id`, `funcionario_id` (FK, indexed), `data` (Date, indexed)
+- `tipo` (Enum: FOLGA, ATESTADO, FERIAS), `aprovado` (Boolean)
+- `criado_por_id` (FK, nullable), `observacao` (Text)
+- `criado_em` (DateTime)
+- Unique constraint: `(funcionario_id, data)` — one absence per employee per day
+
+**Model Extension:** `Funcionario.horario_entrada_padrao` (Time, nullable)
+- Expected start time for tardiness detection; NULL = employee excluded from monitoring
+
+### Services
+
+**`AvisoService`** — `app/services/aviso_service.py`
+| Method | Purpose |
+|---|---|
+| `criar(destinatario_id, titulo, mensagem, tipo, remetente_id=None, ator_id=None)` | Create notification; validates recipient active; logs audit |
+| `marcar_lido(aviso_id, ator_id)` | Mark as read (idempotent) |
+| `marcar_todos_lidos(funcionario_id, ator_id)` | Bulk mark all unread as read; returns count |
+| `deletar(aviso_id, ator_id)` | Delete notification; logs audit |
+| `contar_nao_lidos(funcionario_id)` | Count unread (used by context processor); no audit |
+| `listar(funcionario_id, page=1, per_page=20)` | Paginated list, newest first |
+| `verificar_atrasos()` | **Background job (every 5 min)**: detect missed clock-ins, apply provisional debits, notify supervisors |
+| `finalizar_ausencias()` | **Background job (daily 23:00)**: confirm unexcused absences, create FALTA avisos |
+
+**`AusenciaService`** — `app/services/ausencia_service.py`
+| Method | Purpose |
+|---|---|
+| `criar(funcionario_id, data, tipo, criado_por_id, observacao=None, aprovado=False, ator_id=None)` | Create absence record; enforces uniqueness; logs audit |
+| `aprovar(ausencia_id, ator_id)` | Approve absence; reverses `auto_debit_aplicado` if TimeDay exists; adjusts banco_horas_acumulado |
+| `deletar(ausencia_id, ator_id)` | Delete (raises error if already approved); logs audit |
+| `listar(funcionario_id, page=1, per_page=20)` | Paginated list, newest first |
+
+### Background Scheduler
+
+**Framework:** Flask-APScheduler
+
+**Configuration** (app/config.py):
+```
+SCHEDULER_API_ENABLED = False
+SCHEDULER_EXECUTORS = {"default": {"type": "threadpool", "max_workers": 1}}
+SCHEDULER_JOB_DEFAULTS = {"coalesce": True, "max_instances": 1}
+```
+
+**Jobs:**
+- `verificar_atrasos` — interval, 5 minutes
+- `finalizar_ausencias` — cron, daily 23:00
+
+**Key Design:** `max_instances=1` + `coalesce=True` prevent duplicate execution in multi-worker Gunicorn. Code guard (`auto_debit_aplicado=True` check) as second layer.
+
+### Context Processor
+
+**`inject_avisos()`** — `app/__init__.py`
+- Injects `avisos_nao_lidos` (int) into every template
+- Called on every request
+- Falls back gracefully to 0 on error
+- Enables topbar bell badge without explicit passing
+
+### Permissions (RBAC)
+
+**New permission group:** `avisos: ["view", "receber_alertas"]`
+- `avisos.view` — access `/avisos/` page
+- `avisos.receber_alertas` — receive supervisor alerts for tardiness/absences in own area
+
+### Provisional Debit Reversal Integration
+
+**Key integration with PontoService:**
+- `verificar_atrasos()` sets `TimeDay.auto_debit_aplicado=True` + applies debit
+- `PontoService.processar_dia()` resets flag when real punches exist (no extra logic needed — delta mechanism handles it)
+- `AusenciaService.aprovar()` also reverses debit if approved absence exists
+
+**Model extension:** `TimeDay.auto_debit_aplicado` (Boolean) — tracks provisional debit state
+
+### Templates
+
+**`_avisos_bell.html`** — Reusable topbar include
+- Bell icon (20×20 SVG) + red badge showing unread count (99+ max)
+- 44px touch target; inline styles; links to `/avisos/`
+- Included in: portal/dashboard, ponto/index, ponto/analise, rh/index
+
+**`avisos/index.html`** — Notification list page
+- Topbar with back link + title + bell icon
+- Flash message area
+- "Mark all as read" button (visible if unread > 0)
+- Notification cards: color-coded by type, timestamps, action buttons
+- Empty state + pagination
+- Mobile-first responsive
+
+### Testing
+
+**File:** `tests/services/test_aviso_service.py`
+- 8 tests covering: criar audit, marcar_todos_lidos, verificar_atrasos logic (detection, skip conditions), processar_dia reversal, aprovar reversal
+- All passing ✅
+
+### See Also
+
+- Full documentation: `docs/avisos/README.md`
+- API endpoints: `docs/api_catalog.md` — `/avisos/*` routes
+
+---
+
 ## Module: RH — Dashboard de Recursos Humanos
 
 **Route:** `GET /rh/` (dashboard principal com abas)

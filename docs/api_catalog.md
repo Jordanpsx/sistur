@@ -334,6 +334,273 @@ Salva dados cadastrais da empresa para uso no cabeçalho do PDF da Folha de Pont
 
 ---
 
+## Module: Avisos — Proactive Absence Monitoring (`/avisos`)
+
+> **Access:** Todas as rotas requerem autenticação (`@login_required`).
+> Supervisores recebem notificações via RBAC: permissão `avisos.receber_alertas`.
+> Ver documentação completa em `docs/avisos/README.md`.
+
+### `GET /avisos/`
+
+Lista notificações do usuário autenticado com paginação.
+
+**Auth required:** Yes
+**Query params:** `page` (int, default: 1)
+**Response:** `200 text/html` — `avisos/index.html`
+
+**Template variables:**
+
+| Variable | Type | Description |
+|---|---|---|
+| `pagination` | `Pagination` | Flask-SQLAlchemy pagination object |
+| `avisos` | `list[Aviso]` | Avisos para a página atual |
+| `avisos_nao_lidos` | int | Contagem total de não lidos (injected by context processor) |
+
+**Features:**
+- Cards with color-coded left border by tipo (amber=ATRASO, red=FALTA, blue=SISTEMA)
+- Unread indicator dot
+- "Mark as read" + "Delete" buttons per card
+- "Mark all as read" button (visible if unread > 0)
+- Empty state: "Nenhum aviso por enquanto."
+- Pagination (prev/next)
+- Mobile-first responsive design
+
+---
+
+### `POST /avisos/<id>/marcar-lido`
+
+Marca uma notificação como lida.
+
+**Auth required:** Yes
+**Path param:** `id` (int) — PK do Aviso
+**Security:** IDOR guard — verifica `aviso.destinatario_id == current_user`
+**Form/AJAX:** Both supported (form fallback)
+**Response (Form):** Redirect `GET /avisos/` com flash de sucesso
+**Response (AJAX):** `200 application/json` `{"status": "success", "marcados": 1}`
+**Error:** HTTP 403 se IDOR falhar; HTTP 404 se aviso não encontrado
+
+---
+
+### `POST /avisos/marcar-todos-lidos`
+
+Marca todas as notificações não lidas como lidas.
+
+**Auth required:** Yes
+**Form fields:** None required
+**Response:** Redirect `GET /avisos/` com flash `"Todas as notificações marcadas como lidas."`
+**Audit:** `AuditLog` via `AvisoService.marcar_todos_lidos` (logs count)
+
+---
+
+### `POST /avisos/<id>/deletar`
+
+Remove uma notificação.
+
+**Auth required:** Yes
+**Path param:** `id` (int) — PK do Aviso
+**Security:** IDOR guard — verifica `aviso.destinatario_id == current_user`
+**Response:** Redirect `GET /avisos/` com flash de sucesso
+**Audit:** `AuditLog` via `AvisoService.deletar`
+**Error:** HTTP 403 se IDOR falhar; HTTP 404 se aviso não encontrado
+
+---
+
+## Background Scheduler Jobs
+
+> Jobs executados via **Flask-APScheduler**. Configuração em `app/config.py`.
+
+### Job: `verificar_atrasos` (Tardy Detection)
+
+**Trigger:** Interval — every 5 minutes
+**Handler:** `AvisoService.verificar_atrasos()`
+
+**Logic:**
+1. Reads timezone from `ConfiguracaoService.get("scheduler.timezone", "America/Sao_Paulo")`
+2. Converts UTC now to local time
+3. For each active employee with `horario_entrada_padrao` set:
+   - Skip if today is holiday (via `GlobalEvent.afeta_folha`)
+   - Skip if day inactive in `jornada_semanal`
+   - Skip if within 20-min tolerance window (entrada_padrao + 20 min)
+   - Skip if approved `AusenciaJustificada` exists for today
+   - Skip if `TimeEntry` exists (already punched)
+   - Skip if `TimeDay.auto_debit_aplicado=True` (guard against duplicates)
+4. Apply provisional debit:
+   - Create/update `TimeDay` with `saldo_final_minutos = -expected`
+   - Set `auto_debit_aplicado = True`
+   - Adjust `banco_horas_acumulado` via delta
+   - Log audit event
+5. Create notifications:
+   - `Aviso(tipo=ATRASO)` to employee
+   - `Aviso(tipo=ATRASO)` to each supervisor in employee's area (RBAC: `avisos.receber_alertas` or super_admin)
+
+**Error handling:** try/except per employee — isolated failures
+
+**Returns:** `{"processados": int, "erros": list[str]}`
+
+---
+
+### Job: `finalizar_ausencias` (Absence Confirmation)
+
+**Trigger:** Cron — daily at 23:00 (11 PM)
+**Handler:** `AvisoService.finalizar_ausencias()`
+
+**Logic:**
+1. Find all `TimeDay` with `auto_debit_aplicado=True` for today
+2. For each:
+   - Check if `TimeEntry` exists (real punches)
+   - If no punches: confirm as permanent absence
+     - Create `Aviso(tipo=FALTA)` to employee
+     - Create `Aviso(tipo=FALTA)` to each supervisor in area
+     - Log audit events
+
+**Returns:** `{"confirmadas": int, "erros": list[str]}`
+
+---
+
+## Context Processor: `inject_avisos()`
+
+> Injected into every template request via Flask `@app.context_processor`.
+
+**Variable:** `avisos_nao_lidos` (int)
+
+**Implementation:**
+```python
+@app.context_processor
+def inject_avisos():
+    try:
+        from flask import session
+        fid = session.get("funcionario_id")
+        if fid:
+            from app.services.aviso_service import AvisoService
+            return {"avisos_nao_lidos": AvisoService.contar_nao_lidos(fid)}
+    except Exception:
+        pass
+    return {"avisos_nao_lidos": 0}
+```
+
+**Usage:** Templates can reference `{{ avisos_nao_lidos }}` without explicit passing.
+
+**Topbar bell:** `_avisos_bell.html` include displays red badge with count (99+ max).
+
+---
+
+## Models & Database
+
+### `Aviso` Table
+
+```sql
+CREATE TABLE sistur_avisos (
+    id INTEGER PRIMARY KEY,
+    destinatario_id INTEGER NOT NULL,
+    remetente_id INTEGER,
+    titulo VARCHAR(200) NOT NULL,
+    mensagem TEXT,
+    tipo ENUM('ATRASO', 'FALTA', 'SISTEMA') NOT NULL DEFAULT 'SISTEMA',
+    is_lido BOOLEAN NOT NULL DEFAULT FALSE,
+    criado_em DATETIME NOT NULL,
+    FOREIGN KEY (destinatario_id) REFERENCES sistur_funcionarios(id) ON DELETE CASCADE,
+    FOREIGN KEY (remetente_id) REFERENCES sistur_funcionarios(id) ON DELETE SET NULL,
+    INDEX (destinatario_id),
+    INDEX (is_lido),
+    INDEX (criado_em)
+);
+```
+
+### `AusenciaJustificada` Table
+
+```sql
+CREATE TABLE sistur_ausencias_justificadas (
+    id INTEGER PRIMARY KEY,
+    funcionario_id INTEGER NOT NULL,
+    data DATE NOT NULL,
+    tipo ENUM('FOLGA', 'ATESTADO', 'FERIAS') NOT NULL,
+    aprovado BOOLEAN NOT NULL DEFAULT FALSE,
+    criado_por_id INTEGER,
+    observacao TEXT,
+    criado_em DATETIME NOT NULL,
+    FOREIGN KEY (funcionario_id) REFERENCES sistur_funcionarios(id) ON DELETE CASCADE,
+    FOREIGN KEY (criado_por_id) REFERENCES sistur_funcionarios(id) ON DELETE SET NULL,
+    UNIQUE KEY uq_ausencia_funcionario_data (funcionario_id, data),
+    INDEX (funcionario_id),
+    INDEX (data)
+);
+```
+
+### Model Extensions
+
+**`Funcionario` column:**
+```sql
+ALTER TABLE sistur_funcionarios ADD COLUMN horario_entrada_padrao TIME;
+```
+
+**`TimeDay` column:**
+```sql
+ALTER TABLE sistur_time_days ADD COLUMN auto_debit_aplicado BOOLEAN NOT NULL DEFAULT FALSE;
+```
+
+---
+
+## RBAC Permissions
+
+### New Permission Group: `avisos`
+
+| Permission | Scope | Meaning |
+|---|---|---|
+| `avisos.view` | Employee | Access `/avisos/` page (implicit for all active employees) |
+| `avisos.receber_alertas` | Supervisor | Receive notifications for tardiness/absences in own area |
+
+**Assignment:** Via `/admin/configuracoes/roles/<id>/permissoes` interface
+
+**Query Logic:** `_buscar_supervisores(area_id)` filters employees with this permission OR `role.is_super_admin=True`
+
+---
+
+## Integration Points
+
+### With `PontoService`
+
+**`processar_dia()` method:**
+- When `len(entries) > 0` and `auto_debit_aplicado=True`:
+  - Reset `auto_debit_aplicado = False`
+  - Existing delta mechanism (`banco_horas_acumulado += delta`) handles reversal
+  - No extra arithmetic needed
+
+**`_get_expected_minutes(funcionario, shift_date)` function:**
+- Called by `verificar_atrasos()` to calculate expected minutes
+- Respects `jornada_semanal` overrides + `minutos_esperados_dia` fallback
+
+### With `CalendarService` (GlobalEvent)
+
+**Holiday Detection:**
+```python
+GlobalEvent.afeta_folha == True AND (
+    GlobalEvent.data_evento == today OR (
+        GlobalEvent.recorrente_anual == True AND
+        EXTRACT(MONTH FROM data_evento) == today.month AND
+        EXTRACT(DAY FROM data_evento) == today.day
+    )
+)
+```
+
+---
+
+## Migration
+
+**File:** `migrations/versions/a1b2c3d4e5f6_add_avisos_ausencias_horario_autodebit.py`
+
+**Changes:**
+1. Create `sistur_avisos` table (+ 3 indexes)
+2. Create `sistur_ausencias_justificadas` table (+ 2 indexes, unique constraint)
+3. Add `horario_entrada_padrao` column to `sistur_funcionarios`
+4. Add `auto_debit_aplicado` column to `sistur_time_days` (default=FALSE)
+
+**VPS Deployment:**
+```bash
+docker exec -it sistur-flask-app flask db upgrade
+```
+
+---
+
 ## Module: RH — Folha de Ponto (`/rh`)
 
 > **Access:** Requer permissão `folha_ponto.*` por ação. Super admins têm acesso total.
