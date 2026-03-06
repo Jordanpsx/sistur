@@ -422,9 +422,8 @@ class PontoService(BaseService):
         from app.models.ponto import ProcessingStatus, PunchSource, PunchType, TimeDay, TimeEntry
 
         # Validação de geofencing (Rule #2) — aplicável APENAS a punches de autoatendimento
-        # GPS é OBRIGATÓRIO apenas para: 'employee' (portal) e 'QR' (QR code).
+        # GPS é OBRIGATÓRIO apenas para: 'employee' (portal do colaborador) e 'QR' (QR code pessoal via câmera).
         # Admin edits ('admin' source) NÃO exigem geofencing — são edições administrativas.
-        # KIOSK pode ter regras próprias futuras.
         if source in ("employee", "QR"):
             from app.models.geofence import GeofenceLocation
             _zonas_ativas = db.session.query(GeofenceLocation).filter_by(is_active=True).count()
