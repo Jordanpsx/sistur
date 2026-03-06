@@ -1,0 +1,171 @@
+<!DOCTYPE html>
+<!--
+  Copyright (c) 2026 Jordan Barbosa Machado — All Rights Reserved
+  Reservas — Dashboard (visão geral do módulo)
+-->
+<html lang="pt-BR">
+
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Reservas | Dashboard</title>
+
+  <script src="https://cdn.tailwindcss.com"></script>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link
+    href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap"
+    rel="stylesheet" />
+
+  <style>
+    body {
+      font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+      background: #f0fdfa;
+    }
+
+    .topbar {
+      position: sticky;
+      top: 0;
+      z-index: 50;
+      background: rgba(255, 255, 255, 0.85);
+      backdrop-filter: blur(16px);
+      border-bottom: 1px solid rgba(0, 0, 0, 0.06);
+    }
+
+    .topbar-inner {
+      max-width: 1100px;
+      margin: 0 auto;
+      padding: 0 1.5rem;
+      height: 60px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+    }
+
+    .btn-back {
+      display: inline-flex;
+      align-items: center;
+      gap: 0.375rem;
+      padding: 0.5rem 0.875rem;
+      border-radius: 8px;
+      font-size: 0.875rem;
+      font-weight: 600;
+      color: #64748b;
+      background: transparent;
+      border: 1px solid #e2e8f0;
+      cursor: pointer;
+      text-decoration: none;
+      transition: all 0.15s ease;
+    }
+
+    .btn-back:hover {
+      background: #f1f5f9;
+      color: #334155;
+      border-color: #cbd5e1;
+    }
+
+    .card {
+      background: white;
+      border: 1px solid #e2e8f0;
+      border-radius: 12px;
+      padding: 1.5rem;
+      box-shadow: 0 1px 2px rgba(0, 0, 0, 0.05);
+    }
+
+    .stat-card {
+      background: linear-gradient(135deg, #ccfbf1 0%, #a7f3d0 100%);
+      color: #0f766e;
+    }
+
+    .stat-value {
+      font-size: 2rem;
+      font-weight: 700;
+      line-height: 1;
+    }
+
+    .stat-label {
+      font-size: 0.875rem;
+      font-weight: 500;
+      opacity: 0.85;
+      margin-top: 0.5rem;
+    }
+
+    .grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+      gap: 1rem;
+    }
+
+    .alert {
+      background: #fef3c7;
+      border: 1px solid #fcd34d;
+      border-radius: 8px;
+      padding: 1rem;
+      color: #92400e;
+      font-size: 0.875rem;
+    }
+  </style>
+</head>
+
+<body>
+  <!-- Topbar -->
+  <div class="topbar">
+    <div class="topbar-inner">
+      <h1 style="font-size: 1.25rem; font-weight: 700; color: #0f766e; margin: 0;">
+        Reservas
+      </h1>
+      <a href="{{ url_for('portal.dashboard') }}" class="btn-back">
+        ← Voltar ao Dashboard
+      </a>
+    </div>
+  </div>
+
+  <!-- Content -->
+  <main style="max-width: 1100px; margin: 0 auto; padding: 2rem 1.5rem;">
+
+    <!-- Alert -->
+    <div class="alert" style="margin-bottom: 2rem;">
+      ℹ️ O módulo de Reservas está em desenvolvimento. Funcionalidades completas em breve.
+    </div>
+
+    <!-- Estatísticas -->
+    <div class="grid" style="margin-bottom: 2rem;">
+      <div class="card stat-card">
+        <div class="stat-value">{{ total_sources }}</div>
+        <div class="stat-label">Locais / Venues</div>
+      </div>
+      <div class="card stat-card">
+        <div class="stat-value">{{ total_reservas }}</div>
+        <div class="stat-label">Reservas Ativas</div>
+      </div>
+      {% if status_dict.get('PENDING', 0) > 0 %}
+      <div class="card stat-card">
+        <div class="stat-value">{{ status_dict.get('PENDING', 0) }}</div>
+        <div class="stat-label">Aguardando Pagamento</div>
+      </div>
+      {% endif %}
+      {% if status_dict.get('PAID', 0) > 0 %}
+      <div class="card stat-card">
+        <div class="stat-value">{{ status_dict.get('PAID', 0) }}</div>
+        <div class="stat-label">Pagas</div>
+      </div>
+      {% endif %}
+    </div>
+
+    <!-- Links rápidos -->
+    <div class="card">
+      <h2 style="font-size: 1.125rem; font-weight: 600; margin: 0 0 1rem 0; color: #0f766e;">
+        Ações Rápidas
+      </h2>
+      <div style="display: flex; gap: 1rem; flex-wrap: wrap;">
+        <a href="{{ url_for('reservas.listar_fontes') }}"
+          style="display: inline-block; padding: 0.75rem 1rem; background: #0d9488; color: white; text-decoration: none; border-radius: 8px; font-weight: 500; transition: background 0.15s;">
+          Ver Locais
+        </a>
+      </div>
+    </div>
+
+  </main>
+</body>
+
+</html>
