@@ -167,6 +167,7 @@ class FuncionarioService(BaseService):
             "minutos_esperados_dia", "minutos_almoco", "jornada_semanal",
             "email", "telefone", "data_admissao", "bio",
             "ctps", "ctps_uf", "cbo",
+            "horario_entrada_padrao",  # campo para monitoramento de atrasos (AvisoService)
         }
 
         for campo, valor in dados.items():

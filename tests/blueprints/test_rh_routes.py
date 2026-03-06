@@ -289,6 +289,32 @@ class TestEditarFuncionario:
         resp = client_sem_permissao.post("/rh/funcionarios/1/editar", data={"nome": "X"})
         assert resp.status_code == 403
 
+    def test_post_salva_horario_entrada_padrao(self, app, client_rh, db):
+        """POST com horario_entrada_padrao deve converter '08:00' para datetime.time e salvar no banco.
+
+        Garante que o campo de monitoramento de atrasos é processado corretamente
+        pela rota editar_funcionario e persistido via FuncionarioService.atualizar.
+        """
+        with app.app_context():
+            f = _criar_funcionario("Horario Test", "11144477735")
+            fid = f.id
+
+        resp = client_rh.post(f"/rh/funcionarios/{fid}/editar", data={
+            "nome": "Horario Test",
+            "area_id": "",
+            "role_id": "",
+            "minutos_esperados_dia": "480",
+            "minutos_almoco": "60",
+            "horario_entrada_padrao": "08:00",
+        })
+
+        assert resp.status_code == 302
+
+        with app.app_context():
+            from datetime import time as dtime
+            f = _db.session.get(Funcionario, fid)
+            assert f.horario_entrada_padrao == dtime(8, 0)
+
 
 # ---------------------------------------------------------------------------
 # Desativar

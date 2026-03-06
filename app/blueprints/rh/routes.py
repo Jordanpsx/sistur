@@ -320,6 +320,19 @@ def novo_funcionario():
         if valor:
             dados_extras[campo] = valor
     dados_extras["jornada_semanal"] = _parse_jornada(request.form)
+
+    # Horário de entrada padrão para monitoramento de atrasos (campo time HTML → datetime.time)
+    _hep = (request.form.get("horario_entrada_padrao") or "").strip()
+    if _hep:
+        from datetime import time as _dtime
+        try:
+            _h, _m = _hep.split(":")
+            dados_extras["horario_entrada_padrao"] = _dtime(int(_h), int(_m))
+        except (ValueError, AttributeError):
+            dados_extras["horario_entrada_padrao"] = None
+    else:
+        dados_extras["horario_entrada_padrao"] = None
+
     FuncionarioService.atualizar(f.id, dados_extras, ator_id)
 
     # Senha (opcional)
@@ -397,6 +410,18 @@ def editar_funcionario(funcionario_id: int):
             dados[campo] = int(request.form[campo])
 
     dados["jornada_semanal"] = _parse_jornada(request.form)
+
+    # Horário de entrada padrão para monitoramento de atrasos (campo time HTML → datetime.time)
+    _hep = (request.form.get("horario_entrada_padrao") or "").strip()
+    if _hep:
+        from datetime import time as _dtime
+        try:
+            _h, _m = _hep.split(":")
+            dados["horario_entrada_padrao"] = _dtime(int(_h), int(_m))
+        except (ValueError, AttributeError):
+            dados["horario_entrada_padrao"] = None
+    else:
+        dados["horario_entrada_padrao"] = None
 
     try:
         f = FuncionarioService.atualizar(funcionario_id, dados, ator_id)

@@ -778,7 +778,7 @@
       <!-- Ponto Eletrônico -->
       {% if perms.ponto.view and (modulos_ativos.ponto or is_super_admin) %}
       <a href="{{ url_for('ponto.historico') }}"
-         class="mod-card mod-active mod-ponto{% if not modulos_ativos.ponto %} mod-master-off{% endif %}">
+        class="mod-card mod-active mod-ponto{% if not modulos_ativos.ponto %} mod-master-off{% endif %}">
         <div class="mod-card-header">
           <div class="mod-icon">
             <svg width="20" height="20" viewBox="0 0 24 24" fill="none">
@@ -789,9 +789,9 @@
           <div class="mod-card-titles">
             <h2 class="mod-card-title">Ponto Eletrônico</h2>
             {% if not modulos_ativos.ponto %}
-              <span class="badge-master-off">Desativado</span>
+            <span class="badge-master-off">Desativado</span>
             {% else %}
-              <span class="mod-badge badge-ponto">Ponto</span>
+            <span class="mod-badge badge-ponto">Ponto</span>
             {% endif %}
           </div>
         </div>
@@ -837,7 +837,7 @@
       <!-- Estoque -->
       {% if perms.estoque.view and (modulos_ativos.estoque or is_super_admin) %}
       <a href="{{ url_for('estoque.dashboard') }}"
-         class="mod-card mod-active mod-estoque{% if not modulos_ativos.estoque %} mod-master-off{% endif %}">
+        class="mod-card mod-active mod-estoque{% if not modulos_ativos.estoque %} mod-master-off{% endif %}">
         <div class="mod-card-header">
           <div class="mod-icon">
             <svg width="20" height="20" viewBox="0 0 24 24" fill="none">
@@ -851,9 +851,9 @@
           <div class="mod-card-titles">
             <h2 class="mod-card-title">Estoque</h2>
             {% if not modulos_ativos.estoque %}
-              <span class="badge-master-off">Desativado</span>
+            <span class="badge-master-off">Desativado</span>
             {% else %}
-              <span class="mod-badge badge-estoque">Operações</span>
+            <span class="mod-badge badge-estoque">Operações</span>
             {% endif %}
           </div>
         </div>
@@ -864,7 +864,7 @@
       <!-- Restaurante -->
       {% if perms.restaurante.view and (modulos_ativos.restaurante or is_super_admin) %}
       <a href="{{ url_for('restaurante.dashboard') }}"
-         class="mod-card mod-active mod-restaurante{% if not modulos_ativos.restaurante %} mod-master-off{% endif %}">
+        class="mod-card mod-active mod-restaurante{% if not modulos_ativos.restaurante %} mod-master-off{% endif %}">
         <div class="mod-card-header">
           <div class="mod-icon">
             <svg width="20" height="20" viewBox="0 0 24 24" fill="none">
@@ -876,9 +876,9 @@
           <div class="mod-card-titles">
             <h2 class="mod-card-title">Restaurante</h2>
             {% if not modulos_ativos.restaurante %}
-              <span class="badge-master-off">Desativado</span>
+            <span class="badge-master-off">Desativado</span>
             {% else %}
-              <span class="mod-badge badge-restaurante">Operações</span>
+            <span class="mod-badge badge-restaurante">Operações</span>
             {% endif %}
           </div>
         </div>
@@ -908,21 +908,47 @@
       </a>
       {% endif %}
 
+      <!-- Avisos / Notificações — visível a quem tem avisos.view -->
+      {% if perms.avisos.view %}
+      <a href="{{ url_for('avisos.index') }}" class="mod-card mod-active" style="border-left-color: #f59e0b;">
+        <div class="mod-card-header">
+          <div class="mod-icon" style="background:#fef3c7;color:#d97706;transition:background 0.2s,color 0.2s;">
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="none">
+              <path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9
+                       M13.73 21a2 2 0 0 1-3.46 0" stroke="currentColor" stroke-width="2" stroke-linecap="round"
+                stroke-linejoin="round" />
+            </svg>
+          </div>
+          <div class="mod-card-titles">
+            <h2 class="mod-card-title">Notificações</h2>
+            {% if avisos_nao_lidos > 0 %}
+            <span class="mod-badge" style="background:#fee2e2;color:#dc2626;">
+              {{ avisos_nao_lidos }} não lido{{ 's' if avisos_nao_lidos != 1 else '' }}
+            </span>
+            {% else %}
+            <span class="mod-badge" style="background:#f0fdf4;color:#16a34a;">Em dia</span>
+            {% endif %}
+          </div>
+        </div>
+        <p class="mod-card-desc">Avisos de atrasos, ausências e alertas do sistema.</p>
+      </a>
+      {% endif %}
+
       <!-- Configurações — visível apenas para super_admin -->
       {% if is_super_admin %}
       <a href="{{ url_for('configuracoes.index') }}" class="mod-card mod-active mod-config">
         <div class="mod-card-header">
           <div class="mod-icon">
             <svg width="20" height="20" viewBox="0 0 24 24" fill="none">
-              <circle cx="12" cy="12" r="3" stroke="currentColor" stroke-width="2"/>
+              <circle cx="12" cy="12" r="3" stroke="currentColor" stroke-width="2" />
               <path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33
                        1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33
                        l-.06.06a2 2 0 0 1-2.83-2.83l.06-.06A1.65 1.65 0 0 0 4.68 15a1.65 1.65 0 0 0-1.51-1H3a2 2 0
                        0 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 2.83-2.83l.06.06
                        A1.65 1.65 0 0 0 9 4.68a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51
                        1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 2.83l-.06.06A1.65 1.65 0 0 0 19.4 9a1.65 1.65
-                       0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z" stroke="currentColor" stroke-width="2"
-                stroke-linecap="round" stroke-linejoin="round"/>
+                       0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z" stroke="currentColor"
+                stroke-width="2" stroke-linecap="round" stroke-linejoin="round" />
             </svg>
           </div>
           <div class="mod-card-titles">
