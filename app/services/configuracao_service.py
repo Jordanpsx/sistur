@@ -101,7 +101,7 @@ class ConfiguracaoService(BaseService):
     """
 
     # Módulos gerenciados pelo master switch
-    MODULOS = ["ponto", "estoque", "restaurante", "financeiro"]
+    MODULOS = ["ponto", "estoque", "restaurante", "financeiro", "reservas"]
 
     # ------------------------------------------------------------------
     # Queries (somente leitura)

@@ -294,20 +294,138 @@ Retrieve a single booking by ID.
 
 ---
 
-## Future Endpoints (Planning)
+#### `GET /reservas/api/disponibilidade`
 
-The following endpoints are planned but not yet implemented:
+Calculate item availability for a given category and date range. This endpoint is used to determine which items are available (or how many units remain) during a specific check-in/check-out window.
 
-### `POST /reservas/`
+**Auth required:** Yes → redirects to `/portal/login`
+**Permission required:** `reservas` → `view`
+**Query parameters:**
 
-Create a new booking.
+| Param | Type | Required | Description |
+|---|---|---|---|
+| `category_id` | int | Yes | ID of the category to check availability for |
+| `check_in` | string (YYYY-MM-DD) | Yes | Check-in date in ISO 8601 format |
+| `check_out` | string (YYYY-MM-DD) | Yes | Check-out date in ISO 8601 format |
 
-**Expected request body:**
+**Response:** `200 application/json`
 
 ```json
 {
-  "source_id": 1,
   "category_id": 1,
+  "check_in": "2026-03-15",
+  "check_out": "2026-03-17",
+  "items": [
+    {
+      "item_id": 1,
+      "name": "Cama individual",
+      "billing_type": "PER_DAY",
+      "requires_deposit": false,
+      "stock_quantity": 10,
+      "consumed": 5,
+      "available": 5
+    },
+    {
+      "item_id": 2,
+      "name": "Lanche",
+      "billing_type": "FIXED",
+      "requires_deposit": false,
+      "stock_quantity": null,
+      "consumed": 0,
+      "available": null
+    }
+  ]
+}
+```
+
+**Response field meanings:**
+
+- `stock_quantity`: Total available units (null = unlimited/infinite stock)
+- `consumed`: Units already booked for overlapping date ranges
+- `available`: Remaining units available (`null` if stock_quantity is null)
+
+**Error responses:**
+
+| Scenario | Status | Body |
+|---|---|---|
+| Missing `category_id` | 400 | `{"erro": "Parâmetro 'category_id' é obrigatório."}` |
+| Missing `check_in` | 400 | `{"erro": "Parâmetro 'check_in' é obrigatório."}` |
+| Missing `check_out` | 400 | `{"erro": "Parâmetro 'check_out' é obrigatório."}` |
+| Invalid date format | 400 | `{"erro": "Formato de data inválido. Use YYYY-MM-DD."}` |
+| `check_out < check_in` | 400 | `{"erro": "check_out deve ser >= check_in."}` |
+
+**Audit:** No (read-only)
+
+---
+
+#### `GET /reservas/api/`
+
+List all active bookings with filtering and pagination. Headless JSON API version of the HTML dashboard route.
+
+**Auth required:** Yes → redirects to `/portal/login`
+**Permission required:** `reservas` → `view`
+**Query parameters:**
+
+| Param | Type | Default | Description |
+|---|---|---|---|
+| `q` | string | "" | Free-text search on customer name or CPF |
+| `source_id` | int | null | Filter by venue ID |
+| `status` | enum | "" | Filter by booking status (PENDING, PAID, CANCELED, COMPLETED) |
+| `page` | int | 1 | Pagination page number |
+| `per_page` | int | 20 | Items per page |
+
+**Response:** `200 application/json`
+
+```json
+{
+  "reservas": [
+    {
+      "id": 1,
+      "group_id": "550e8400-e29b-41d4-a716-446655440000",
+      "version": 1,
+      "source_id": 1,
+      "category_id": 1,
+      "customer_name": "João Silva",
+      "customer_document": "12345678901",
+      "origin": "WEB",
+      "status": "PENDING",
+      "check_in_date": "2026-03-15",
+      "check_out_date": "2026-03-17",
+      "expires_at": "2026-03-15T09:15:00Z",
+      "criado_em": "2026-02-24T18:30:00Z"
+    }
+  ],
+  "total": 42,
+  "page": 1,
+  "per_page": 20
+}
+```
+
+**Error responses:**
+
+| Scenario | Status | Body |
+|---|---|---|
+| Invalid `status` value | 400 | `{"erro": "Status inválido: {status}"}` |
+| Unauthenticated | 401 | Redirect to `/portal/login` |
+| Missing permission | 403 | `{"erro": "NAO_AUTORIZADO"}` |
+
+**Audit:** No (read-only)
+
+---
+
+#### `POST /reservas/api/`
+
+Create a new booking with items. Returns a 15-minute soft lock via `expires_at` timestamp (see **Soft Lock Behaviour** section below).
+
+**Auth required:** Yes → redirects to `/portal/login`
+**Permission required:** `reservas` → `create`
+
+**Request body (JSON):**
+
+```json
+{
+  "source_name": "Cachoeira",
+  "category_name": "Day Use",
   "customer_name": "João Silva",
   "customer_document": "12345678901",
   "origin": "WEB",
@@ -316,20 +434,81 @@ Create a new booking.
   "items": [
     {
       "item_id": 1,
-      "quantity": 2
+      "quantity": 2,
+      "price_override": "150.00"
     }
   ]
 }
 ```
 
-**Expected behavior:**
-- Generate a new `group_id` (UUID v4)
-- Create `Reserva` row with `version=1`, `status=PENDING`
-- Create `ReservaItemLink` rows for each item
-- Log creation in `AuditLog`
-- Return `201 Created` with the new booking
+**Field descriptions:**
+
+- `source_name` (string, required): Name of the venue. If it doesn't exist, it will be created automatically.
+- `category_name` (string, required): Name of the category within the source. If it doesn't exist within the source, it will be created automatically.
+- `customer_name` (string, required): Full name of the customer.
+- `customer_document` (string, optional): CPF or CNPJ of the customer.
+- `origin` (enum, required): Must be `"WEB"` or `"BALCAO"`.
+- `check_in_date` (string YYYY-MM-DD, required): Check-in date.
+- `check_out_date` (string YYYY-MM-DD, optional): Check-out date. If omitted, defaults to single-day booking (same as check-in).
+- `items` (array, required): At least one item must be specified.
+  - `item_id` (int, required): ID of the item to book.
+  - `quantity` (int, required): Number of units to book.
+  - `price_override` (string decimal, **required**): Price snapshot at booking time. Example: `"150.00"` or `"99.99"`.
+
+**Response:** `201 Created`
+
+```json
+{
+  "reserva": {
+    "id": 1,
+    "group_id": "550e8400-e29b-41d4-a716-446655440000",
+    "version": 1,
+    "source_id": 1,
+    "category_id": 1,
+    "customer_name": "João Silva",
+    "customer_document": "12345678901",
+    "origin": "WEB",
+    "status": "PENDING",
+    "check_in_date": "2026-03-15",
+    "check_out_date": "2026-03-17",
+    "expires_at": "2026-03-15T09:15:00Z",
+    "criado_em": "2026-02-24T18:30:00Z",
+    "items": [
+      {
+        "id": 1,
+        "item_id": 1,
+        "item_name": "Cama individual",
+        "quantity": 2,
+        "locked_price": "150.00"
+      }
+    ]
+  }
+}
+```
+
+**Error responses:**
+
+| Scenario | Status | Body |
+|---|---|---|
+| Missing required field | 400 | `{"erro": "Campo obrigatório ausente: '{field_name}'."}` |
+| Invalid date format | 400 | `{"erro": "Formato de data inválido. Use YYYY-MM-DD."}` |
+| `check_out_date < check_in_date` | 400 | `{"erro": "check_out_date deve ser igual ou posterior a check_in_date."}` |
+| Empty items list | 400 | `{"erro": "A reserva deve conter ao menos um item."}` |
+| Item not found | 400 | `{"erro": "Item com ID {item_id} não encontrado."}` |
+| Missing `price_override` | 400 | `{"erro": "Item {item_id}: campo 'price_override' é obrigatório."}` |
+| Insufficient stock | 400 | `{"erro": "Estoque insuficiente para o item '{item_name}'. Disponível: {available}, solicitado: {quantity}."}` |
+| Duplicate item in payload | 400 | `{"erro": "Itens duplicados no payload: use um único entry por item_id."}` |
+| Invalid `origin` value | 400 | `{"erro": "origin deve ser 'WEB' ou 'BALCAO', recebido: {origin}"}` |
+| Unauthenticated | 401 | Redirect to `/portal/login` |
+| Missing permission | 403 | `{"erro": "NAO_AUTORIZADO"}` |
+
+**Audit:** Yes (`AuditService.log_create("reservas", ...)`)
 
 ---
+
+## Future Endpoints (Planning)
+
+The following endpoints are planned but not yet implemented:
 
 ### `POST /reservas/<int:reserva_id>/editar`
 
@@ -344,7 +523,8 @@ Edit an existing booking (creates a new version).
   "items": [
     {
       "item_id": 1,
-      "quantity": 3
+      "quantity": 3,
+      "price_override": "160.00"
     }
   ]
 }
@@ -422,6 +602,81 @@ When a new `ReservaSource` is inserted, a SQLAlchemy event listener automaticall
 **Example:** Inserting `ReservaSource(name="Cachoeira")` creates:
 - `RolePermission(role_id=1, modulo="reservas_cachoeira", acao="view")`
 - `RolePermission(role_id=1, modulo="reservas_cachoeira", acao="edit")`
+
+---
+
+## Soft Lock Behaviour
+
+When a booking is created via `POST /reservas/api/`, the system implements an **optimistic locking mechanism** using the `expires_at` timestamp to temporarily reserve inventory without requiring payment confirmation.
+
+### How It Works
+
+1. **Creation:** `POST /reservas/api/` creates a new `Reserva` with:
+   - `status = PENDING`
+   - `expires_at = NOW + 15 minutes`
+
+2. **Inventory Hold:** During the 15-minute window, the inventory system treats the booking as **active** when calculating availability:
+   - `GET /reservas/api/disponibilidade` includes items from PENDING bookings with `expires_at > NOW`
+   - Stock is marked as "consumed" even though payment hasn't been confirmed
+   - This prevents double-booking of limited items
+
+3. **Expiration:** After 15 minutes:
+   - The PENDING booking becomes "stale"
+   - **Availability calculations** exclude it (because `expires_at ≤ NOW`)
+   - The inventory is freed up for other bookings
+   - **The old booking row remains in the database** (soft delete not applied)
+
+4. **No Background Cleanup:**
+   - Stale PENDING bookings are **never automatically deleted or archived**
+   - They accumulate in the database indefinitely
+   - This is intentional: they serve as a historical audit trail
+   - Queries simply ignore them via the `expires_at > NOW` condition
+
+### Implementation Detail
+
+In `ReservaService.verificar_disponibilidade()`:
+
+```python
+overlapping_ids = (
+    db.session.query(Reserva.id)
+    .filter(
+        Reserva.category_id == category_id,
+        Reserva.deleted_at.is_(None),
+        Reserva.status != ReservaStatus.ARCHIVED_VERSION,
+        Reserva.status != ReservaStatus.CANCELED,
+        or_(
+            and_(
+                Reserva.status == ReservaStatus.PENDING,
+                Reserva.expires_at > datetime.now(timezone.utc),  # ← only non-stale
+            ),
+            Reserva.status == ReservaStatus.PAID,
+        ),
+        Reserva.check_in_date <= req_out_effective,
+        effective_checkout >= check_in,
+    )
+    .all()
+)
+```
+
+The same logic is applied in `_verificar_estoque()` during booking creation to prevent overselling.
+
+### Use Cases
+
+**Scenario 1: Customer completes payment within 15 minutes**
+- Booking remains PENDING → `POST /reservas/<id>/pagar` updates status to PAID
+- Inventory hold is maintained indefinitely
+- Stale rows never expire
+
+**Scenario 2: Customer abandons booking**
+- 15 minutes pass
+- New bookings can now use the reserved inventory
+- Old PENDING row remains in database (archived by time, not deleted)
+- Useful for analytics: "How many bookings started but never completed?"
+
+**Scenario 3: Manual admin cleanup (future endpoint)**
+- A future `DELETE /reservas/<id>` endpoint could hard-delete stale rows
+- Or move them to an `ARCHIVED_VERSION` status if they need to be visible in reports
+- Currently not implemented
 
 ---
 
