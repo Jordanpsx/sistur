@@ -684,6 +684,7 @@
       </div>
 
       <div class="topbar-actions">
+        {% include '_avisos_bell.html' %}
         <span class="topbar-employee">{{ funcionario.nome.split()[0] | e }}</span>
         <form method="POST" action="{{ url_for('portal.logout') }}">
           <button type="submit" class="btn-logout">

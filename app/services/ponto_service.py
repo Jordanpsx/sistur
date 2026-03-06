@@ -588,7 +588,15 @@ class PontoService(BaseService):
             db.session.add(time_day)
         else:
             old_saldo_final = time_day.saldo_final_minutos
-            
+
+        # Reversão de débito provisório de ausência (auto_debit_aplicado).
+        # O flag é limpo apenas quando existem batidas reais para recalcular —
+        # sem batidas, o débito provisório continua em vigor como estado correto.
+        # O mecanismo de delta abaixo já corrige banco_horas_acumulado automaticamente,
+        # pois old_saldo_final retém o valor negativo do débito provisório.
+        if time_day.auto_debit_aplicado and len(entries) > 0:
+            time_day.auto_debit_aplicado = False
+
         # O cálculo usa sempre o snapshot do dia (preserva regra passada)
         result = PontoService.calculate_daily_balance(
             punch_list,

@@ -66,6 +66,8 @@ PERMISSOES_DO_SISTEMA: dict[str, list[str]] = {
     "audit":        ["view", "view_all"],
     "leads":        ["view", "create", "edit"],
     "folha_ponto":  ["view", "edit", "deducao", "imprimir"],
+    # avisos: view = pode ver as próprias notificações; receber_alertas = recebe alertas de atraso/falta
+    "avisos":       ["view", "receber_alertas"],
 }
 
 # Nomes legíveis para exibição nas permissões

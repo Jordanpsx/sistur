@@ -191,6 +191,11 @@ class TimeDay(db.Model):
     # Snapshot da tolerância (regra 4) aplicável no dia
     tolerance_snapshot = db.Column(db.Integer, nullable=False, default=10)
 
+    # True quando o scheduler de monitoramento aplicou um débito provisório de ausência.
+    # Revertido automaticamente por processar_dia() quando batidas reais são registradas.
+    # Veja: AvisoService.verificar_atrasos(), PontoService.processar_dia().
+    auto_debit_aplicado = db.Column(db.Boolean, nullable=False, default=False)
+
     criado_em = db.Column(
         db.DateTime,
         default=lambda: datetime.now(timezone.utc),

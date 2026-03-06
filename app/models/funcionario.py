@@ -125,6 +125,11 @@ class Funcionario(db.Model):
     # Dias sem entrada assumem {"ativo": false}.
     jornada_semanal = db.Column(db.JSON, nullable=True)
 
+    # Horário de início esperado para monitoramento automático de atrasos.
+    # Quando None, o colaborador é excluído do scheduler de verificação de presença.
+    # Exemplo: time(8, 0) = 08:00. Usado por AvisoService.verificar_atrasos().
+    horario_entrada_padrao = db.Column(db.Time, nullable=True)
+
     # ------------------------------------------------------------------
     # Organisation
     # ------------------------------------------------------------------

@@ -28,11 +28,19 @@ class DevelopmentConfig(Config):
         "DATABASE_URL",
         "mysql+mysqlconnector://root:root@localhost/sistur_dev",
     )
+    # APScheduler — monitoramento de presença em background
+    SCHEDULER_API_ENABLED = False
+    SCHEDULER_EXECUTORS = {"default": {"type": "threadpool", "max_workers": 1}}
+    SCHEDULER_JOB_DEFAULTS = {"coalesce": True, "max_instances": 1}
 
 
 class ProductionConfig(Config):
     DEBUG = False
     SQLALCHEMY_DATABASE_URI = os.environ.get("DATABASE_URL")
+    # APScheduler — desabilita API pública; coalesce evita execuções duplicadas em multi-worker
+    SCHEDULER_API_ENABLED = False
+    SCHEDULER_EXECUTORS = {"default": {"type": "threadpool", "max_workers": 1}}
+    SCHEDULER_JOB_DEFAULTS = {"coalesce": True, "max_instances": 1}
 
 
 class TestingConfig(Config):
@@ -44,6 +52,7 @@ class TestingConfig(Config):
     WTF_CSRF_ENABLED = False
     # Token fixo para testes do endpoint QR scanner
     QR_SERVICE_TOKEN = "test-qr-service-token"
+    # Scheduler NÃO é inicializado em modo de teste
 
 
 config = {
