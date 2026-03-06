@@ -866,6 +866,56 @@ git add migrations/ && git commit -m "...migration..."
 
 ---
 
+## Rule #12 — API Contract Documentation
+
+Every HTTP endpoint in the `app/blueprints/` layer **must** be documented in `docs/api_catalog.md` and module-specific documentation files.
+
+**When is documentation required?**
+
+- **Adding a new endpoint:** Document in `docs/api_catalog.md` immediately
+- **Changing request/response payload:** Update the endpoint documentation with new schema
+- **Changing authentication or permission requirements:** Update the documentation
+- **Adding query parameters or path parameters:** Document in the parameter table
+- **Changes to error codes or status codes:** Update error responses section
+
+**What must be documented?**
+
+For each endpoint, document:
+
+| Item | Details |
+|---|---|
+| **Method & path** | `GET /reservas/`, `POST /reservas/`, etc. |
+| **Auth required** | Yes/No and where it redirects if missing |
+| **Permission required** | The `@require_permission(modulo, acao)` decorator requirement |
+| **Query/path parameters** | Table with type, default, description |
+| **Request body** | For POST/PUT/PATCH: JSON/form schema with required fields |
+| **Success response** | HTTP status code and full JSON/HTML response schema |
+| **Error responses** | All possible error codes with status codes and error messages |
+| **Audit trail** | Whether and how the endpoint is logged in `AuditLog` |
+
+**Examples:**
+
+- `docs/api_catalog.md` — centralized catalog of ALL endpoints (module, method, path, description)
+- `docs/reservas/README.md` — detailed schemas for each reservas endpoint (request/response payloads)
+- `docs/ponto/README.md` — detailed schemas for time tracking endpoints
+
+**Enforcement:**
+
+1. **Before committing:** Verify that the endpoint documentation in `docs/` matches the actual route decorator and logic in `app/blueprints/`
+2. **Before merging to develop:** PR reviewer checks that documentation is complete and accurate
+3. **Failing to document:** Blocks the PR merge
+
+**Special rule for Reservas module:**
+
+The Reservas module (`app/models/reservas.py`, `app/blueprints/reservas/routes.py`, `app/services/reserva_service.py`) enforces strict API contract documentation:
+
+- The headless API design (used by multiple frontends) means the request/response payload is a **binding contract**
+- Any change to how an endpoint receives or returns data **must** be reflected in `docs/reservas/README.md`
+- Request body schema, response schema, and all fields **must match** the actual code
+- Schema changes without documentation updates are **blocking issues**
+
+---
+
 ## Commit Guidelines
 
 1. Write commit messages in **English**, clear and descriptive

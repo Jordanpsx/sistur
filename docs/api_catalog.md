@@ -670,3 +670,56 @@ Gera PDF da Folha de Ponto via WeasyPrint.
 **Query params:** `mes`, `ano`
 **Response:** `application/pdf` inline — filename `folha_ponto_{cpf}_{ano}-{MM}.pdf`
 **Template:** `rh/folha_ponto_pdf.html` (CSS inline, A4 landscape, sem JS)
+
+---
+
+## Module: Reservas (`/reservas`) — Headless API
+
+> **NOTE:** For detailed request/response schemas, permissions, and business logic,
+> see `docs/reservas/README.md`. This section lists endpoints only.
+
+### `GET /reservas/`
+
+List all active bookings (pagination 50 per page).
+
+**Auth required:** Yes
+**Permission required:** `reservas` → `view`
+**Query params:** `q` (search), `source_id` (filter), `status` (filter), `page` (pagination)
+**Response:** `200 application/json` — list of bookings with sources and categories
+**Status:** 501 Not Implemented (placeholder)
+
+---
+
+### `GET /reservas/sources`
+
+List all active booking venues (ReservaSource).
+
+**Auth required:** Yes
+**Permission required:** `reservas` → `view`
+**Response:** `200 application/json` — list of venues with nested categories
+**Status:** 501 Not Implemented (placeholder)
+
+---
+
+### `GET /reservas/<int:reserva_id>`
+
+Retrieve a single booking by ID.
+
+**Auth required:** Yes
+**Permission required:** `reservas` → `view`
+**Path params:** `reserva_id` (int)
+**Response:** `200 application/json` — booking detail with items and pricing
+**Errors:** `404 NAO_ENCONTRADO` if booking not found
+**Status:** 501 Not Implemented (placeholder)
+
+---
+
+### Planned endpoints (not yet implemented)
+
+| Method | Path | Purpose |
+|---|---|---|
+| `POST` | `/reservas/` | Create new booking |
+| `POST` | `/reservas/<id>/editar` | Edit booking (creates new version) |
+| `POST` | `/reservas/<id>/cancelar` | Cancel booking |
+
+**For detailed schemas and business logic, see `docs/reservas/README.md`.**

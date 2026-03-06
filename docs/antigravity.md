@@ -260,3 +260,55 @@ def calcular_saldo_dia(cls, funcionario_id: int, data: date) -> int:
 4. Documente regras de negócio e restrições, não a implementação óbvia
 5. Métodos privados (`_prefixo`) também exigem docstring se a lógica não for trivial
 6. Rotas de blueprint devem documentar os campos do formulário ou parâmetros de URL
+
+---
+
+## Rule #12 — API Contract Documentation
+
+Every HTTP endpoint is a **contract** between the backend and its consumers (web portal, mobile app, POS system, etc.).
+This contract **must be documented** in the documentation files, especially for headless APIs like Reservas.
+
+**What is a "contract"?**
+
+The API contract consists of:
+- **Request shape:** What JSON/form data the endpoint expects
+- **Response shape:** What JSON the endpoint returns
+- **Status codes:** HTTP status codes for success and errors
+- **Field types and constraints:** Required vs optional, min/max values, enums
+- **Error messages:** Exact error codes and messages returned
+
+**When documentation is required:**
+
+1. **Adding a new endpoint** → Document in `docs/api_catalog.md` and module's `docs/<module>/README.md`
+2. **Changing request payload** (add/remove/rename field) → Update documentation immediately
+3. **Changing response payload** (add/remove/rename field) → Update documentation immediately
+4. **Changing field type** (string → int, optional → required) → Update documentation immediately
+5. **Adding/removing status codes** → Update documentation immediately
+6. **Adding/removing error codes** → Update documentation immediately
+
+**Especially for Reservas module:**
+
+The Reservas module is a **headless API** designed to be consumed by multiple frontends:
+- Legacy WordPress plugin
+- In-house Portal do Colaborador
+- Physical POS counter system
+
+Because of this design, the request/response contract is **critical** — changes to the API schema can break existing consumers.
+
+**Rule:** Whenever the Reservas API changes (endpoints, payloads, status codes, error codes), the changes **must** be documented in `docs/reservas/README.md` with:
+- Full request JSON schema (with all required and optional fields)
+- Full response JSON schema (with all fields, types, and nesting)
+- All status codes (success and error)
+- All error codes with explanations
+
+**Verification before code review:**
+
+Code reviewers must check:
+
+1. Does the route match what's documented in `docs/api_catalog.md`?
+2. Does the request body match what's documented in `docs/<module>/README.md`?
+3. Does the response JSON match what's documented?
+4. Are all error codes documented?
+5. For Reservas: Does the JSON schema in `docs/reservas/README.md` match the actual code?
+
+**Failure to document is a blocking issue** — PRs with undocumented or incorrectly documented API changes will not be merged.
