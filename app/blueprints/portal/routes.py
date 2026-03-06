@@ -152,6 +152,10 @@ def dashboard():
             "view":     has_permission(fid, "audit", "view"),
             "view_all": has_permission(fid, "audit", "view_all"),
         },
+        "avisos": {
+            "view":             has_permission(fid, "avisos", "view"),
+            "receber_alertas":  has_permission(fid, "avisos", "receber_alertas"),
+        },
     }
 
     modulos_ativos = {
