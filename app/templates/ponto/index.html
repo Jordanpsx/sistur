@@ -1078,6 +1078,21 @@
                 "Julho","Agosto","Setembro","Outubro","Novembro","Dezembro"][mes-1] }} {{ ano }}
               </span>
               <div style="display:flex; align-items:center; gap:.75rem; flex-wrap:wrap;">
+
+                <button type="button" onclick="abrirModalAjuste()" style="display:inline-flex; align-items:center; gap:.4rem;
+                               font-size:.78rem; font-weight:700; color:#fff;
+                               background:#0d9488; padding:.35rem .75rem;
+                               border:none; border-radius:var(--radius-full); cursor:pointer;
+                               transition:all .15s;" onmouseover="this.style.background='#0f766e';"
+                  onmouseout="this.style.background='#0d9488';">
+                  <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
+                    stroke-linecap="round" stroke-linejoin="round">
+                    <path d="M12 20h9"></path>
+                    <path d="M16.5 3.5a2.121 2.121 0 0 1 3 3L7 19l-4 1 1-4L16.5 3.5z"></path>
+                  </svg>
+                  Solicitar Ajuste
+                </button>
+
                 <a href="{{ url_for('ponto.analise', mes=mes, ano=ano) }}" style="display:inline-flex; align-items:center; gap:.4rem;
                           font-size:.78rem; font-weight:700; color:var(--teal-700);
                           background:var(--teal-100); padding:.35rem .75rem;
@@ -1183,6 +1198,86 @@
     </main>
   </div><!-- .page-shell -->
 
+  <!-- ── MODAL SOLICITAR AJUSTE ──────────────────────────────────────── -->
+  <div id="modal-ajuste" class="modal-overlay"
+    style="display: none; position: fixed; inset: 0; background: rgba(15,23,42,0.6); z-index: 999; backdrop-filter: blur(4px); align-items: center; justify-content: center; padding: 1rem;">
+    <div class="modal-content"
+      style="background: #fff; width: 100%; max-width: 450px; border-radius: 12px; box-shadow: 0 20px 25px -5px rgba(0,0,0,0.1), 0 10px 10px -5px rgba(0,0,0,0.04); overflow: hidden;">
+
+      <div
+        style="padding: 1.25rem 1.5rem; border-bottom: 1px solid #e2e8f0; display: flex; justify-content: space-between; align-items: center;">
+        <h3 style="margin: 0; font-size: 1.1rem; font-weight: 700; color: #1e293b;">Solicitar Ajuste de Ponto</h3>
+        <button type="button" onclick="fecharModalAjuste()"
+          style="background: none; border: none; cursor: pointer; color: #64748b; padding: 0.25rem;">
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
+            stroke-linecap="round" stroke-linejoin="round">
+            <line x1="18" y1="6" x2="6" y2="18"></line>
+            <line x1="6" y1="6" x2="18" y2="18"></line>
+          </svg>
+        </button>
+      </div>
+
+      <form method="POST" action="{{ url_for('ponto.solicitar_ajuste') }}"
+        style="padding: 1.5rem; display: flex; flex-direction: column; gap: 1rem;">
+
+        <!-- Data -->
+        <div>
+          <label for="data_solicitada"
+            style="display: block; font-size: 0.85rem; font-weight: 600; color: #475569; margin-bottom: 0.4rem;">Data da
+            Batida</label>
+          <input type="date" id="data_solicitada" name="data_solicitada" required max="{{ hoje.strftime('%Y-%m-%d') }}"
+            style="width: 100%; padding: 0.6rem; border: 1px solid #cbd5e1; border-radius: 6px; font-family: inherit; font-size: 0.95rem; color: #1e293b;">
+        </div>
+
+        <!-- Horário -->
+        <div>
+          <label for="horario_solicitado"
+            style="display: block; font-size: 0.85rem; font-weight: 600; color: #475569; margin-bottom: 0.4rem;">Horário</label>
+          <input type="time" id="horario_solicitado" name="horario_solicitado" required
+            style="width: 100%; padding: 0.6rem; border: 1px solid #cbd5e1; border-radius: 6px; font-family: inherit; font-size: 0.95rem; color: #1e293b;">
+        </div>
+
+        <!-- Tipo -->
+        <div>
+          <label for="tipo_ponto"
+            style="display: block; font-size: 0.85rem; font-weight: 600; color: #475569; margin-bottom: 0.4rem;">Tipo de
+            Batida</label>
+          <select id="tipo_ponto" name="tipo_ponto" required
+            style="width: 100%; padding: 0.6rem; border: 1px solid #cbd5e1; border-radius: 6px; font-family: inherit; font-size: 0.95rem; color: #1e293b; background: #fff;">
+            <option value="clock_in">Entrada</option>
+            <option value="lunch_start">Início Intervalo</option>
+            <option value="lunch_end">Fim Intervalo</option>
+            <option value="clock_out">Saída</option>
+          </select>
+        </div>
+
+        <!-- Motivo -->
+        <div>
+          <label for="motivo"
+            style="display: block; font-size: 0.85rem; font-weight: 600; color: #475569; margin-bottom: 0.4rem;">Motivo
+            da Solicitação</label>
+          <textarea id="motivo" name="motivo" required rows="3" placeholder="Ex: Esqueci de bater na entrada..."
+            style="width: 100%; padding: 0.6rem; border: 1px solid #cbd5e1; border-radius: 6px; font-family: inherit; font-size: 0.95rem; color: #1e293b; resize: vertical;"></textarea>
+        </div>
+
+        <div
+          style="background: #f1f5f9; padding: 0.75rem; border-radius: 6px; font-size: 0.8rem; color: #64748b; margin-top: 0.25rem;">
+          💡 Sua solicitação será enviada para o seu supervisor. O registro só ficará válido na folha de ponto após a
+          aprovação.
+        </div>
+
+        <div style="display: flex; gap: 0.75rem; margin-top: 0.5rem;">
+          <button type="button" onclick="fecharModalAjuste()"
+            style="flex: 1; padding: 0.65rem; background: #f1f5f9; color: #475569; border: 1px solid #cbd5e1; border-radius: 6px; font-weight: 600; cursor: pointer;">Cancelar</button>
+          <button type="submit"
+            style="flex: 1; padding: 0.65rem; background: #0d9488; color: white; border: none; border-radius: 6px; font-weight: 600; cursor: pointer;">Enviar
+            Solicitação</button>
+        </div>
+
+      </form>
+    </div>
+  </div>
+
 
   <script>
     /* ── Live clock ── */
@@ -1261,6 +1356,31 @@
         document.getElementById('punch-label').textContent = 'Registrar Ponto';
         alert('Seu navegador não suporta geolocalização. Use um navegador moderno (Chrome, Firefox, Safari) para registrar o ponto.');
       }
+    });
+
+    /* ── Modal Ajuste de Ponto ── */
+    function abrirModalAjuste() {
+      const modal = document.getElementById('modal-ajuste');
+      modal.style.display = 'flex';
+      // Preenche data atual por padrão
+      if (!document.getElementById('data_solicitada').value) {
+        const today = new Date();
+        const yyyy = today.getFullYear();
+        const mm = String(today.getMonth() + 1).padStart(2, '0');
+        const dd = String(today.getDate()).padStart(2, '0');
+        document.getElementById('data_solicitada').value = `${yyyy}-${mm}-${dd}`;
+      }
+    }
+
+    function fecharModalAjuste() {
+      const modal = document.getElementById('modal-ajuste');
+      modal.style.display = 'none';
+      document.querySelector('#modal-ajuste form').reset();
+    }
+
+    // Fechar ao clicar fora
+    document.getElementById('modal-ajuste').addEventListener('click', function (e) {
+      if (e.target === this) fecharModalAjuste();
     });
   </script>
 </body>

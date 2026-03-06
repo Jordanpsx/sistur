@@ -12,8 +12,7 @@
   <script src="https://cdn.tailwindcss.com"></script>
   <link rel="preconnect" href="https://fonts.googleapis.com" />
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
-  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap"
-        rel="stylesheet" />
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet" />
 
   <style>
     :root {
@@ -21,157 +20,356 @@
       --primary-dark: #0f766e;
       --bg-page: #f0fdfa;
     }
-    * { box-sizing: border-box; }
-    body { font-family: 'Inter', sans-serif; background: var(--bg-page); margin: 0; }
+
+    * {
+      box-sizing: border-box;
+    }
+
+    body {
+      font-family: 'Inter', sans-serif;
+      background: var(--bg-page);
+      margin: 0;
+    }
 
     /* ── Top bar ─────────────────────────────────────────────── */
     .topbar {
-      position: sticky; top: 0; z-index: 50;
-      background: rgba(255,255,255,0.9);
+      position: sticky;
+      top: 0;
+      z-index: 50;
+      background: rgba(255, 255, 255, 0.9);
       backdrop-filter: blur(16px);
-      border-bottom: 1px solid rgba(0,0,0,0.06);
+      border-bottom: 1px solid rgba(0, 0, 0, 0.06);
     }
+
     .topbar-inner {
-      max-width: 760px; margin: 0 auto;
-      padding: 0 1.25rem; height: 60px;
-      display: flex; align-items: center; gap: 0.75rem;
+      max-width: 760px;
+      margin: 0 auto;
+      padding: 0 1.25rem;
+      height: 60px;
+      display: flex;
+      align-items: center;
+      gap: 0.75rem;
     }
+
     .btn-back {
-      display: flex; align-items: center; gap: 0.375rem;
-      font-size: 0.82rem; font-weight: 600; color: #64748b;
-      text-decoration: none; padding: 0.5rem 0.75rem;
-      border-radius: 8px; border: 1px solid #e2e8f0;
-      transition: all 0.15s; min-height: 44px;
+      display: flex;
+      align-items: center;
+      gap: 0.375rem;
+      font-size: 0.82rem;
+      font-weight: 600;
+      color: #64748b;
+      text-decoration: none;
+      padding: 0.5rem 0.75rem;
+      border-radius: 8px;
+      border: 1px solid #e2e8f0;
+      transition: all 0.15s;
+      min-height: 44px;
     }
-    .btn-back:hover { background: #f1f5f9; color: #0f766e; border-color: #99f6e4; }
+
+    .btn-back:hover {
+      background: #f1f5f9;
+      color: #0f766e;
+      border-color: #99f6e4;
+    }
+
     .topbar-title {
-      font-size: 1rem; font-weight: 700; color: #1e293b; flex: 1;
+      font-size: 1rem;
+      font-weight: 700;
+      color: #1e293b;
+      flex: 1;
     }
 
     /* ── Content ─────────────────────────────────────────────── */
     .content {
-      max-width: 760px; margin: 0 auto;
+      max-width: 760px;
+      margin: 0 auto;
       padding: 1.5rem 1.25rem 3rem;
     }
 
     /* ── Flash messages ──────────────────────────────────────── */
     .flash {
-      padding: 0.75rem 1rem; border-radius: 10px;
-      font-size: 0.85rem; font-weight: 500; margin-bottom: 1rem;
+      padding: 0.75rem 1rem;
+      border-radius: 10px;
+      font-size: 0.85rem;
+      font-weight: 500;
+      margin-bottom: 1rem;
     }
-    .flash-sucesso { background: #d1fae5; color: #065f46; border: 1px solid #6ee7b7; }
-    .flash-erro    { background: #fee2e2; color: #991b1b; border: 1px solid #fca5a5; }
-    .flash-aviso   { background: #fef3c7; color: #92400e; border: 1px solid #fcd34d; }
+
+    .flash-sucesso {
+      background: #d1fae5;
+      color: #065f46;
+      border: 1px solid #6ee7b7;
+    }
+
+    .flash-erro {
+      background: #fee2e2;
+      color: #991b1b;
+      border: 1px solid #fca5a5;
+    }
+
+    .flash-aviso {
+      background: #fef3c7;
+      color: #92400e;
+      border: 1px solid #fcd34d;
+    }
 
     /* ── Action bar ──────────────────────────────────────────── */
     .action-bar {
-      display: flex; align-items: center;
-      justify-content: space-between; flex-wrap: wrap;
-      gap: 0.75rem; margin-bottom: 1.25rem;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      flex-wrap: wrap;
+      gap: 0.75rem;
+      margin-bottom: 1.25rem;
     }
+
     .count-label {
-      font-size: 0.78rem; font-weight: 600; color: #94a3b8;
-      letter-spacing: 0.06em; text-transform: uppercase;
+      font-size: 0.78rem;
+      font-weight: 600;
+      color: #94a3b8;
+      letter-spacing: 0.06em;
+      text-transform: uppercase;
     }
+
     .btn-mark-all {
-      display: flex; align-items: center; gap: 0.375rem;
-      font-size: 0.8rem; font-weight: 600; color: #0f766e;
-      background: #ccfbf1; border: none; border-radius: 8px;
-      padding: 0.5rem 0.875rem; cursor: pointer;
-      transition: background 0.15s; min-height: 44px;
+      display: flex;
+      align-items: center;
+      gap: 0.375rem;
+      font-size: 0.8rem;
+      font-weight: 600;
+      color: #0f766e;
+      background: #ccfbf1;
+      border: none;
+      border-radius: 8px;
+      padding: 0.5rem 0.875rem;
+      cursor: pointer;
+      transition: background 0.15s;
+      min-height: 44px;
     }
-    .btn-mark-all:hover { background: #99f6e4; }
+
+    .btn-mark-all:hover {
+      background: #99f6e4;
+    }
 
     /* ── Aviso cards ─────────────────────────────────────────── */
-    .aviso-list { display: flex; flex-direction: column; gap: 0.75rem; }
+    .aviso-list {
+      display: flex;
+      flex-direction: column;
+      gap: 0.75rem;
+    }
 
     .aviso-card {
-      background: #fff; border-radius: 14px;
-      border: 1px solid #f1f5f9; border-left: 4px solid #e2e8f0;
-      padding: 1rem 1.125rem; position: relative;
+      background: #fff;
+      border-radius: 14px;
+      border: 1px solid #f1f5f9;
+      border-left: 4px solid #e2e8f0;
+      padding: 1rem 1.125rem;
+      position: relative;
       transition: box-shadow 0.15s;
     }
-    .aviso-card.unread { border-left-color: #0d9488; }
-    .aviso-card.tipo-ATRASO { border-left-color: #f59e0b; }
-    .aviso-card.tipo-FALTA  { border-left-color: #ef4444; }
-    .aviso-card.tipo-SISTEMA { border-left-color: #3b82f6; }
-    .aviso-card.tipo-ATRASO.unread { border-left-color: #d97706; }
-    .aviso-card.tipo-FALTA.unread  { border-left-color: #dc2626; }
-    .aviso-card.tipo-SISTEMA.unread { border-left-color: #2563eb; }
+
+    .aviso-card.unread {
+      border-left-color: #0d9488;
+    }
+
+    .aviso-card.tipo-ATRASO {
+      border-left-color: #f59e0b;
+    }
+
+    .aviso-card.tipo-FALTA {
+      border-left-color: #ef4444;
+    }
+
+    .aviso-card.tipo-SISTEMA {
+      border-left-color: #3b82f6;
+    }
+
+    .aviso-card.tipo-ATRASO.unread {
+      border-left-color: #d97706;
+    }
+
+    .aviso-card.tipo-FALTA.unread {
+      border-left-color: #dc2626;
+    }
+
+    .aviso-card.tipo-SISTEMA.unread {
+      border-left-color: #2563eb;
+    }
 
     .aviso-header {
-      display: flex; align-items: flex-start;
-      justify-content: space-between; gap: 0.5rem;
+      display: flex;
+      align-items: flex-start;
+      justify-content: space-between;
+      gap: 0.5rem;
       margin-bottom: 0.375rem;
     }
+
     .aviso-titulo {
-      font-size: 0.9rem; font-weight: 600; color: #1e293b;
-      display: flex; align-items: center; gap: 0.5rem; flex: 1;
+      font-size: 0.9rem;
+      font-weight: 600;
+      color: #1e293b;
+      display: flex;
+      align-items: center;
+      gap: 0.5rem;
+      flex: 1;
     }
+
     .dot-unread {
-      width: 8px; height: 8px; border-radius: 50%;
-      background: #0d9488; flex-shrink: 0;
+      width: 8px;
+      height: 8px;
+      border-radius: 50%;
+      background: #0d9488;
+      flex-shrink: 0;
     }
+
     .aviso-badge {
-      font-size: 0.65rem; font-weight: 700; letter-spacing: 0.06em;
-      text-transform: uppercase; padding: 0.15rem 0.5rem; border-radius: 999px;
+      font-size: 0.65rem;
+      font-weight: 700;
+      letter-spacing: 0.06em;
+      text-transform: uppercase;
+      padding: 0.15rem 0.5rem;
+      border-radius: 999px;
     }
-    .badge-ATRASO  { background: #fef3c7; color: #d97706; }
-    .badge-FALTA   { background: #fee2e2; color: #dc2626; }
-    .badge-SISTEMA { background: #dbeafe; color: #2563eb; }
+
+    .badge-ATRASO {
+      background: #fef3c7;
+      color: #d97706;
+    }
+
+    .badge-FALTA {
+      background: #fee2e2;
+      color: #dc2626;
+    }
+
+    .badge-SISTEMA {
+      background: #dbeafe;
+      color: #2563eb;
+    }
 
     .aviso-mensagem {
-      font-size: 0.82rem; color: #64748b; line-height: 1.5; margin-bottom: 0.75rem;
+      font-size: 0.82rem;
+      color: #64748b;
+      line-height: 1.5;
+      margin-bottom: 0.75rem;
     }
+
     .aviso-footer {
-      display: flex; align-items: center;
-      justify-content: space-between; flex-wrap: wrap; gap: 0.5rem;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      flex-wrap: wrap;
+      gap: 0.5rem;
     }
-    .aviso-ts { font-size: 0.72rem; color: #94a3b8; }
-    .aviso-actions { display: flex; gap: 0.5rem; flex-wrap: wrap; }
+
+    .aviso-ts {
+      font-size: 0.72rem;
+      color: #94a3b8;
+    }
+
+    .aviso-actions {
+      display: flex;
+      gap: 0.5rem;
+      flex-wrap: wrap;
+    }
 
     .btn-action {
-      font-size: 0.75rem; font-weight: 600;
-      padding: 0.375rem 0.75rem; border-radius: 6px;
-      border: none; cursor: pointer; transition: all 0.15s; min-height: 36px;
+      font-size: 0.75rem;
+      font-weight: 600;
+      padding: 0.375rem 0.75rem;
+      border-radius: 6px;
+      border: none;
+      cursor: pointer;
+      transition: all 0.15s;
+      min-height: 36px;
     }
+
     .btn-lido {
-      background: #f0fdfa; color: #0f766e;
+      background: #f0fdfa;
+      color: #0f766e;
       border: 1px solid #99f6e4;
     }
-    .btn-lido:hover { background: #ccfbf1; }
+
+    .btn-lido:hover {
+      background: #ccfbf1;
+    }
+
     .btn-delete {
-      background: #fff; color: #94a3b8;
+      background: #fff;
+      color: #94a3b8;
       border: 1px solid #e2e8f0;
     }
-    .btn-delete:hover { background: #fee2e2; color: #dc2626; border-color: #fca5a5; }
+
+    .btn-delete:hover {
+      background: #fee2e2;
+      color: #dc2626;
+      border-color: #fca5a5;
+    }
 
     /* ── Empty state ─────────────────────────────────────────── */
     .empty {
-      text-align: center; padding: 3rem 1rem;
-      color: #94a3b8; font-size: 0.9rem;
+      text-align: center;
+      padding: 3rem 1rem;
+      color: #94a3b8;
+      font-size: 0.9rem;
     }
-    .empty svg { margin: 0 auto 1rem; display: block; opacity: 0.35; }
+
+    .empty svg {
+      margin: 0 auto 1rem;
+      display: block;
+      opacity: 0.35;
+    }
 
     /* ── Pagination ──────────────────────────────────────────── */
     .pagination {
-      display: flex; justify-content: center; gap: 0.5rem;
-      margin-top: 2rem; flex-wrap: wrap;
+      display: flex;
+      justify-content: center;
+      gap: 0.5rem;
+      margin-top: 2rem;
+      flex-wrap: wrap;
     }
+
     .page-btn {
-      padding: 0.5rem 0.875rem; border-radius: 8px; font-size: 0.82rem;
-      font-weight: 600; text-decoration: none; color: #475569;
-      border: 1px solid #e2e8f0; background: #fff; min-height: 44px;
-      display: flex; align-items: center; transition: all 0.15s;
+      padding: 0.5rem 0.875rem;
+      border-radius: 8px;
+      font-size: 0.82rem;
+      font-weight: 600;
+      text-decoration: none;
+      color: #475569;
+      border: 1px solid #e2e8f0;
+      background: #fff;
+      min-height: 44px;
+      display: flex;
+      align-items: center;
+      transition: all 0.15s;
     }
-    .page-btn:hover { background: #f1f5f9; }
-    .page-btn.active { background: var(--primary); color: #fff; border-color: var(--primary); }
+
+    .page-btn:hover {
+      background: #f1f5f9;
+    }
+
+    .page-btn.active {
+      background: var(--primary);
+      color: #fff;
+      border-color: var(--primary);
+    }
 
     @media (max-width: 640px) {
-      .topbar-inner { padding: 0 1rem; }
-      .content { padding: 1.25rem 1rem 2.5rem; }
-      .aviso-card { padding: 0.875rem 1rem; }
-      .aviso-actions { width: 100%; justify-content: flex-end; }
+      .topbar-inner {
+        padding: 0 1rem;
+      }
+
+      .content {
+        padding: 1.25rem 1rem 2.5rem;
+      }
+
+      .aviso-card {
+        padding: 0.875rem 1rem;
+      }
+
+      .aviso-actions {
+        width: 100%;
+        justify-content: flex-end;
+      }
     }
   </style>
 </head>
@@ -183,12 +381,12 @@
     <div class="topbar-inner">
       <a href="{{ url_for('portal.dashboard') }}" class="btn-back">
         <svg width="14" height="14" viewBox="0 0 24 24" fill="none">
-          <path d="M19 12H5M12 5l-7 7 7 7" stroke="currentColor" stroke-width="2"
-                stroke-linecap="round" stroke-linejoin="round"/>
+          <path d="M19 12H5M12 5l-7 7 7 7" stroke="currentColor" stroke-width="2" stroke-linecap="round"
+            stroke-linejoin="round" />
         </svg>
         Início
       </a>
-      <span class="topbar-title">Notificações</span>
+      <span class="topbar-title">Central de Avisos</span>
       {% include '_avisos_bell.html' %}
     </div>
   </header>
@@ -198,26 +396,65 @@
 
     <!-- Flash messages -->
     {% with messages = get_flashed_messages(with_categories=true) %}
-      {% for category, message in messages %}
-        <div class="flash flash-{{ category }}" role="alert">{{ message | e }}</div>
-      {% endfor %}
+    {% for category, message in messages %}
+    <div class="flash flash-{{ category }}" role="alert">{{ message | e }}</div>
+    {% endfor %}
     {% endwith %}
 
-    <!-- Action bar -->
+    <!-- ── Header & Tabs ─────────────────────────────────────────────────── -->
+    <div style="margin-bottom: 1.5rem;">
+      <h1 style="font-size: 1.25rem; font-weight: 700; color: #1e293b; margin-bottom: 1rem;">Notificações e Ajustes</h1>
+
+      <div
+        style="display: flex; gap: 0.5rem; border-bottom: 2px solid #e2e8f0; padding-bottom: 0.5rem; overflow-x: auto;">
+        <a href="{{ url_for('avisos.index', tab='notificacoes') }}" style="padding: 0.5rem 1rem; border-radius: 6px; font-weight: 600; font-size: 0.875rem; transition: all 0.2s; white-space: nowrap; text-decoration: none;
+                  background: {% if tab == 'notificacoes' %}#0d9488{% else %}transparent{% endif %};
+                  color: {% if tab == 'notificacoes' %}#fff{% else %}#64748b{% endif %};">
+          Avisos Gerais
+          {% if avisos_nao_lidos > 0 %}
+          <span
+            style="background: #ef4444; color: #fff; border-radius: 999px; padding: 0.1rem 0.4rem; font-size: 0.7rem; margin-left: 0.25rem;">{{
+            avisos_nao_lidos }}</span>
+          {% endif %}
+        </a>
+
+        {% if tem_permissao_aprovar %}
+        <a href="{{ url_for('avisos.index', tab='aprovacoes') }}" style="padding: 0.5rem 1rem; border-radius: 6px; font-weight: 600; font-size: 0.875rem; transition: all 0.2s; white-space: nowrap; text-decoration: none;
+                  background: {% if tab == 'aprovacoes' %}#0d9488{% else %}transparent{% endif %};
+                  color: {% if tab == 'aprovacoes' %}#fff{% else %}#64748b{% endif %};">
+          Aprovar Ajustes
+          {% if ajustes_pendentes_count > 0 %}
+          <span
+            style="background: #f59e0b; color: #fff; border-radius: 999px; padding: 0.1rem 0.4rem; font-size: 0.7rem; margin-left: 0.25rem;">{{
+            ajustes_pendentes_count }}</span>
+          {% endif %}
+        </a>
+        {% endif %}
+
+        <a href="{{ url_for('avisos.index', tab='minhas') }}" style="padding: 0.5rem 1rem; border-radius: 6px; font-weight: 600; font-size: 0.875rem; transition: all 0.2s; white-space: nowrap; text-decoration: none;
+                  background: {% if tab == 'minhas' %}#0d9488{% else %}transparent{% endif %};
+                  color: {% if tab == 'minhas' %}#fff{% else %}#64748b{% endif %};">
+          Minhas Solicitações
+        </a>
+      </div>
+    </div>
+
+    <!-- ── TAB: NOTIFICAÇÕES ──────────────────────────────────────────────── -->
+    {% if tab == 'notificacoes' %}
     <div class="action-bar">
       <span class="count-label">
         {% if avisos.total == 1 %}
-          1 notificação
+        1 notificação
         {% else %}
-          {{ avisos.total }} notificações
+        {{ avisos.total }} notificações
         {% endif %}
       </span>
       {% if avisos_nao_lidos > 0 %}
       <form method="POST" action="{{ url_for('avisos.marcar_todos') }}">
         <button type="submit" class="btn-mark-all">
           <svg width="14" height="14" viewBox="0 0 24 24" fill="none">
-            <path d="M20 6L9 17l-5-5" stroke="currentColor" stroke-width="2"
-                  stroke-linecap="round" stroke-linejoin="round"/>
+            <path d="M20 6L9 17l-5-5" stroke="currentColor" stroke-width="2" stroke-linecap="round"
+              stroke-linejoin="round" />
           </svg>
           Marcar todos como lido
         </button>
@@ -225,12 +462,11 @@
       {% endif %}
     </div>
 
-    <!-- Aviso list -->
     {% if avisos.items %}
     <div class="aviso-list" role="list">
       {% for aviso in avisos.items %}
       <article class="aviso-card tipo-{{ aviso.tipo.value }}{% if not aviso.is_lido %} unread{% endif %}"
-               role="listitem">
+        role="listitem">
         <div class="aviso-header">
           <div class="aviso-titulo">
             {% if not aviso.is_lido %}
@@ -251,16 +487,12 @@
           </time>
           <div class="aviso-actions">
             {% if not aviso.is_lido %}
-            <form method="POST"
-                  action="{{ url_for('avisos.marcar_lido', aviso_id=aviso.id) }}"
-                  style="display:inline;">
-              <button type="submit" class="btn-action btn-lido">Marcar lido</button>
+            <form method="POST" action="{{ url_for('avisos.marcar_lido', aviso_id=aviso.id) }}">
+              <button type="submit" class="btn-action btn-lido">Marcar como Lido</button>
             </form>
             {% endif %}
-            <form method="POST"
-                  action="{{ url_for('avisos.deletar', aviso_id=aviso.id) }}"
-                  style="display:inline;"
-                  onsubmit="return confirm('Excluir esta notificação?')">
+            <form method="POST" action="{{ url_for('avisos.deletar', aviso_id=aviso.id) }}"
+              onsubmit="return confirm('Excluir este aviso?');">
               <button type="submit" class="btn-action btn-delete">Excluir</button>
             </form>
           </div>
@@ -269,78 +501,211 @@
       {% endfor %}
     </div>
 
-    <!-- Pagination -->
+    <!-- Paginação de avisos -->
     {% if avisos.pages > 1 %}
-    <nav class="pagination" aria-label="Paginação">
+    <div class="pagination">
       {% if avisos.has_prev %}
-      <a href="{{ url_for('avisos.index', page=avisos.prev_num) }}" class="page-btn">← Anterior</a>
+      <a href="{{ url_for('avisos.index', page=avisos.prev_num, tab='notificacoes') }}" class="page-btn">Anterior</a>
       {% endif %}
-      {% for p in avisos.iter_pages(left_edge=1, right_edge=1, left_current=2, right_current=2) %}
-        {% if p %}
-          <a href="{{ url_for('avisos.index', page=p) }}"
-             class="page-btn{% if p == avisos.page %} active{% endif %}">{{ p }}</a>
-        {% else %}
-          <span class="page-btn" style="cursor:default;color:#cbd5e1;">…</span>
-        {% endif %}
+
+      {% for p in avisos.iter_pages(left_edge=1, left_current=2, right_current=2, right_edge=1) %}
+      {% if p %}
+      <a href="{{ url_for('avisos.index', page=p, tab='notificacoes') }}"
+        class="page-btn {% if p == page %}active{% endif %}">{{ p }}</a>
+      {% else %}
+      <span style="padding: 0.5rem; color: #94a3b8;">&hellip;</span>
+      {% endif %}
       {% endfor %}
+
       {% if avisos.has_next %}
-      <a href="{{ url_for('avisos.index', page=avisos.next_num) }}" class="page-btn">Próxima →</a>
+      <a href="{{ url_for('avisos.index', page=avisos.next_num, tab='notificacoes') }}" class="page-btn">Próxima</a>
       {% endif %}
-    </nav>
+    </div>
     {% endif %}
 
     {% else %}
-    <!-- Empty state -->
-    <div class="empty" role="status" aria-live="polite">
-      <svg width="48" height="48" viewBox="0 0 24 24" fill="none">
-        <path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"
-              stroke="#94a3b8" stroke-width="1.5"
-              stroke-linecap="round" stroke-linejoin="round"/>
-        <path d="M13.73 21a2 2 0 0 1-3.46 0"
-              stroke="#94a3b8" stroke-width="1.5"
-              stroke-linecap="round" stroke-linejoin="round"/>
+    <div class="empty">
+      <svg fill="none" viewBox="0 0 24 24" stroke="currentColor" width="48" height="48">
+        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5"
+          d="M15 17h5l-1.405-1.405A2.032 2.032 0 0118 14.158V11a6.002 6.002 0 00-4-5.659V5a2 2 0 10-4 0v.341C7.67 6.165 6 8.388 6 11v3.159c0 .538-.214 1.055-.595 1.436L4 17h5m6 0v1a3 3 0 11-6 0v-1m6 0H9" />
       </svg>
-      <p>Nenhum aviso por enquanto.</p>
+      Sua caixa de notificações está vazia.
     </div>
+    {% endif %}
+
+
+    <!-- ── TAB: APROVAÇÕES DE AJUSTES ──────────────────────────────────────── -->
+    {% elif tab == 'aprovacoes' and tem_permissao_aprovar %}
+    {% if ajustes_pendentes %}
+    <div class="aviso-list">
+      {% for ajuste in ajustes_pendentes %}
+      <article class="aviso-card" style="border-left-color: #f59e0b;">
+        <div class="aviso-header">
+          <div class="aviso-titulo">
+            <span class="dot-unread" style="background: #f59e0b;"></span>
+            Solicitação de Ajuste — {{ ajuste.funcionario.nome }}
+          </div>
+          <span class="aviso-badge" style="background:#fef3c7; color:#d97706;">PENDENTE</span>
+        </div>
+
+        <div style="font-size: 0.85rem; color: #475569; margin-bottom: 0.75rem; line-height: 1.5;">
+          <p><strong>Data:</strong> {{ ajuste.data_solicitada.strftime('%d/%m/%Y') }}</p>
+          <p><strong>Horário Solicitado:</strong> {{ ajuste.horario_solicitado.strftime('%H:%M') }}</p>
+          <p><strong>Tipo:</strong> {% if ajuste.tipo_ponto == 'clock_in' %}Entrada{% else %}Saída{% endif %}</p>
+          <p><strong>Motivo:</strong> {{ ajuste.motivo }}</p>
+          {% if ajuste.time_entry_id %}
+          <p style="margin-top:0.25rem;"><span
+              style="background:#e2e8f0; padding:0.15rem 0.4rem; border-radius:4px; font-size:0.75rem;">Substituição de
+              batida existente</span></p>
+          {% else %}
+          <p style="margin-top:0.25rem;"><span
+              style="background:#d1fae5; padding:0.15rem 0.4rem; border-radius:4px; font-size:0.75rem;">Nova
+              batida</span></p>
+          {% endif %}
+        </div>
+
+        <div class="aviso-footer" style="padding-top: 0.75rem; border-top: 1px solid #f1f5f9; align-items: flex-start;">
+          <div style="flex: 1; min-width: 200px;">
+            <form method="POST" action="{{ url_for('avisos.rejeitar_ajuste', ajuste_id=ajuste.id) }}"
+              style="display: flex; gap: 0.5rem; width: 100%;">
+              <input type="text" name="motivo_rejeicao" placeholder="Motivo da rejeição (obrigatório)" required
+                style="flex:1; padding: 0.375rem; font-size: 0.8rem; border: 1px solid #cbd5e1; border-radius: 6px;">
+              <button type="submit" class="btn-action"
+                style="background: #fee2e2; color: #991b1b; border: 1px solid #fca5a5;">
+                Rejeitar
+              </button>
+            </form>
+          </div>
+          <form method="POST" action="{{ url_for('avisos.aprovar_ajuste', ajuste_id=ajuste.id) }}"
+            onsubmit="return confirm('Deseja aprovar este ajuste e atualizar a folha de ponto?');">
+            <button type="submit" class="btn-action btn-lido" style="background: #0d9488; color: #fff; height: 100%;">
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="none"
+                style="display:inline; margin-bottom:-2px; margin-right:2px;">
+                <path d="M20 6L9 17l-5-5" stroke="currentColor" stroke-width="2" stroke-linecap="round"
+                  stroke-linejoin="round" />
+              </svg>
+              Aprovar
+            </button>
+          </form>
+        </div>
+      </article>
+      {% endfor %}
+    </div>
+    {% else %}
+    <div class="empty">
+      <svg fill="none" viewBox="0 0 24 24" stroke="currentColor" width="48" height="48">
+        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5"
+          d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
+      </svg>
+      Tudo certo! Nenhuma solicitação pendente para aprovação.
+    </div>
+    {% endif %}
+
+
+    <!-- ── TAB: MINHAS SOLICITAÇÕES ──────────────────────────────────────── -->
+    {% elif tab == 'minhas' %}
+    {% if minhas_solicitacoes %}
+    <div class="aviso-list">
+      {% for ajuste in minhas_solicitacoes %}
+      {% set status_color = '#94a3b8' %}
+      {% set status_bg = '#f1f5f9' %}
+      {% if ajuste.status == 'APPROVED' %} {% set status_color = '#059669' %} {% set status_bg = '#d1fae5' %} {% endif
+      %}
+      {% if ajuste.status == 'REJECTED' %} {% set status_color = '#dc2626' %} {% set status_bg = '#fee2e2' %} {% endif
+      %}
+      {% if ajuste.status == 'PENDING' %} {% set status_color = '#d97706' %} {% set status_bg = '#fef3c7' %} {% endif %}
+
+      <article class="aviso-card" style="border-left-color: {{ status_color }};">
+        <div class="aviso-header">
+          <div class="aviso-titulo">
+            Ajuste para {{ ajuste.data_solicitada.strftime('%d/%m/%Y') }} às {{
+            ajuste.horario_solicitado.strftime('%H:%M') }}
+          </div>
+          <span class="aviso-badge" style="background: {{ status_bg }}; color: {{ status_color }};">
+            {% if ajuste.status == 'APPROVED' %}APROVADO{% elif ajuste.status == 'REJECTED' %}REJEITADO{% else
+            %}PENDENTE{% endif %}
+          </span>
+        </div>
+
+        <div style="font-size: 0.85rem; color: #475569; margin-bottom: 0.75rem; line-height: 1.5;">
+          <p><strong>Tipo:</strong> {% if ajuste.tipo_ponto == 'clock_in' %}Entrada{% else %}Saída{% endif %}</p>
+          <p><strong>Seu Motivo:</strong> {{ ajuste.motivo }}</p>
+
+          {% if ajuste.status == 'REJECTED' and ajuste.motivo_rejeicao %}
+          <div
+            style="margin-top: 0.5rem; padding: 0.5rem; background: #fee2e2; border-radius: 6px; color: #991b1b; border: 1px dashed #fca5a5;">
+            <strong>Motivo da Rejeição:</strong> {{ ajuste.motivo_rejeicao }}
+          </div>
+          {% endif %}
+
+          {% if ajuste.status == 'APPROVED' %}
+          <p style="margin-top: 0.25rem; font-size: 0.75rem; color: #059669;">
+            <svg width="12" height="12" viewBox="0 0 24 24" fill="none" style="display:inline;">
+              <path d="M20 6L9 17l-5-5" stroke="currentColor" stroke-width="2" stroke-linecap="round"
+                stroke-linejoin="round" />
+            </svg>
+            Batida oficial inserida com sucesso.
+          </p>
+          {% endif %}
+        </div>
+
+        <div class="aviso-footer">
+          <time class="aviso-ts" datetime="{{ ajuste.criado_em.isoformat() }}">
+            Solicitado em {{ ajuste.criado_em.strftime('%d/%m/%Y às %H:%M') }}
+          </time>
+        </div>
+      </article>
+      {% endfor %}
+    </div>
+    {% else %}
+    <div class="empty">
+      <svg fill="none" viewBox="0 0 24 24" stroke="currentColor" width="48" height="48">
+        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5"
+          d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
+      </svg>
+      Você não enviou nenhuma solicitação de ajuste de ponto.
+    </div>
+    {% endif %}
     {% endif %}
 
   </main>
 
   <!-- AJAX: marcar como lido sem recarregar a página -->
   <script>
-    document.querySelectorAll("form[action*='/marcar-lido']").forEach(function(form) {
-      form.addEventListener("submit", function(e) {
+    document.querySelectorAll("form[action*='/marcar-lido']").forEach(function (form) {
+      form.addEventListener("submit", function (e) {
         e.preventDefault();
         fetch(form.action, {
           method: "POST",
           headers: { "Accept": "application/json" },
         })
-        .then(function(r) { return r.json(); })
-        .then(function(data) {
-          if (data.ok) {
-            var card = form.closest(".aviso-card");
-            if (card) {
-              card.classList.remove("unread");
-              var dot = card.querySelector(".dot-unread");
-              if (dot) dot.remove();
-            }
-            form.remove(); // remove o botão "Marcar lido"
-            // Atualizar badge do sino
-            var badge = document.querySelector("[role='status']");
-            if (badge) {
-              var count = parseInt(badge.textContent.trim(), 10);
-              if (!isNaN(count) && count > 1) {
-                badge.textContent = count - 1;
-              } else {
-                badge.closest("span") && badge.closest("span").remove();
+          .then(function (r) { return r.json(); })
+          .then(function (data) {
+            if (data.ok) {
+              var card = form.closest(".aviso-card");
+              if (card) {
+                card.classList.remove("unread");
+                var dot = card.querySelector(".dot-unread");
+                if (dot) dot.remove();
+              }
+              form.remove(); // remove o botão "Marcar lido"
+              // Atualizar badge do sino
+              var badge = document.querySelector("[role='status']");
+              if (badge) {
+                var count = parseInt(badge.textContent.trim(), 10);
+                if (!isNaN(count) && count > 1) {
+                  badge.textContent = count - 1;
+                } else {
+                  badge.closest("span") && badge.closest("span").remove();
+                }
               }
             }
-          }
-        })
-        .catch(function() { form.submit(); }); // fallback: submit normal
+          })
+          .catch(function () { form.submit(); }); // fallback: submit normal
       });
     });
   </script>
 
 </body>
+
 </html>

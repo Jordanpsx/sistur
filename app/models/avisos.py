@@ -27,9 +27,10 @@ from app.extensions import db
 class TipoAviso(str, enum.Enum):
     """Classificação do aviso interno."""
 
-    ATRASO = "ATRASO"   # Colaborador não registrou ponto no horário previsto
-    FALTA  = "FALTA"    # Ausência não justificada confirmada ao fim do dia
-    SISTEMA = "SISTEMA" # Mensagem genérica do sistema (RH, admin, etc.)
+    ATRASO        = "ATRASO"        # Colaborador não registrou ponto no horário previsto
+    FALTA         = "FALTA"         # Ausência não justificada confirmada ao fim do dia
+    SISTEMA       = "SISTEMA"       # Mensagem genérica do sistema (RH, admin, etc.)
+    AJUSTE_PONTO  = "AJUSTE_PONTO" # Notificação sobre solicitação de ajuste de ponto
 
 
 class TipoAusencia(str, enum.Enum):
@@ -88,6 +89,13 @@ class Aviso(db.Model):
     )
 
     is_lido = db.Column(db.Boolean, nullable=False, default=False, index=True)
+
+    # Referência opcional ao AjustePontoRequest relacionado (para avisos do tipo AJUSTE_PONTO)
+    ajuste_ponto_id = db.Column(
+        db.Integer,
+        db.ForeignKey("sistur_ajuste_ponto_requests.id", ondelete="SET NULL"),
+        nullable=True,
+    )
 
     criado_em = db.Column(
         db.DateTime,

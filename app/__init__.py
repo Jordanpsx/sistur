@@ -43,16 +43,32 @@ def create_app(config_name: str = "default") -> Flask:
     # para exibir o badge no sino de notificações da topbar.
     @app.context_processor
     def inject_avisos():
-        """Injeta a contagem de avisos não lidos do colaborador logado em todos os templates."""
+        """Injeta contagens de notificações em todos os templates para o badge da sineta.
+
+        Retorna:
+            avisos_nao_lidos      — avisos não lidos do colaborador logado.
+            ajustes_pendentes_count — solicitações de ajuste PENDENTE (apenas para quem tem
+                                       permissão ajuste_ponto.aprovar). Zero para demais.
+        """
         try:
             from flask import session
             fid = session.get("funcionario_id")
             if fid:
                 from app.services.aviso_service import AvisoService
-                return {"avisos_nao_lidos": AvisoService.contar_nao_lidos(fid)}
+                from app.core.permissions import has_permission
+                nao_lidos = AvisoService.contar_nao_lidos(fid)
+                pendentes = 0
+                if has_permission(fid, "ajuste_ponto", "aprovar"):
+                    from app.services.ajuste_ponto_service import AjustePontoService
+                    pendentes = AjustePontoService.contar_pendentes()
+                return {
+                    "avisos_nao_lidos": nao_lidos,
+                    "ajustes_pendentes_count": pendentes,
+                }
         except Exception:
             pass
-        return {"avisos_nao_lidos": 0}
+        return {"avisos_nao_lidos": 0, "ajustes_pendentes_count": 0}
+
 
     # Root route — serve the login page at /
     @app.route("/")
@@ -70,6 +86,7 @@ def create_app(config_name: str = "default") -> Flask:
         from app.models import geofence  # noqa: F401
         from app.models import calendario  # noqa: F401
         from app.models import avisos  # noqa: F401  — sistur_avisos, sistur_ausencias_justificadas
+        from app.models import ajuste_ponto  # noqa: F401  — sistur_ajuste_ponto_requests
 
     # Blueprints
     from app.blueprints.portal.routes import bp as portal_bp

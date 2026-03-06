@@ -347,3 +347,73 @@ def analise():
         chart_balance=json.dumps(chart_balance),
     )
 
+
+# ---------------------------------------------------------------------------
+# Solicitar Ajuste de Ponto (self-service)
+# ---------------------------------------------------------------------------
+
+@bp.route("/solicitar-ajuste", methods=["POST"])
+@login_required
+def solicitar_ajuste():
+    """Recebe e processa a solicitação de ajuste de ponto do colaborador.
+
+    Campos do formulário:
+        data_solicitada   (str, YYYY-MM-DD): Data do turno que precisa de ajuste.
+        horario_solicitado (str, HH:MM):     Horário desejado pelo colaborador.
+        tipo_ponto         (str):            Tipo de batida (clock_in, clock_out, etc.).
+        motivo             (str):            Justificativa obrigatória.
+        time_entry_id      (int, opcional):  PK da TimeEntry a corrigir. Omitir para nova batida.
+
+    Returns:
+        Redirect para /ponto/ com flash de confirmação ou erro.
+    """
+    from app.services.ajuste_ponto_service import AjustePontoService
+    from datetime import date, datetime, timezone
+
+    fid = _get_ator_id()
+
+    data_str = (request.form.get("data_solicitada") or "").strip()
+    hora_str = (request.form.get("horario_solicitado") or "").strip()
+    tipo_ponto = (request.form.get("tipo_ponto") or "").strip()
+    motivo = (request.form.get("motivo") or "").strip()
+    time_entry_id_raw = request.form.get("time_entry_id")
+
+    # Validações básicas de formato (regras de negócio ficam no service)
+    try:
+        data_solicitada = date.fromisoformat(data_str)
+    except (ValueError, TypeError):
+        flash("Data inválida. Use o formato AAAA-MM-DD.", "erro")
+        return redirect(url_for("ponto.index"))
+
+    try:
+        hora_dt = datetime.strptime(hora_str, "%H:%M")
+        horario_solicitado = datetime(
+            data_solicitada.year, data_solicitada.month, data_solicitada.day,
+            hora_dt.hour, hora_dt.minute,
+            tzinfo=timezone.utc,
+        )
+    except (ValueError, TypeError):
+        flash("Horário inválido. Use o formato HH:MM.", "erro")
+        return redirect(url_for("ponto.index"))
+
+    time_entry_id = None
+    if time_entry_id_raw:
+        try:
+            time_entry_id = int(time_entry_id_raw)
+        except (ValueError, TypeError):
+            time_entry_id = None
+
+    try:
+        AjustePontoService.criar_solicitacao(
+            funcionario_id=fid,
+            data_solicitada=data_solicitada,
+            horario_solicitado=horario_solicitado,
+            tipo_ponto=tipo_ponto,
+            motivo=motivo,
+            time_entry_id=time_entry_id,
+        )
+        flash("Solicitação de ajuste enviada. Aguarde a aprovação do supervisor.", "sucesso")
+    except ValueError as exc:
+        flash(str(exc), "erro")
+
+    return redirect(url_for("ponto.index"))

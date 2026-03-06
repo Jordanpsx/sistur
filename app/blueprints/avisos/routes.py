@@ -1,17 +1,20 @@
 # Copyright (c) 2026 Jordan Barbosa Machado — All Rights Reserved
 
 """
-Blueprint Avisos — Módulo de Notificações Internas.
+Blueprint Avisos — Módulo de Notificações Internas e Ajuste de Ponto.
 
 Rotas
 -----
-GET  /avisos/                         → historico()    — lista avisos do colaborador logado
-POST /avisos/<id>/marcar-lido         → marcar_lido()  — marca aviso como lido (JSON)
-POST /avisos/marcar-todos-lidos       → marcar_todos() — marca todos como lidos
-POST /avisos/<id>/deletar             → deletar()      — exclui aviso (com guarda IDOR)
+GET  /avisos/                              -> index()           — tabs: notificações, aprovações, minhas solicitações
+POST /avisos/<id>/marcar-lido             -> marcar_lido()     — marca aviso como lido (JSON)
+POST /avisos/marcar-todos-lidos           -> marcar_todos()    — marca todos como lidos
+POST /avisos/<id>/deletar                 -> deletar()         — exclui aviso (com guarda IDOR)
+POST /avisos/ajuste/<id>/aprovar          -> aprovar_ajuste()  — aprova solicitação de ajuste
+POST /avisos/ajuste/<id>/rejeitar         -> rejeitar_ajuste() — rejeita solicitação de ajuste
 
 Todas as rotas exigem sessão ativa (@login_required).
 Segurança IDOR: toda mutação verifica aviso.destinatario_id == fid antes de agir.
+Permissão de aprovação: ajuste_ponto.aprovar (RBAC via has_permission).
 """
 
 from __future__ import annotations
@@ -19,9 +22,11 @@ from __future__ import annotations
 from flask import Blueprint, abort, flash, jsonify, redirect, render_template, request, session, url_for
 
 from app.blueprints.portal.routes import login_required
+from app.core.permissions import has_permission
 from app.extensions import db
 from app.models.avisos import Aviso
 from app.services.aviso_service import AvisoService
+from app.services.ajuste_ponto_service import AjustePontoService
 
 bp = Blueprint("avisos", __name__)
 
@@ -36,32 +41,50 @@ def _get_fid() -> int:
 
 
 # ---------------------------------------------------------------------------
-# Histórico / listagem
+# Histórico / listagem (com tabs)
 # ---------------------------------------------------------------------------
 
 @bp.route("/", methods=["GET"])
 @login_required
 def index():
-    """Exibe a lista paginada de notificações do colaborador logado.
+    """Exibe a lista de notificações do colaborador com tabs de navegação.
+
+    Tabs disponíveis:
+        notificacoes  — avisos gerais do colaborador (padrão)
+        aprovacoes    — solicitações de ajuste PENDENTE (requer ajuste_ponto.aprovar)
+        minhas        — histórico de solicitações do próprio colaborador
 
     Query params:
-        page (int): Página atual. Padrão: 1.
+        page (int): Página atual para tab notificacoes. Padrão: 1.
+        tab  (str): Tab ativa. Padrão: 'notificacoes'.
 
     Returns:
-        Renderização de avisos/index.html com avisos paginados.
+        Renderização de avisos/index.html com dados das três tabs.
     """
     fid = _get_fid()
+    tab = request.args.get("tab", "notificacoes")
     try:
         page = int(request.args.get("page", 1))
     except (TypeError, ValueError):
         page = 1
 
     avisos_pag = AvisoService.listar(fid, page=page)
+    tem_permissao_aprovar = has_permission(fid, "ajuste_ponto", "aprovar")
+
+    ajustes_pendentes = []
+    if tem_permissao_aprovar:
+        ajustes_pendentes = AjustePontoService.listar_pendentes()
+
+    minhas_solicitacoes = AjustePontoService.listar_por_funcionario(fid)
 
     return render_template(
         "avisos/index.html",
         avisos=avisos_pag,
         page=page,
+        tab=tab,
+        tem_permissao_aprovar=tem_permissao_aprovar,
+        ajustes_pendentes=ajustes_pendentes,
+        minhas_solicitacoes=minhas_solicitacoes,
     )
 
 
@@ -152,3 +175,70 @@ def deletar(aviso_id: int):
         flash(str(exc), "erro")
 
     return redirect(url_for("avisos.index"))
+
+
+# ---------------------------------------------------------------------------
+# Aprovar ajuste de ponto
+# ---------------------------------------------------------------------------
+
+@bp.route("/ajuste/<int:ajuste_id>/aprovar", methods=["POST"])
+@login_required
+def aprovar_ajuste(ajuste_id: int):
+    """Aprova uma solicitação de ajuste de ponto.
+
+    Requer permissão ajuste_ponto.aprovar. Chama AjustePontoService.aprovar(),
+    que cria/edita a TimeEntry e recalcula o TimeDay automaticamente.
+
+    Args:
+        ajuste_id: PK da AjustePontoRequest a aprovar.
+
+    Returns:
+        Redirect para /avisos/?tab=aprovacoes com flash de resultado.
+    """
+    fid = _get_fid()
+    if not has_permission(fid, "ajuste_ponto", "aprovar"):
+        abort(403)
+
+    try:
+        AjustePontoService.aprovar(ajuste_id, supervisor_id=fid)
+        flash("Solicitação de ajuste aprovada com sucesso.", "sucesso")
+    except ValueError as exc:
+        flash(str(exc), "erro")
+
+    return redirect(url_for("avisos.index", tab="aprovacoes"))
+
+
+# ---------------------------------------------------------------------------
+# Rejeitar ajuste de ponto
+# ---------------------------------------------------------------------------
+
+@bp.route("/ajuste/<int:ajuste_id>/rejeitar", methods=["POST"])
+@login_required
+def rejeitar_ajuste(ajuste_id: int):
+    """Rejeita uma solicitação de ajuste de ponto com motivo obrigatório.
+
+    Requer permissão ajuste_ponto.aprovar. O campo 'motivo_rejeicao' do
+    formulário é obrigatório.
+
+    Args:
+        ajuste_id: PK da AjustePontoRequest a rejeitar.
+
+    Returns:
+        Redirect para /avisos/?tab=aprovacoes com flash de resultado.
+    """
+    fid = _get_fid()
+    if not has_permission(fid, "ajuste_ponto", "aprovar"):
+        abort(403)
+
+    motivo_rejeicao = (request.form.get("motivo_rejeicao") or "").strip()
+    if not motivo_rejeicao:
+        flash("Informe o motivo da rejeição.", "erro")
+        return redirect(url_for("avisos.index", tab="aprovacoes"))
+
+    try:
+        AjustePontoService.rejeitar(ajuste_id, supervisor_id=fid, motivo_rejeicao=motivo_rejeicao)
+        flash("Solicitação de ajuste rejeitada.", "sucesso")
+    except ValueError as exc:
+        flash(str(exc), "erro")
+
+    return redirect(url_for("avisos.index", tab="aprovacoes"))
