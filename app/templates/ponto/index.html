@@ -1227,7 +1227,7 @@
         formPonto.submit();
       }
 
-      // Captura GPS antes de submeter — fail-open se negado ou indisponível
+      // Captura GPS antes de submeter — BLOQUEIA se negado quando zonas de geofence existem
       if (navigator.geolocation) {
         navigator.geolocation.getCurrentPosition(
           function (pos) {
@@ -1235,11 +1235,31 @@
             document.getElementById('geo_lng_input').value = pos.coords.longitude;
             submitForm();
           },
-          function () { submitForm(); },  // permissão negada → submit sem coordenadas
+          function (err) {
+            // GPS negado ou indisponível → restaura botão e alerta o usuário
+            punchBtn.disabled = false;
+            punchBtn.classList.remove('punch-btn--loading');
+            punchBtn.classList.add('punch-btn--idle');
+            document.getElementById('punch-label').textContent = 'Registrar Ponto';
+            var msg = 'Localização GPS necessária para registrar o ponto.\n\n';
+            if (err.code === 1) {
+              msg += 'Permissão negada. Permita o acesso à localização nas configurações do navegador e tente novamente.';
+            } else if (err.code === 2) {
+              msg += 'Localização indisponível. Verifique se o GPS está ativado no dispositivo.';
+            } else {
+              msg += 'Tempo esgotado ao obter localização. Verifique o sinal GPS e tente novamente.';
+            }
+            alert(msg);
+          },
           { timeout: 8000, maximumAge: 60000 }
         );
       } else {
-        submitForm();  // navegador sem suporte → submit sem coordenadas
+        // Navegador sem suporte a geolocation → bloqueia e informa
+        punchBtn.disabled = false;
+        punchBtn.classList.remove('punch-btn--loading');
+        punchBtn.classList.add('punch-btn--idle');
+        document.getElementById('punch-label').textContent = 'Registrar Ponto';
+        alert('Seu navegador não suporta geolocalização. Use um navegador moderno (Chrome, Firefox, Safari) para registrar o ponto.');
       }
     });
   </script>

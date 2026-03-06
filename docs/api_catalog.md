@@ -157,6 +157,8 @@ Registra uma nova batida de ponto para o colaborador autenticado.
 | Field | Type | Required | Description |
 |---|---|---|---|
 | `punch_time` | string (ISO 8601) | No | Timestamp local do cliente. Se ausente, usa o servidor. |
+| `lat` | float | Conditional | Latitude GPS (graus decimais). **Obrigatório** se existirem zonas de geofence ativas. |
+| `lng` | float | Conditional | Longitude GPS (graus decimais). **Obrigatório** se existirem zonas de geofence ativas. |
 
 **Success response:** `302` → `GET /ponto/`
 

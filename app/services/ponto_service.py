@@ -421,12 +421,21 @@ class PontoService(BaseService):
         from app.models.funcionario import Funcionario
         from app.models.ponto import ProcessingStatus, PunchSource, PunchType, TimeDay, TimeEntry
 
-        # Validação de geofencing (Rule #2) — apenas quando coordenadas foram fornecidas
-        if current_lat is not None and current_lng is not None:
+        # Validação de geofencing (Rule #2) — fail-closed quando zonas estão configuradas
+        # Se não há zonas ativas, o geofence é irrelevante e não bloqueia (fail-open sem zonas).
+        # Se há zonas ativas, as coordenadas são OBRIGATÓRIAS — GPS negado = acesso bloqueado.
+        from app.models.geofence import GeofenceLocation
+        _zonas_ativas = db.session.query(GeofenceLocation).filter_by(is_active=True).count()
+        if _zonas_ativas > 0:
+            if current_lat is None or current_lng is None:
+                raise GeofenceViolationError(
+                    "Localização GPS obrigatória. Permita o acesso à localização no navegador e tente novamente."
+                )
             if not PontoService._esta_dentro_do_geofence(current_lat, current_lng):
                 raise GeofenceViolationError(
                     "Você não está em uma localização autorizada para registrar o ponto."
                 )
+
 
         funcionario = db.session.get(Funcionario, funcionario_id)
         if not funcionario or not funcionario.ativo:
