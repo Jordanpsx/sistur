@@ -38,6 +38,8 @@
       --mod-estoque-bg: #ffedd5;
       --mod-restaurante: #059669;
       --mod-restaurante-bg: #d1fae5;
+      --mod-reservas: #ec4899;
+      --mod-reservas-bg: #fce7f3;
       --mod-audit: #7c3aed;
       --mod-audit-bg: #ede9fe;
     }
@@ -553,6 +555,30 @@
       color: var(--mod-restaurante);
     }
 
+    .mod-card.mod-active.mod-reservas:hover {
+      border-color: var(--mod-reservas);
+      background: rgba(236, 72, 153, 0.02);
+    }
+
+    .mod-card.mod-reservas .mod-icon {
+      background: var(--mod-reservas-bg);
+      color: var(--mod-reservas);
+    }
+
+    .mod-card.mod-active.mod-reservas:hover .mod-icon {
+      background: var(--mod-reservas);
+      color: white;
+    }
+
+    .mod-card.mod-active.mod-reservas:hover .mod-card-title {
+      color: var(--mod-reservas);
+    }
+
+    .badge-reservas {
+      background: var(--mod-reservas-bg);
+      color: var(--mod-reservas);
+    }
+
     .mod-badge {
       display: inline-block;
       font-size: 0.6rem;
@@ -883,6 +909,30 @@
           </div>
         </div>
         <p class="mod-card-desc">Gerencie fichas técnicas e análise de custos (CMV).</p>
+      </a>
+      {% endif %}
+
+      <!-- Reservas -->
+      {% if perms.reservas.view and (modulos_ativos.reservas or is_super_admin) %}
+      <a href="{{ url_for('reservas.index') }}"
+        class="mod-card mod-active mod-reservas{% if not modulos_ativos.reservas %} mod-master-off{% endif %}">
+        <div class="mod-card-header">
+          <div class="mod-icon">
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="none">
+              <path d="M6 9h12M6 12h12M6 15h8M4 6h16a2 2 0 0 1 2 2v10a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2z"
+                stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" />
+            </svg>
+          </div>
+          <div class="mod-card-titles">
+            <h2 class="mod-card-title">Reservas</h2>
+            {% if not modulos_ativos.reservas %}
+            <span class="badge-master-off">Desativado</span>
+            {% else %}
+            <span class="mod-badge badge-reservas">Operações</span>
+            {% endif %}
+          </div>
+        </div>
+        <p class="mod-card-desc">Gerencie reservas, locais e categorias de hospedagem.</p>
       </a>
       {% endif %}
 

@@ -156,6 +156,12 @@ def dashboard():
             "view":             has_permission(fid, "avisos", "view"),
             "receber_alertas":  has_permission(fid, "avisos", "receber_alertas"),
         },
+        "reservas": {
+            "view":   has_permission(fid, "reservas", "view"),
+            "create": has_permission(fid, "reservas", "create"),
+            "edit":   has_permission(fid, "reservas", "edit"),
+            "delete": has_permission(fid, "reservas", "delete"),
+        },
     }
 
     modulos_ativos = {
@@ -163,6 +169,7 @@ def dashboard():
         "estoque":     ConfiguracaoService.is_module_enabled("estoque"),
         "restaurante": ConfiguracaoService.is_module_enabled("restaurante"),
         "financeiro":  ConfiguracaoService.is_module_enabled("financeiro"),
+        "reservas":    ConfiguracaoService.is_module_enabled("reservas"),
     }
 
     is_super_admin = bool(funcionario.role and funcionario.role.is_super_admin)
